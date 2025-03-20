@@ -1,0 +1,26 @@
+app-no-repository-access-dialog {
+    --mdc-dialog-supporting-text-line-height: 1.25rem;
+    --mdc-dialog-supporting-text-color: var(--bi-color-secondary-main);
+    --mdc-dialog-subhead-color: var(--bi-color-secondary-main);
+    --mdc-dialog-supporting-text-size: 0.875rem;
+
+    h2 {
+        margin-top: .5rem!important;
+    }
+
+    mat-dialog-actions {
+        padding: 0 1.5rem 1.5rem!important;
+        gap: 1.5rem;
+        --mdc-filled-button-label-text-size: 0.875rem;
+        font-size: 0.875rem;
+        --mdc-filled-button-label-text-weight: 500;
+
+        a {
+            color: var(--bi-color-secondary-main);
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 2px solid var(--bi-color-accent-green-main);
+            cursor: pointer;
+        }
+    }
+}

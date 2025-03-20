@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.11.0",
+    "generators": {
+      "component-catalog-client": {
+        "generatorName": "typescript-angular",
+        "inputSpec": "openapi-componentcatalog-v1.0.0.yaml",
+        "output": "src/app/openapi",
+        "additionalProperties": {
+          "fileNaming": "kebab-case",
+          "withInterfaces": true,
+          "generateAliasAsModel": true
+        }
+      }
+    }
+  }
+}
