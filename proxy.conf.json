@@ -1,0 +1,12 @@
+{
+    "/component-catalog": {
+        "target": "https://component-catalog-devstack-dev.apps.eu-dev.ocp.aws.boehringer.com/v1",
+        "pathRewrite": { "^/component-catalog": "" },
+        "headers": {
+            "Accept": "*/*"
+        },
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    }
+}

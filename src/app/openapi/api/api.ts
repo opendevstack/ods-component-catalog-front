@@ -1,0 +1,10 @@
+export * from './catalog-filters.service';
+import { CatalogFiltersService } from './catalog-filters.service';
+export * from './catalog-filters.serviceInterface';
+export * from './catalog-items.service';
+import { CatalogItemsService } from './catalog-items.service';
+export * from './catalog-items.serviceInterface';
+export * from './files.service';
+import { FilesService } from './files.service';
+export * from './files.serviceInterface';
+export const APIS = [CatalogFiltersService, CatalogItemsService, FilesService];
