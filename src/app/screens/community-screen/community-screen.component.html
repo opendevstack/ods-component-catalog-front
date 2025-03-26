@@ -1,0 +1,20 @@
+<appshell-page-header
+    [breadcrumbLinks]="breadcrumbLinks"
+    title="Community"
+></appshell-page-header>
+@if(!noProductsHtmlMessage && !noProductsIcon) {
+    <div class="community-page-content">
+        <markdown
+            [data]="pageContent | async"
+            [disableSanitizer]="true">
+        </markdown>
+    </div>
+}
+@if(noProductsHtmlMessage || noProductsIcon) {
+    <div class="no-results-ctn" role="status" aria-live="polite" tabindex="0">
+        @if(noProductsIcon) {
+            <span [class]="'no-results-icon ' + noProductsIcon"></span>
+        }
+        <div [innerHTML]="noProductsHtmlMessage"></div>
+    </div>
+}

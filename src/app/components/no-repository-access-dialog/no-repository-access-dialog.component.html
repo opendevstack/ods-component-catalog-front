@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>Access Restricted</h2>
+<mat-dialog-content>
+    To view code, you need to have access to our Bitbucket project. To request access, fill out the access request form, selecting the following options:
+    <br/>
+    <ol>
+      <li>Select Project: Data Science Models Catalog-DSMC</li>
+      <li>Select an Account</li>
+      <li>Select Add role</li>
+      <li>Select Access: TEAM</li>
+    </ol>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <a mat-dialog-close>Cancel</a>
+    <a [href]="requestUrl" target="_blank" mat-flat-button color="accent" mat-dialog-close>Request Access</a>
+</mat-dialog-actions>
