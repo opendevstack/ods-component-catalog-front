@@ -5,31 +5,42 @@ import { AppShellProduct } from '@appshell/ngx-appshell';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CatalogService } from '../../services/catalog.service';
 import { provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 
 describe('ProductCatalogScreenComponent', () => {
   let component: ProductCatalogScreenComponent;
   let fixture: ComponentFixture<ProductCatalogScreenComponent>;
   let mockCatalogService: jasmine.SpyObj<CatalogService>;
+  let activatedRouteSpy: jasmine.SpyObj<ActivatedRoute>;
+  let routerSpy: jasmine.SpyObj<Router>;
+  let activatedRouteSubject = new Subject();
 
   beforeEach(async () => {
-    mockCatalogService = jasmine.createSpyObj('CatalogService', ['getProductsList', 'getFilters']);
+    mockCatalogService = jasmine.createSpyObj('CatalogService', ['getProductsList', 'getFilters', 'getCatalogDescriptors', 'getSlugUrl']);
+    activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {'params': activatedRouteSubject});
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     
     await TestBed.configureTestingModule({
       imports: [BrowserAnimationsModule, ProductCatalogScreenComponent],
       providers: [
         { provide: CatalogService, useValue: mockCatalogService },
-        provideHttpClient()
+        provideHttpClient(),
+        { provide: ActivatedRoute, useValue: activatedRouteSpy },
+        { provide: Router, useValue: routerSpy },
       ]
     })
     .compileComponents();
 
     mockCatalogService.getProductsList.and.returnValue(of([]));
     mockCatalogService.getFilters.and.returnValue(of([]));
+    mockCatalogService.getCatalogDescriptors.and.returnValue([{slug: 'catalog', id: 'fake'}]);
+    mockCatalogService.getSlugUrl.and.callFake((id: string) => {return id;});
 
     fixture = TestBed.createComponent(ProductCatalogScreenComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    activatedRouteSubject.next({'catalogSlug': 'catalog'});
   });
 
   it('should create', () => {
@@ -129,10 +140,13 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should set the proper message if the call to retrieve the products fails', () => {
     mockCatalogService.getProductsList.and.returnValue(throwError(() => new Error('test')));
-    fixture = TestBed.createComponent(ProductCatalogScreenComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    activatedRouteSubject.next({'catalogSlug': 'catalog'});
     expect(component.noProductsIcon).toEqual('bi-smiley-sad-icon');
     expect(component.noProductsHtmlMessage).toEqual('Sorry, we are having trouble loading the results.<br/> Please check back in a few minutes.');
+  });
+
+  it('should redirect to / if there is no valid catalog in the route params', () => {
+    activatedRouteSubject.next({});
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
   });
 });

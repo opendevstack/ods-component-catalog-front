@@ -1,6 +1,6 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, Inject, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-no-repository-access-dialog',
@@ -14,5 +14,5 @@ export class NoRepositoryAccessDialogComponent {
 
   requestUrl: string = 'https://boehringer.service-now.com/esc?id=sc_cat_item&sys_id=3574dd671b75605099bd63546b4bcb1e';
 
-  constructor(public dialogRef: MatDialogRef<NoRepositoryAccessDialogComponent>) {}
+  constructor(public dialogRef: MatDialogRef<NoRepositoryAccessDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {}
 }

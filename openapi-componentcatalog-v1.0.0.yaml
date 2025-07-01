@@ -29,6 +29,87 @@ tags:
   - name: Files
     description: File operations.
 paths:
+  /catalog-descriptors:
+    get:
+      tags:
+        - Catalog-descriptors
+      summary: List of all available Catalog Descriptors.
+      description: > 
+        Returns a list of all available Catalog Descriptors.<br/>
+      operationId: getCatalogDescriptors
+      responses:
+        "200":
+          description: A list of Catalog Descriptors.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogDescriptor'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+  /catalogs/{id}:
+    get:
+      tags:
+        - Catalogs
+      summary: Get a catalog by id.
+      description: >
+        Returns a valid catalog.
+      operationId: getCatalog
+      parameters:
+        - name: id
+          in: path
+          description: id for the Catalog.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A Single catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Catalog'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
   /catalog-items:
     get:
       tags:
@@ -274,6 +355,44 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Catalog:
+      properties:
+        name:
+          type: string
+          example: 'catalog-name'
+        description:
+          type: string
+          example: 'A brief description for a catalog'
+        communityPageId:
+          type: string
+          example: 'aSdFam...yCg=='
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogLink'
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - 'tasks'
+            - 'technologies'
+    CatalogDescriptor:
+      properties:
+        id:
+          type: string
+          example: 'aSdFam...yCg=='
+        slug:
+          type: string
+          example: 'aSdFam...yCg=='
+    CatalogLink:
+      properties:
+        url:
+          type: string
+          example: 'http://some-link.com'
+        name:
+          type: string
+          example: 'whatever name'
     CatalogItem:
       properties:
         id:
@@ -297,6 +416,9 @@ components:
         itemSrc:
           type: string
           example: 'https://bitbucket.some-company.com/projects/SOMEPROJECT/repos/some-repo/browse/CatalogItem.yaml?at=refs/heads/master'
+        type:
+          type: string
+          example: 'machine-learning-model'
         tags:
           type: array
           items:

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NoRepositoryAccessDialogComponent } from './no-repository-access-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
 
 describe('NoRepositoryAccessDialogComponent', () => {
   let component: NoRepositoryAccessDialogComponent;
@@ -19,6 +19,7 @@ describe('NoRepositoryAccessDialogComponent', () => {
             componentInstance: () => { }
           }
         },
+        { provide: MAT_DIALOG_DATA, useValue: {} }
       ]
     })
     .compileComponents();

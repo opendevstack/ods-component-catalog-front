@@ -4,7 +4,7 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 The AppShell is a framework and foundation to boost the development of modern web applications on the EDP. The framework provides commonly used capabilities in frontend and backend application components.
 
-With the Appshell, we are offering design templates "ready to use" so any platform can optimize the efforts  by using our adaptable templates, promoting consistency between platforms but also guaranteeing following the Digital Design System of our company and complying with Web Content Accessibility Guidelines. 
+With the AppShell, we are offering design templates "ready to use" so any platform can optimize the efforts  by using our adaptable templates, promoting consistency between platforms but also guaranteeing following the Digital Design System of our company and complying with Web Content Accessibility Guidelines. 
 
 ## Configuring the local environment
 

@@ -8,7 +8,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false --code-coverage --reporters=junit,coverage",
-    "generate-api-client": "openapi-generator-cli generate --generator-key component-catalog-client"
+    "generate-api-client": "rm -rf src/app/openapi && openapi-generator-cli generate --generator-key component-catalog-client"
   },
   "private": true,
   "dependencies": {
@@ -21,7 +21,7 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
-    "@appshell/ngx-appshell": "18.0.1",
+    "@appshell/ngx-appshell": "18.0.2",
     "@openapitools/openapi-generator-cli": "^2.16.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
