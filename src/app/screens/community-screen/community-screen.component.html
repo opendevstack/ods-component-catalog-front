@@ -5,7 +5,7 @@
 @if(!noProductsHtmlMessage && !noProductsIcon) {
     <div class="community-page-content">
         <markdown
-            [data]="pageContent | async"
+            [data]="pageContent"
             [disableSanitizer]="true">
         </markdown>
     </div>

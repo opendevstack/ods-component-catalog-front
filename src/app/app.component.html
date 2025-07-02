@@ -2,11 +2,14 @@
   [headerVariant]="headerVariant"
   [applicationSymbol]="applicationSymbol"
   [applicationName]="applicationName"
+  [applicationNameLink]=""
   [appShellHelpLink]="appShellHelpLink"
   [headerLinks]="headerLinks"
+  [headerPicker]="catalogPicker"
   [sidenavSections]="sidenavSections"
   [sidenavLinks]="sidenavLinks"
   [loggedUser]="loggedUser"
   (userLoggedIn)="login()"
-  (userLoggedOut)="logout()">
+  (userLoggedOut)="logout()"
+  (userPick)="pickCatalog($event)">
 </appshell-layout>

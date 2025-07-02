@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
-import { AppshellProductCatalogScreenComponent, AppShellProduct, AppShellLink, AppShellFilter } from '@appshell/ngx-appshell';
+import { AppShellProductCatalogScreenComponent, AppShellProduct, AppShellLink, AppShellFilter } from '@appshell/ngx-appshell';
 import { CatalogService } from '../../services/catalog.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-product-catalog-screen',
   standalone: true,
-  imports: [AppshellProductCatalogScreenComponent],
+  imports: [AppShellProductCatalogScreenComponent],
   templateUrl: './product-catalog-screen.component.html',
   styleUrl: './product-catalog-screen.component.scss'
 })
@@ -16,34 +17,59 @@ export class ProductCatalogScreenComponent {
 
   noProductsIcon?: string = undefined;
   noProductsHtmlMessage?: string = undefined;
+  
+  breadcrumbLinks: AppShellLink[] = []
 
-  constructor(private readonly catalogService: CatalogService) {
-    this.catalogService.getProductsList().subscribe({
-      next: (products) => {
-        if (!products || products.length === 0) { this.showNoProductsMessage(); }
-        this.products = products;
-        this.filterProducts(new Map<string, string[]>());
-      }, 
-      error: () => {
-        this.showNoProductsMessage();
+  constructor(
+    private readonly catalogService: CatalogService, 
+    private readonly router: Router, 
+    private readonly route: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    this.route.params.subscribe(params => {
+      const catalogSlug = params['catalogSlug'] || '';
+
+      const catalog = this.catalogService.getCatalogDescriptors().find(catalog => this.catalogService.getSlugUrl(catalog.slug!) === catalogSlug);
+
+      if(!catalog) {
+        this.router.navigate(['/']);
+        return;
       }
-    });
-    this.catalogService.getFilters().subscribe(filters => {
-      this.filters = filters;
-    });
-    this.filterProducts(new Map<string, string[]>());
-  }
 
-  breadcrumbLinks: AppShellLink[] = [
-    {
-      anchor: '',
-      label: 'CATALOG',
-    },
-    {
-      anchor: '',
-      label: 'Our repositories',
-    }
-  ]
+      this.breadcrumbLinks = [
+        {
+          anchor: '',
+          label: 'Catalogs',
+        },
+        {
+          anchor: '',
+          label: catalog.slug!,
+        }
+      ]
+
+      this.products = [];
+      this.filteredProducts = [];
+      this.filters = [];
+      this.noProductsIcon = undefined;
+      this.noProductsHtmlMessage = undefined;
+
+      this.catalogService.getProductsList(catalog).subscribe({
+        next: (products) => {
+          if (!products || products.length === 0) { this.showNoProductsMessage(); }
+          this.products = products;
+          this.filterProducts(new Map<string, string[]>());
+        }, 
+        error: () => {
+          this.showNoProductsMessage();
+        }
+      });
+      this.catalogService.getFilters(catalog.id!).subscribe(filters => {
+        this.filters = filters;
+      });
+      this.filterProducts(new Map<string, string[]>());
+    });
+  }
 
   filterProducts(activeFilters: Map<string, string[]>): void {
     const filters = Array.from(activeFilters.values()).flat();
