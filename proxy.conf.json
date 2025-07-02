@@ -1,6 +1,6 @@
 {
     "/component-catalog": {
-        "target": "https://component-catalog-devstack-dev.apps.eu-dev.ocp.aws.boehringer.com/v1",
+        "target": "http://localhost:8080/v1",
         "pathRewrite": { "^/component-catalog": "" },
         "headers": {
             "Accept": "*/*"

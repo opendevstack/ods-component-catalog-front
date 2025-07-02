@@ -18,8 +18,7 @@ describe('ProductViewScreenComponent', () => {
   let activatedRouteSubject = new Subject();
 
   beforeEach(async () => {
-    activatedRouteSubject.next({'id': '1'});
-    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct']);
+    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct', 'getCatalogDescriptors', 'getSlugUrl']);
     activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {'params': activatedRouteSubject});
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
@@ -42,9 +41,13 @@ describe('ProductViewScreenComponent', () => {
     .compileComponents();
 
     catalogServiceSpy.getProduct.and.returnValue(of({} as AppShellProduct));
+    catalogServiceSpy.getCatalogDescriptors.and.returnValue([{slug: 'catalog', id: 'fake'}]);
+    catalogServiceSpy.getSlugUrl.and.callFake((id: string) => {return id;});
+
     fixture = TestBed.createComponent(ProductViewScreenComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
   });
 
   it('should create', () => {
@@ -52,7 +55,6 @@ describe('ProductViewScreenComponent', () => {
   });
 
   it('should navigate to / if there is no id in the route params', fakeAsync(() => {
-    component.ngOnInit();
     activatedRouteSubject.next({});
     tick();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
@@ -60,8 +62,7 @@ describe('ProductViewScreenComponent', () => {
 
   it('should navigate to / if the call to retrieve the product fails', fakeAsync(() => {
     catalogServiceSpy.getProduct.and.returnValue(throwError(() => new Error('test')));
-    component.ngOnInit();
-    activatedRouteSubject.next({'id': '1'});
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
     tick();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
   }));
@@ -75,12 +76,58 @@ describe('ProductViewScreenComponent', () => {
 
   it('should open the NoRepositoryAccessDialogComponent if the product does not have a link', () => {
     const dialogSpy = spyOn(component.dialog, 'open');
-    component.product = {} as AppShellProduct;
+    component.product = {id: btoa('/project/XXX/repo/YYY/catalogItem.yaml')} as AppShellProduct;
     component.actionButtonFn();
     expect(dialogSpy).toHaveBeenCalledWith(NoRepositoryAccessDialogComponent, {
       width: '480px',
-      autoFocus: false
+      autoFocus: false,
+      data: { project: 'XXX' }
     });
   });
 
+  it('should only inform the actionButtonText if the product has a link', () => {
+    catalogServiceSpy.getProduct.and.returnValue(of({link: 'http://link.com'} as AppShellProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionButtonText).toEqual('View Code');
+    catalogServiceSpy.getProduct.and.returnValue(of({link: undefined} as AppShellProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionButtonText).toBeUndefined();
+  });
+  
+  it('base64URLDecode should decode base64 URL encoded string with no padding', () => {
+    const input = 'SGVsbG8gd29ybGQ';
+    const expectedOutput = 'Hello world';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });
+  
+  it('base64URLDecode should decode base64 URL encoded string with one padding character', () => {
+    const input = 'SGVsbG8gd29ybGQ';
+    const expectedOutput = 'Hello world';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });
+  
+  it('base64URLDecode should decode base64 URL encoded string with two padding characters', () => {
+    const input = 'SGVsbG8gd29ybG';
+    const expectedOutput = 'Hello worl';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });
+  
+  it('base64URLDecode should decode base64 URL encoded string with hyphens and underscores', () => {
+    const input = 'SGVsbG-_';
+    const expectedOutput = 'Hello¿';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });
+  
+  it('base64URLDecode should handle empty string', () => {
+    const input = '';
+    const expectedOutput = '';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });  
+  
+  it('base64URLDecode should return the same string if the length is not valid to be decoded', () => {
+    const input = 'SGVsbG8-_';
+    const expectedOutput = 'SGVsbG8-_';
+    expect(component.base64URLDecode(input)).toBe(expectedOutput);
+  });  
+    
 });

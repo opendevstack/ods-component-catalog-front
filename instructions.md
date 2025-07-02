@@ -2,6 +2,44 @@
 
 In order to define a component catalog, you must configure a repository to keep the catalog configuration. And different repositories for the different catalog item configurations.
 
+## Catalogs collection
+The catalog collection is an special catalog file, that references all the catalogs that are available in the system.
+Each link will represent a catalog repository described below.
+
+### Expected Repository Structure
+
+    └── CatalogsCollection.yaml
+
+### CatalogsCollection.yaml
+There MUST be a CatalogsCollection.yaml file to configure the catalog that has the following structure:
+
+```
+---
+kind: CatalogCollections       # This is a CatalogCollections object
+metadata:                     
+  name: Catalog collections    # The name of the CatalogCollections
+ 
+# Specifications for the CatalogCollections
+spec:
+  # The targets, or sources, for the CatalogCollections. These are direct links to specific versions of the CatalogItem, determined by branch, tag, or commit SHA.
+  targets:
+     # A dictionary for each target allow us to add extra configuration
+    - url: https://bitbucket.biscrum.com/projects/machine-learning-model-catalog/repos/model-catalog/raw/machine-learning-catalog/catalog.yaml?at=refs%2Ftags%2Fv0.2
+      slug: catalog-1
+      conf: ...... # extra configuration
+    - url: https://bitbucket.biscrum.com/projects/other-catalog/repos/catalog-definition/raw/catalog.yaml?at=refs%2Ftags%2Fv0.2 # URL to another specific version of the CatalogItem
+      slug: catalog-2
+```
+Properties:
+- **kind**: Constant value that needs to be set as CatalogCollections
+- **metadata**:
+  - **name**: Name of the catalogs collection. This information is only to get some extra context to understand this repository. Does not get reflected in the UI.
+  - **spec**:
+    - **targets**: 
+      - **url**: A list of url references to the catalog repositories that will appear in the catalogs collection. The frontend will show them in the specified order. The URLs must be complete, containing the protocol (http/s), the host (bitbucket.biscrum.com), the link must be to the "browse" file (not "raw") and must contain the references to choose the branch to be used.
+      - **slug**: A slug is a URL-friendly version of the catalog name. It is used to create a unique identifier for the catalog in the system. The slug should be lowercase and can contain letters, numbers, and hyphens.
+
+
 ## Catalog Repository
 The main catalog repository (entry point) can have any name but it must contain the following 2 files:
 
@@ -19,7 +57,13 @@ kind: Catalog
 metadata: 
   name: Name of the catalog
   description: Description of the catalog
+  communityPage: ./community.md path or url
   spec: 
+    links:
+    - url: http://www.boheringer.com
+      name: boehringer
+    - url: http://www.google.com
+      name: google
     tags:
       - Category1
       - Category2
@@ -34,7 +78,9 @@ Properties:
 - **metadata**:
     - **name**: Name of the catalog. This information is only to get some extra context to understand this repository. Does not get reflected in the UI.
     - **description**: Description of the catalog. This information is only to get some extra context to understand this repository. Does not get reflected in the UI.
+    - **communityPage**: Reference to a markdown (.md) file from the same repository. The contents of that file will be rendered (using markdown) in the community page.
     - **spec**:
+        - **links**: A list of links that will appear in the left block of the catalog page. The frontend will show them in alphabetical order. The URLs must be complete, containing the protocol (http/s), the host (bitbucket.biscrum.com), the link must be to the "browse" file (not "raw") and must contain the references to choose the branch to be used.
         - **tags**: A list of strings that will be the filters appearing on the top of the catalog page. The names will appear in the UI as you define them here, being case sensitive and in the same exact order you define them in the catalog. This same values will need to be aligned in the catalog items repositories. The options of the select fields will be all the values from all the catalog items for that specific label. They will be ordered alphabetically and cannot have repeated values in the same filter options.
         - **targets**: A list of url references to the catalog items that will appear in the catalog. The frontend will show them in alphabetical order. The URLs must be complete, containing the protocol (http/s), the host (bitbucket.biscrum.com), the link must be to the "browse" file (not "raw") and must contain the references to choose the branch to be used.
 

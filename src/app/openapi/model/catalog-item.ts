@@ -18,6 +18,7 @@ export interface CatalogItem {
     descriptionFileId?: string;
     imageFileId?: string;
     itemSrc?: string;
+    type?: string;
     tags?: Array<CatalogItemTag>;
     authors: Array<string>;
     date: string;
