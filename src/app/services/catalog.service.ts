@@ -65,8 +65,8 @@ export class CatalogService {
 
   async getProductImage(img: string): Promise<string | undefined> {
     try {
-      const file = await firstValueFrom(this.filesService.getFileById(img, FileFormat.Image, 'body', false, { httpHeaderAccept: 'application/octet-stream' }));
-      return URL.createObjectURL(new Blob([file]));
+      const file: any = await firstValueFrom(this.filesService.getFileById(img, FileFormat.Image, 'body', false, { httpHeaderAccept: 'application/octet-stream' }));
+      return URL.createObjectURL(file instanceof Blob ? file : new Blob([file]));
     } catch (error: any) {
       return undefined;
     }
