@@ -224,8 +224,12 @@ describe('CatalogService', () => {
     spyOn(URL, 'createObjectURL').and.returnValue(fakeBlobUrl);
     filesServiceSpy.getFileById.and.returnValue(of('fake image content'));
 
-    const result = await service.getProductImage(imageFileId);
-    expect(result).toContain('blob');
+    let result = await service.getProductImage(imageFileId);
+    expect(result).toContain('blob:http');
+    filesServiceSpy.getFileById.and.returnValue(of(fakeBlob) as any);
+
+    result = await service.getProductImage(imageFileId);
+    expect(result).toContain('blob:http');
   });
 
   it('getProductImage should return undefined if the file retrieval throws an error', async () => {
