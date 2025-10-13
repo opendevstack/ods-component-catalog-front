@@ -5,7 +5,7 @@
 odsComponentPipeline(
   imageStreamTag: 'ods/jenkins-agent-nodejs22:4.x',
   branchToEnvironmentMapping: [
-    'master': 'dev'
+    'master': 'dev',
   ],
   sonarQubeBranch: '*'
 ) { context ->

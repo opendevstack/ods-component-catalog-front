@@ -4,10 +4,11 @@ import { ProductViewScreenComponent } from './product-view-screen.component';
 import { CatalogService } from '../../services/catalog.service';
 import { provideHttpClient } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
-import { AppShellProduct } from '@appshell/ngx-appshell';
 import { ActivatedRoute, Router } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
 import { NoRepositoryAccessDialogComponent } from '../../components/no-repository-access-dialog/no-repository-access-dialog.component';
+import { AppProduct } from '../../models/app-product';
+import { ProductAction } from '../../models/product-action';
 
 describe('ProductViewScreenComponent', () => {
   let component: ProductViewScreenComponent;
@@ -15,7 +16,7 @@ describe('ProductViewScreenComponent', () => {
   let catalogServiceSpy: jasmine.SpyObj<CatalogService>;
   let activatedRouteSpy: jasmine.SpyObj<ActivatedRoute>;
   let routerSpy: jasmine.SpyObj<Router>;
-  let activatedRouteSubject = new Subject();
+  const activatedRouteSubject = new Subject();
 
   beforeEach(async () => {
     catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct', 'getCatalogDescriptors', 'getSlugUrl']);
@@ -40,7 +41,7 @@ describe('ProductViewScreenComponent', () => {
     })
     .compileComponents();
 
-    catalogServiceSpy.getProduct.and.returnValue(of({} as AppShellProduct));
+    catalogServiceSpy.getProduct.and.returnValue(of({} as AppProduct));
     catalogServiceSpy.getCatalogDescriptors.and.returnValue([{slug: 'catalog', id: 'fake'}]);
     catalogServiceSpy.getSlugUrl.and.callFake((id: string) => {return id;});
 
@@ -67,17 +68,46 @@ describe('ProductViewScreenComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
   }));
 
-  it('should open the product link in a new tab if the product has a link', () => {
+  it('should call viewCodeAction in actionButtonFn if the first action is of type code', () => {
     spyOn(window, 'open');
-    component.product = { link: 'http://example.com' } as AppShellProduct;
+    spyOn(component, 'viewCodeAction');
+    component.product = { actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://example.com'}] } as AppProduct;
     component.actionButtonFn();
+    expect(component.viewCodeAction).toHaveBeenCalledWith({id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://example.com'} as ProductAction);
+  });
+
+  it('should call genericAction in actionButtonFn if the first action is not of type code', () => {
+    spyOn(component, 'genericAction');
+    component.product = {id: btoa('/project/XXX/repo/YYY/catalogItem.yaml'), actions: [{id: 'other', url: null}]} as AppProduct;
+    component.actionButtonFn();
+    expect(component.genericAction).toHaveBeenCalledWith({id: 'other', url: null} as ProductAction);
+  });
+
+  it('should call viewCodeAction in secondaryActionButtonFn if there are 2 actions and the second action is of type code', () => {
+    spyOn(window, 'open');
+    spyOn(component, 'viewCodeAction');
+    component.product = { actions: [{id: 'other', url: null}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://example.com'}] } as AppProduct;
+    component.secondaryActionButtonFn();
+    expect(component.viewCodeAction).toHaveBeenCalledWith({id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://example.com'} as ProductAction);
+  });
+
+  it('should call genericAction in secondaryActionButtonFn if there are 2 actions and the second action is not of type code', () => {
+    spyOn(component, 'genericAction');
+    component.product = {id: btoa('/project/XXX/repo/YYY/catalogItem.yaml'), actions: [{id: 'one', url: null}, {id: 'other', url: null}]} as AppProduct;
+    component.secondaryActionButtonFn();
+    expect(component.genericAction).toHaveBeenCalledWith({id: 'other', url: null} as ProductAction);
+  });
+
+  it('should open the product link in a new tab if the product has a link in viewCodeAction', () => {
+    spyOn(window, 'open');
+    component.viewCodeAction({id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://example.com'} as ProductAction);
     expect(window.open).toHaveBeenCalledWith('http://example.com', '_blank');
   });
 
-  it('should open the NoRepositoryAccessDialogComponent if the product does not have a link', () => {
+  it('should open the NoRepositoryAccessDialogComponent if the product does not have a link in viewCodeAction', () => {
     const dialogSpy = spyOn(component.dialog, 'open');
-    component.product = {id: btoa('/project/XXX/repo/YYY/catalogItem.yaml')} as AppShellProduct;
-    component.actionButtonFn();
+    component.product = {id: btoa('/project/XXX/repo/YYY/catalogItem.yaml'), actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: null}]} as AppProduct;
+    component.viewCodeAction({id: CatalogService.CODE_PRODUCT_TYPE, url: null} as ProductAction);
     expect(dialogSpy).toHaveBeenCalledWith(NoRepositoryAccessDialogComponent, {
       width: '480px',
       autoFocus: false,
@@ -85,13 +115,87 @@ describe('ProductViewScreenComponent', () => {
     });
   });
 
-  it('should only inform the actionButtonText if the product has a link', () => {
-    catalogServiceSpy.getProduct.and.returnValue(of({link: 'http://link.com'} as AppShellProduct));
+  it('should only inform the actionButtonText if the product has actions', () => {
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
     expect(component.actionButtonText).toEqual('View Code');
-    catalogServiceSpy.getProduct.and.returnValue(of({link: undefined} as AppShellProduct));
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [] as ProductAction[]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
     expect(component.actionButtonText).toBeUndefined();
+  });
+  
+  it('should only inform the secondaryActionButtonText if the product has exactly 2 actions', () => {
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.secondaryActionButtonText).toBeUndefined();
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'Action Two'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.secondaryActionButtonText).toEqual('Action Two');
+  });
+  
+  it('should inform the actionPicker if the product has more than 2 actions', () => {
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionPicker).toBeUndefined();
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'Action Two'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionPicker).toBeUndefined();
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: '1', url: 'http://link.com', label: 'Action One'}, {id: '2', url: 'http://link.com', label: 'Action Two'}, {id: '3', url: 'http://link.com', label: 'Action Three'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionPicker).toEqual({
+      label: 'More actions',
+      options: ['Action Two', 'Action Three']
+    });
+  });
+
+  it('should call viewCodeAction if picked action is of type code', () => {
+    spyOn(component, 'viewCodeAction');
+    component.product = {
+      actions: [
+        { id: 'other', label: 'Action One', url: null },
+        { id: CatalogService.CODE_PRODUCT_TYPE, label: 'View Code', url: 'http://example.com' }
+      ]
+    } as AppProduct;
+    component.actionPickerFn('View Code');
+    expect(component.viewCodeAction).toHaveBeenCalledWith(
+      { id: CatalogService.CODE_PRODUCT_TYPE, label: 'View Code', url: 'http://example.com' } as ProductAction
+    );
+  });
+
+  it('should call genericAction if picked action is not of type code', () => {
+    spyOn(component, 'genericAction');
+    component.product = {
+      actions: [
+        { id: 'other', label: 'Action One', url: null },
+        { id: 'another', label: 'Do Something', url: 'http://example.com' }
+      ]
+    } as AppProduct;
+    component.actionPickerFn('Do Something');
+    expect(component.genericAction).toHaveBeenCalledWith(
+      { id: 'another', label: 'Do Something', url: 'http://example.com' } as ProductAction
+    );
+  });
+
+  it('should do nothing if picked action is not found', () => {
+    spyOn(component, 'viewCodeAction');
+    spyOn(component, 'genericAction');
+    component.product = {
+      actions: [
+        { id: 'other', label: 'Action One', url: null }
+      ]
+    } as AppProduct;
+    component.actionPickerFn('Nonexistent Action');
+    expect(component.viewCodeAction).not.toHaveBeenCalled();
+    expect(component.genericAction).not.toHaveBeenCalled();
+  });
+
+  it('should do nothing if product.actions is undefined', () => {
+    spyOn(component, 'viewCodeAction');
+    spyOn(component, 'genericAction');
+    component.product = {} as AppProduct;
+    component.actionPickerFn('Any Action');
+    expect(component.viewCodeAction).not.toHaveBeenCalled();
+    expect(component.genericAction).not.toHaveBeenCalled();
   });
   
   it('base64URLDecode should decode base64 URL encoded string with no padding', () => {
@@ -128,6 +232,17 @@ describe('ProductViewScreenComponent', () => {
     const input = 'SGVsbG8-_';
     const expectedOutput = 'SGVsbG8-_';
     expect(component.base64URLDecode(input)).toBe(expectedOutput);
-  });  
-    
+  });
+
+  it('should navigate to the action id in lowercase relative to the current route in genericAction', () => {
+    const action: ProductAction = { id: 'SOMEACTION', url: null, label: 'Some Action' } as ProductAction;
+    component.genericAction(action);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['someaction'], { relativeTo: activatedRouteSpy });
+  });
+
+  it('should handle action id with mixed case and special characters in genericAction', () => {
+    const action: ProductAction = { id: 'Do-Thing_123', url: null, label: 'Do Thing' } as ProductAction;
+    component.genericAction(action);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['do-thing_123'], { relativeTo: activatedRouteSpy });
+  });
 });

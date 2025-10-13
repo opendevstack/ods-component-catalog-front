@@ -1,15 +1,17 @@
 import { Injectable } from '@angular/core';
-import { AppShellProduct, AppShellFilter } from '@appshell/ngx-appshell';
+import { AppShellFilter } from '@appshell/ngx-appshell';
 import { firstValueFrom, map, Observable, switchMap } from 'rxjs';
-import { Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItemsService, CatalogsService, FileFormat, FilesService } from '../openapi';
+import { Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService } from '../openapi';
+import { AppProduct } from '../models/app-product';
+import { ProductActionParameter } from '../models/product-action-parameter';
+import { ProductAction } from '../models/product-action';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CatalogService {
 
-  public static readonly CODE_PRODUCT_TYPE = 'code';
-  public static readonly NO_PERMISSION_CODE_LINK = 'USER_WITHOUT_PERMISSION';
+  public static readonly CODE_PRODUCT_TYPE = 'CODE';
 
   private catalogDescriptors: CatalogDescriptor[] = [];
 
@@ -45,7 +47,7 @@ export class CatalogService {
     return this.catalogsService.getCatalog(catalogId);
   }
 
-  getProductsList(catalogDescriptor: CatalogDescriptor): Observable<AppShellProduct[]> {
+  getProductsList(catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {
     return this.catalogItemsService.getCatalogItems(catalogDescriptor.id!, 'asc').pipe(
       switchMap(items => Promise.all(items.map(async item => {
         return {
@@ -57,57 +59,36 @@ export class CatalogService {
           link: `${this.getSlugUrl(catalogDescriptor.slug!)}/item/${item.id}`,
           tags: item.tags?.map(tag => ({label: tag.label, options: tag.options ? Array.from(tag.options) : []})),
           authors: item.authors,
-          date: new Date(item.date)
-        } as AppShellProduct
+          date: item.authors.length > 0 ? new Date(item.date) : undefined,
+        } as AppProduct
       })))
     );
   }
 
   async getProductImage(img: string): Promise<string | undefined> {
     try {
-      const file: any = await firstValueFrom(this.filesService.getFileById(img, FileFormat.Image, 'body', false, { httpHeaderAccept: 'application/octet-stream' }));
-      return URL.createObjectURL(file instanceof Blob ? file : new Blob([file]));
-    } catch (error: any) {
+      const file: Blob | string = await firstValueFrom(this.filesService.getFileById(img, FileFormat.Image, 'body', false, { httpHeaderAccept: 'application/octet-stream' }));
+      return URL.createObjectURL(typeof file === 'string' ? new Blob([file]) : file);
+    } catch {
       return undefined;
     }
   }
 
 
-  getProduct(id: string): Observable<AppShellProduct> {
+  getProduct(id: string): Observable<AppProduct> {
     return this.catalogItemsService.getCatalogItemById(id).pipe(
       switchMap(async (item) => {
         let description = '';
         try {
           description = await firstValueFrom(this.filesService.getFileById(item.descriptionFileId!, FileFormat.Markdown, 'body', false, { httpHeaderAccept: 'text/*' }));
-        } catch (error: any) {
-          if (error.status !== 422) {
+        } catch (error: unknown) {
+          if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status !== 422) {
             throw error;
           }
         }
+        const productImage = item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined;
 
-        let itemLink = undefined;
-        let itemDate = undefined
-        
-        if (item.type === CatalogService.CODE_PRODUCT_TYPE) {
-          if (item.itemSrc) {
-            itemLink = item.itemSrc
-          } else {
-            itemLink = CatalogService.NO_PERMISSION_CODE_LINK;
-          }
-          itemDate = new Date(item.date);
-        }
-
-        return {
-          id: item.id,
-          title: item.title,
-          shortDescription: item.shortDescription,
-          description: description,
-          image: item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined,
-          link: itemLink,
-          tags: item.tags?.map(tag => ({ label: tag.label, options: tag.options ? Array.from(tag.options) : [] })),
-          authors: item.authors,
-          date: itemDate
-        } as AppShellProduct;
+        return this.mapCatalogItemToAppProduct(item, description, productImage);
       })
     );
   }
@@ -122,6 +103,45 @@ export class CatalogService {
         } as AppShellFilter
       }))
     );
+  }
+
+  private mapCatalogItemToAppProduct(item: CatalogItem, description: string, image: string | undefined): AppProduct {
+    return {
+      id: item.id,
+      title: item.title,
+      shortDescription: item.shortDescription,
+      description: description,
+      image: image,
+      tags: item.tags?.map(tag => ({ label: tag.label, options: tag.options ? Array.from(tag.options) : [] })),
+      authors: item.authors,
+      date: item.authors.length > 0 ? new Date(item.date) : undefined,
+      actions: item.userActions?.map(action => ({
+        id: action.id,
+        label: action.displayName,
+        url: action.url,
+        triggerMessage: action.triggerMessage,
+        parameters: action.parameters?.map(param => ({
+          name: param.name,
+          type: param.type,
+          required: param.required,
+          defaultValue: param.defaultValue,
+          defaultValues: param.defaultValues ?? [],
+          options: param.options ?? [],
+          locations: param.locations?.map(location => ({
+            location: location.location,
+            value: location.value
+          })) || [],
+          label: param.label,
+          visible: param.visible,
+          hint: param.hint,
+          placeholder: param.placeholder,
+          validations: param.validations?.map(validation => ({
+            regex: validation.regex,
+            errorMessage: validation.errorMessage,
+          })) || []
+        } as ProductActionParameter)) ?? []
+      } as ProductAction))
+    } as AppProduct;
   }
 
 }

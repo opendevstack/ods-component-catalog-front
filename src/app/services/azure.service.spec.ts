@@ -97,14 +97,21 @@ describe('AzureService', () => {
         msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
 
-        spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(new Blob())));
+        spyOn(window, 'fetch').and.returnValues(
+            Promise.resolve(new Response(new Blob())),
+            Promise.resolve(new Response('{"value": [{"displayName": "BI-AS-ATLASSIAN-P-PROJECT1-MANAGER"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT2-TEAM"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT3-STAKEHOLDER"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT3-INVALID_ROLE"}]}'))
+        );
+
+        service.loggedUser$.subscribe((user) => {
+            if (user) {
+                expect(user.fullName).toBe(msalUser.name);
+                expect(user.avatarSrc).not.toBeUndefined();
+                expect(user.projects).toEqual(['PROJECT1', 'PROJECT2', 'PROJECT3']);
+                done();
+            }
+        });
 
         service.refreshLoggedUser();
-
-        setTimeout(() => {
-            expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
-            done();
-        }, 0);
     });
 
     it('refreshLoggedUser - should handle error when acquiring token silently', (done) => {

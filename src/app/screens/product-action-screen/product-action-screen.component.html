@@ -1,0 +1,74 @@
+<appshell-page-header 
+    [breadcrumbLinks]="breadcrumbLinks"
+    [title]="pageTitle"></appshell-page-header>
+<div class="product-ctn">
+    @if (actionParams.length > 0) {
+        <form [formGroup]="formGroup">
+            @for (param of actionParams; track param.name) {
+                @if (param.visible) {
+                    <div>
+                        <div class="upper-input-text">
+                            <mat-label>{{param.label }}</mat-label>
+                            <span>{{ param.required ? 'Mandatory' : 'Optional' }}</span>
+                        </div>
+                        <mat-form-field appearance="outline">
+                            @switch (param.type) {
+                                @case ('singlelist') {
+                                    <mat-select 
+                                        [formControlName]="param.name"
+                                        [placeholder]="param.placeholder ? param.placeholder : 'Enter ' + (param.label.charAt(0).toLowerCase() + param.label.slice(1))">
+                                            <mat-option [value]="null">Please choose an option</mat-option>
+                                        @for (opt of param.options; track opt) {
+                                            <mat-option [value]="opt">{{opt}}</mat-option>
+                                        }
+                                    </mat-select>
+                                }
+                                @case ('multiplelist') {
+                                    <mat-select multiple
+                                        [formControlName]="param.name"
+                                        [placeholder]="param.placeholder ? param.placeholder : 'Enter ' + (param.label.charAt(0).toLowerCase() + param.label.slice(1))">
+                                        @for (opt of param.options; track opt) {
+                                            <mat-option [value]="opt">{{opt}}</mat-option>
+                                        }
+                                    </mat-select>
+                                }
+                                @default {
+                                    <input
+                                        matInput
+                                        type="text"
+                                        [formControlName]="param.name"
+                                        [placeholder]="param.placeholder ? param.placeholder : 'Enter ' + (param.label.charAt(0).toLowerCase() + param.label.slice(1))" />
+                                }
+                            }
+                            @if (param.hint && !(formGroup.get(param.name)?.invalid && formGroup.get(param.name)?.touched)) {
+                                <mat-hint>{{ param.hint }}</mat-hint>
+                            }
+                            @if (formGroup.get(param.name)?.invalid && formGroup.get(param.name)?.touched) {
+                                <mat-error>
+                                    @for (errorMessage of getValidationErrors(param.name); track errorMessage) {
+                                        <div class="error-message">
+                                            <div class="error-icon"><span class="bi-exclamation-mark-circle-icon"></span></div>
+                                            <div>{{ errorMessage }}</div>
+                                        </div>
+                                    }
+                                </mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+                } @else {
+                    <input type="hidden" [formControlName]="param.name" />
+                }
+            }
+        </form>
+        <div class="action-buttons">
+            <button mat-button class="close-dialog-btn" (click)="onCancelClick()" [disabled]="isExecutingAction">Cancel</button>
+            <button mat-flat-button class="action-dialog-btn" color="accent" [disabled]="isExecutingAction" (click)="onActionClick()" cdkFocusInitial>
+                @if (isExecutingAction) {
+                    <mat-spinner diameter="20" color="primary"></mat-spinner>
+                } @else {
+                    {{action.label}} now
+                }
+            </button>
+        </div>
+    }
+</div>
