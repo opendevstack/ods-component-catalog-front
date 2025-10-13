@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { FileFormat, FilesService } from '../../openapi';
 import { MarkdownComponent } from 'ngx-markdown';
 import { AppShellLink, AppShellPageHeaderComponent } from '@appshell/ngx-appshell';
@@ -7,14 +7,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 
 @Component({
-  selector: 'app-community-screen',
-  standalone: true,
-  imports: [MarkdownComponent, AppShellPageHeaderComponent],
-  templateUrl: './community-screen.component.html',
-  styleUrl: './community-screen.component.scss',
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-community-screen',
+    imports: [MarkdownComponent, AppShellPageHeaderComponent],
+    templateUrl: './community-screen.component.html',
+    styleUrl: './community-screen.component.scss',
+    encapsulation: ViewEncapsulation.None
 })
-export class CommunityScreenComponent {
+export class CommunityScreenComponent implements OnInit, AfterViewInit {
 
   pageContent?: string;
   breadcrumbLinks: AppShellLink[] = [];
@@ -60,7 +59,7 @@ export class CommunityScreenComponent {
           this.filesService.getFileById(catalog.communityPageId, FileFormat.Markdown, 'body', false, {httpHeaderAccept: 'text/*'})
             .pipe(
               map((file: string) => file),
-              catchError((error: any) => {
+              catchError((error: { status?: number }) => {
               if (error.status !== 422) {
                 this.noProductsHtmlMessage = 'Sorry, we are having trouble loading the page.<br/>Please check back in a few minutes.';
                 this.noProductsIcon = 'bi-smiley-sad-icon';

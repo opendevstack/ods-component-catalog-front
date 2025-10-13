@@ -1,6 +1,6 @@
 import { AppConfigService } from './services/app-config.service';
 import { msalProviders } from './azure.config';
-import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, provideAppInitializer, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideMarkdown } from 'ngx-markdown';
@@ -9,6 +9,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Configuration, Param } from './openapi';
 import { AzureService } from './services/azure.service';
 import { tokenInterceptor } from './token.interceptor';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 
 const apiBasePath = '/component-catalog';
 
@@ -19,11 +20,15 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideHttpClient(withInterceptors([tokenInterceptor]), withFetch()),
     provideMarkdown(),
-	  {
-      provide: APP_INITIALIZER,
-      useFactory: initConfig,
-      deps: [AppConfigService],
-      multi: true,
+    provideAppInitializer(() => {
+      const appConfigService = inject(AppConfigService);
+      return appConfigService.loadConfig();
+    }),
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: {
+        subscriptSizing: 'dynamic'
+      }
     },
     ...msalProviders,
     {
@@ -35,9 +40,5 @@ export const appConfig: ApplicationConfig = {
       deps: [AzureService],
       multi: false
     }
-],
+  ],
 };
-
-export function initConfig(appConfig: AppConfigService) {
-  return () => appConfig.loadConfig();
-}

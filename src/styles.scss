@@ -1,17 +1,18 @@
 @use '@angular/material' as mat;
 @use "@appshell/ngx-appshell/styles/appshell-typography-config" as config;
-@import '@appshell/ngx-appshell/styles/appshell.theme.scss';
+@use '@appshell/ngx-appshell/styles/appshell.theme.scss' as appshell;
+@use "sass:map";
 
 @include mat.typography-hierarchy(config.$appshell-typography);
 
 :root {
-    --main-color: #{map-get($appshell-primary-palette, 800)};
-    --main-color-contrast: #{map-get($appshell-accent-palette, 500)};
-    --main-color-contrast-hover: #{map-get($appshell-accent-palette, 200)};
-    --main-color-dark: #{map-get($appshell-primary-palette, 900)};
-    --text-color-on-main-color: #{map-get(map-get($appshell-primary-palette, contrast), 800)};
-    --background-color: #{map-get($appshell-theme, background-color)};
-    --text-color-on-background: #{map-get($appshell-primary-palette, 900)};
+    --main-color: #{map.get(appshell.$appshell-primary-palette, 800)};
+    --main-color-contrast: #{map.get(appshell.$appshell-accent-palette, 500)};
+    --main-color-contrast-hover: #{map.get(appshell.$appshell-accent-palette, 200)};
+    --main-color-dark: #{map.get(appshell.$appshell-primary-palette, 900)};
+    --text-color-on-main-color: #{map.get(map.get(appshell.$appshell-primary-palette, contrast), 800)};
+    --background-color: #{map.get(appshell.$appshell-theme, background-color)};
+    --text-color-on-background: #{map.get(appshell.$appshell-primary-palette, 900)};
 }
 
 html, body {
@@ -37,4 +38,9 @@ router-outlet+* {
 .mat-mdc-tooltip>div {
     background-color: var(--background-color)!important;
     color: var(--text-color-on-background)!important;
+}
+
+.toast-container .appshell-toast .appshell-toast-content h4 {
+    line-clamp: unset!important;
+    -webkit-line-clamp: unset!important;
 }

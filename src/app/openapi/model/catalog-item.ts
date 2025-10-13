@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { CatalogItemUserAction } from './catalog-item-user-action';
 import { CatalogItemTag } from './catalog-item-tag';
 
 
@@ -18,9 +19,9 @@ export interface CatalogItem {
     descriptionFileId?: string;
     imageFileId?: string;
     itemSrc?: string;
-    type?: string;
     tags?: Array<CatalogItemTag>;
     authors: Array<string>;
     date: string;
+    userActions?: Array<CatalogItemUserAction>;
 }
 

@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { CatalogResolver } from './catalog-resolver.service';
 import { CatalogService } from './catalog.service';
 import { CatalogDescriptor } from '../openapi';
+import { Observable, of } from 'rxjs';
 
 describe('CatalogResolver', () => {
   let service: CatalogResolver;
@@ -27,6 +28,7 @@ describe('CatalogResolver', () => {
 
   it('should resolve catalog descriptors calling the service if not present in memory', () => {
     catalogServiceSpy.getCatalogDescriptors.and.returnValue([]);
+    catalogServiceSpy.retrieveCatalogDescriptors.and.returnValue(of([{} as CatalogDescriptor]));
     service.resolve();
     expect(catalogServiceSpy.retrieveCatalogDescriptors).toHaveBeenCalled();
   });
@@ -36,5 +38,21 @@ describe('CatalogResolver', () => {
     service.resolve();
     expect(catalogServiceSpy.retrieveCatalogDescriptors).not.toHaveBeenCalled();
   });
+  
+  it('should handle errors from retrieveCatalogDescriptors and return empty array', (done) => {
+    const error = new Error('Failed to load');
+    spyOn(console, 'error');
+    catalogServiceSpy.getCatalogDescriptors.and.returnValue([]);
+    catalogServiceSpy.retrieveCatalogDescriptors.and.returnValue(
+      new Observable<CatalogDescriptor[]>(subscriber => {
+        subscriber.error(error);
+      })
+    );
 
+    service.resolve().subscribe(result => {
+      expect(result).toEqual([]);
+      expect(console.error).toHaveBeenCalledWith('Error retrieving catalog descriptors', error);
+      done();
+    });
+  });
 });

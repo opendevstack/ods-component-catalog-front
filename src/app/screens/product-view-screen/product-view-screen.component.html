@@ -3,5 +3,9 @@
     [breadcrumbLinks]="breadcrumbLinks"
     [actionButtonText]="actionButtonText"
     (actionButtonClicked)="actionButtonFn()"
+    [secondaryButtonText]="secondaryActionButtonText"
+    (secondaryButtonClicked)="secondaryActionButtonFn()"
+    [actionPicker]="actionPicker"
+    (actionPick)="actionPickerFn($event)"
     [product]="product"
 ></appshell-product-view-screen>

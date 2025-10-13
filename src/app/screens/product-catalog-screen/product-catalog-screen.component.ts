@@ -1,18 +1,18 @@
-import { Component } from '@angular/core';
-import { AppShellProductCatalogScreenComponent, AppShellProduct, AppShellLink, AppShellFilter } from '@appshell/ngx-appshell';
+import { Component, OnInit } from '@angular/core';
+import { AppShellProductCatalogScreenComponent, AppShellLink, AppShellFilter } from '@appshell/ngx-appshell';
 import { CatalogService } from '../../services/catalog.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AppProduct } from '../../models/app-product';
 
 @Component({
-  selector: 'app-product-catalog-screen',
-  standalone: true,
-  imports: [AppShellProductCatalogScreenComponent],
-  templateUrl: './product-catalog-screen.component.html',
-  styleUrl: './product-catalog-screen.component.scss'
+    selector: 'app-product-catalog-screen',
+    imports: [AppShellProductCatalogScreenComponent],
+    templateUrl: './product-catalog-screen.component.html',
+    styleUrl: './product-catalog-screen.component.scss'
 })
-export class ProductCatalogScreenComponent {
-  products: AppShellProduct[] = [];
-  filteredProducts: AppShellProduct[] = [];
+export class ProductCatalogScreenComponent implements OnInit {
+  products: AppProduct[] = [];
+  filteredProducts: AppProduct[] = [];
   filters: AppShellFilter[] = [];
 
   noProductsIcon?: string = undefined;

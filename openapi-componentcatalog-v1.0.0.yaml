@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Component Catalog REST API
   version: '1.0.0'
-  description: > 
+  description: >
     The Component Catalog API allows clients to retrieve information about CatalogItems, CatalogFilters and Files entities.
     
     Catalog and File entities also exist internally, but only referenced by id's on requests and not returned on responses.
@@ -15,7 +15,7 @@ info:
     url: https://confluence.biscrum.com/pages/viewpage.action?spaceKey=EDP&title=Welcome
 servers:
   - url: http://{baseurl}/v1
-    variables: 
+    variables:
       baseurl:
         default: localhost:8080
         description: Default address for a Component Catalog's backend REST API instance.
@@ -26,15 +26,19 @@ tags:
     description: CatalogItems operations.
   - name: CatalogFilters
     description: CatalogFilters operations.
+  - name: CatalogItemUserActionMessageDefinitions
+    description: User actions standardized messages definitions
   - name: Files
     description: File operations.
+  - name: SchemaValidations
+    description: Schema Validations operations.
 paths:
   /catalog-descriptors:
     get:
       tags:
         - Catalog-descriptors
       summary: List of all available Catalog Descriptors.
-      description: > 
+      description: >
         Returns a list of all available Catalog Descriptors.<br/>
       operationId: getCatalogDescriptors
       responses:
@@ -115,7 +119,7 @@ paths:
       tags:
         - CatalogItems
       summary: List of all CatalogItems.
-      description: > 
+      description: >
         Returns a list of all CatalogItems for the given Catalog identified by catalogId.<br/>
         CatalogItems referenced on a Catalog that are either invalid or non-existent are **excluded** from the response.
       operationId: getCatalogItems
@@ -171,7 +175,7 @@ paths:
       tags:
         - CatalogItems
       summary: Returns the CatalogItem associated to the provided id.
-      description: > 
+      description: >
         Returns the CatalogItem associated to the provided id, unless:
         <ul>
         <li> The id is not associated to any CatalogItem. </li>
@@ -346,11 +350,175 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
+  /user-actions/{userActionId}/messages-definitions/{messageDefinitionId}:
+    post:
+      tags:
+        - CatalogItemUserActionMessageDefinitions
+      summary: Get a message definition by id.
+      deprecated: true
+      description: >
+        Returns an standard message definition
+      operationId: getMessageDefinitionById
+      parameters:
+        - name: userActionId
+          in: path
+          description: id for the CatalogItemUserAction
+          required: true
+          schema:
+            type: string
+        - name: messageDefinitionId
+          in: path
+          description: id for the CatalogItemUserActionMessageDefinition
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: A single message definition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemUserActionMessageDefinition'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
+  /catalog-items/{catalogItemId}/user-actions/{userActionId}/messages-definitions/{messageDefinitionId}:
+    post:
+      tags:
+        - CatalogItemUserActionMessageDefinitions
+      summary: Get a message definition by id.
+      description: >
+        Returns an standard message definition
+      operationId: getMessageDefinitionByCatalogItemIdAndMessageId
+      parameters:
+        - name: catalogItemId
+          in: path
+          description: id for the CatalogItem
+          required: true
+          schema:
+            type: string
+        - name: userActionId
+          in: path
+          description: id for the CatalogItemUserAction
+          required: true
+          schema:
+            type: string
+        - name: messageDefinitionId
+          in: path
+          description: id for the CatalogItemUserActionMessageDefinition
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: A single message definition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemUserActionMessageDefinition'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+  /schema-validation/{className}:
+    post:
+      tags:
+        - SchemaValidations
+      summary: Validate a yaml against a proper schema.
+      description: >
+        Validates the provided Catalog schema against the expected format and structure.<br/>
+        Returns a 200 OK response if the schema is valid, otherwise returns a 400 Bad Request with details about the validation errors.
+      operationId: validateCatalogSchema
+      parameters:
+        - name: className
+          in: path
+          description: ClassName for the uploaded file, so we can get proper schema for validation.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Validation resul.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          description: Invalid input or validation failed
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
-      description: > 
+      description: >
         Authorization via bearer token.
       scheme: bearer
       bearerFormat: JWT
@@ -416,9 +584,6 @@ components:
         itemSrc:
           type: string
           example: 'https://bitbucket.some-company.com/projects/SOMEPROJECT/repos/some-repo/browse/CatalogItem.yaml?at=refs/heads/master'
-        type:
-          type: string
-          example: 'machine-learning-model'
         tags:
           type: array
           items:
@@ -434,6 +599,10 @@ components:
           type: string
           format: date-time
           example: '2021-07-01T00:00:00Z'
+        userActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogItemUserAction'
       required:
         - id
         - title
@@ -459,6 +628,149 @@ components:
           - '@SomeAuthor'
           - '@SomeOtherAuthor'
         date: "2021-07-01T00:00:00Z"
+    CatalogItemUserAction:
+      properties:
+        id:
+          type: string
+          nullable: false
+          example: 'CODE'
+        displayName:
+          type: string
+          nullable: false
+          example: 'View Code'
+        url:
+          type: string
+          nullable: true
+          example: 'https://quickstarter'
+        triggerMessage:
+          type: string
+          nullable: true
+          example: 'Provisioning a component'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogItemUserActionParameter'
+      example:
+        id: "PROVISION"
+        triggerMessage: "Provisioning a component custom message"
+        parameters:
+          - name: "workflow"
+            type: "string"
+            required: true
+            defaultValue: "9987"
+            description: "Workflow to execute."
+            visible: false
+    CatalogItemUserActionMessageDefinition:
+      properties:
+        id:
+          type: string
+          nullable: false
+          example: 'OPENSHIFT_CONNECTION_ERROR'
+        type:
+          $ref: '#/components/schemas/CatalogItemUserActionMessageType'
+        title:
+          type: string
+          nullable: false
+          example: 'An error occurred while connecting to OpenShift'
+        message:
+          type: string
+          nullable: false
+          example: >
+            Authorization error: please check your user credentials for deployment 
+            and try again later.
+      example:
+        id: "OPENSHIFT_CONNECTION_ERROR"
+        title: "An error occurred while connecting to OpenShift"
+        message: >
+          Authorization error: please check your user credentials for deployment
+          and try again later.
+    CatalogItemUserActionMessageType:
+      type: string
+      enum:
+        - success
+        - error
+      example: error
+    CatalogItemUserActionParameter:
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: 'workflow'
+        type:
+          type: string
+          nullable: false
+          example: 'string'
+        required:
+          type: boolean
+          example: 'true'
+        defaultValue:
+          type: string
+          nullable: true
+          example: '123'
+        defaultValues:
+          nullable: true
+          type: array
+          items:
+            type: string
+          example:
+            - 'some-data-option'
+            - 'some-other-data-option'
+        options:
+          nullable: true
+          type: array
+          items:
+            type: string
+          example:
+            - 'some-data-option'
+            - 'some-other-data-option'
+        locations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CatalogItemUserActionParameterLocation'
+        label:
+          type: string
+          nullable: false
+          example: 'Workflow to execute.'
+        placeholder:
+          type: string
+          nullable: true
+          example: 'some placeholder for a workflow'
+        hint:
+          type: string
+          nullable: true
+          example: 'some hint for a workflow'
+        visible:
+          type: boolean
+          example: 'true'
+        validations:
+            type: array
+            nullable: true
+            items:
+                $ref: '#/components/schemas/CatalogItemUserActionParameterValidation'
+      example:
+        name: "workflow"
+        type: "string"
+        required: true
+        defaultValue: "9987"
+        description: "Workflow to execute."
+        visible: false
+    CatalogItemUserActionParameterValidation:
+      properties:
+        regex:
+          type: string
+          example: '/^[a-z\s]{0,255}$/i'
+        errorMessage:
+          type: string
+          example: 'There is an error in the provided value, please check it and try again.'
+    CatalogItemUserActionParameterLocation:
+      properties:
+        location:
+          type: string
+          example: 'EU'
+        value:
+          type: string
+          example: '1234'
     CatalogItemTag:
       properties:
         label:
@@ -505,6 +817,26 @@ components:
       example: markdown
     RestErrorMessage:
       properties:
+        message:
+          type: string
+      required:
+        - message
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationMessage'
+    ValidationMessage:
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: string
         message:
           type: string
       required:

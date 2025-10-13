@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ProductCatalogScreenComponent } from './product-catalog-screen.component';
-import { AppShellProduct } from '@appshell/ngx-appshell';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CatalogService } from '../../services/catalog.service';
 import { provideHttpClient } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AppProduct } from '../../models/app-product';
 
 describe('ProductCatalogScreenComponent', () => {
   let component: ProductCatalogScreenComponent;
@@ -14,7 +14,7 @@ describe('ProductCatalogScreenComponent', () => {
   let mockCatalogService: jasmine.SpyObj<CatalogService>;
   let activatedRouteSpy: jasmine.SpyObj<ActivatedRoute>;
   let routerSpy: jasmine.SpyObj<Router>;
-  let activatedRouteSubject = new Subject();
+  const activatedRouteSubject = new Subject();
 
   beforeEach(async () => {
     mockCatalogService = jasmine.createSpyObj('CatalogService', ['getProductsList', 'getFilters', 'getCatalogDescriptors', 'getSlugUrl']);
@@ -52,7 +52,7 @@ describe('ProductCatalogScreenComponent', () => {
     const products = [
       { tags: [{ label: 'label 1', options: ['value 1']}] },
       { tags: [{ label: 'label 2', options: ['value 2']}] }
-    ] as AppShellProduct[];
+    ] as AppProduct[];
     component.products = [...products];
     component.filterProducts(activeFilters);
     expect(component.filteredProducts).toEqual(products);
@@ -80,7 +80,7 @@ describe('ProductCatalogScreenComponent', () => {
         date: new Date(),
         tags: [{ label: 'label 2', options: ['value 2']}]
       }
-    ] as AppShellProduct[];
+    ] as AppProduct[];
 
     const activeFilters = new Map();
     activeFilters.set('label 1', ['value 1']);
@@ -97,7 +97,7 @@ describe('ProductCatalogScreenComponent', () => {
     component.products = [
       { tags: [{ label: 'label 1', options: ['value 1']}] },
       { tags: [{ label: 'label 2', options: ['value 2']}] },
-    ] as AppShellProduct[];
+    ] as AppProduct[];
 
     component.filterProducts(activeFilters);
 
@@ -129,7 +129,7 @@ describe('ProductCatalogScreenComponent', () => {
         date: new Date(),
         tags: null
       }
-    ] as AppShellProduct[];
+    ] as AppProduct[];
 
     component.products = products;
 

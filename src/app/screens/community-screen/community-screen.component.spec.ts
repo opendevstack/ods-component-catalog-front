@@ -13,7 +13,7 @@ describe('CommunityScreenComponent', () => {
   let filesServiceSpy: jasmine.SpyObj<FilesServiceInterface>;
   let activatedRouteSpy: jasmine.SpyObj<ActivatedRoute>;
   let routerSpy: jasmine.SpyObj<Router>;
-  let activatedRouteSubject = new Subject();
+  const activatedRouteSubject = new Subject();
   let mockCatalogService: jasmine.SpyObj<CatalogService>;
 
   beforeEach(async () => {
@@ -59,7 +59,7 @@ describe('CommunityScreenComponent', () => {
 
   it('should handle error 422 scenario in the constructor', fakeAsync(() => {
     filesServiceSpy.getFileById.and.returnValue(throwError(() => {
-      const error: any = new Error('Unprocessable Entity');
+      const error: Error & { status?: number } = new Error('Unprocessable Entity');
       error.status = 422;
       return error;
     }));
