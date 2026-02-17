@@ -21,10 +21,13 @@
             "index": "src/index.html",
             "stylePreprocessorOptions": {
               "includePaths": [
-                "node_modules/@appshell/ngx-appshell"
+                "node_modules/@opendevstack/ngx-appshell"
               ]
             },
             "browser": "src/main.ts",
+            "loader": {
+              ".map": "empty"
+            },
             "polyfills": [
               "zone.js"
             ],
@@ -38,7 +41,7 @@
             ],
             "styles": [
               "src/styles.scss",
-              "@boehringer-ingelheim/theme/palette/palette.css"
+              "node_modules/@opendevstack/ngx-appshell/styles/palette.css"
             ],
             "scripts": []
           },
@@ -53,7 +56,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumError": "6kB"
                 }
               ],
               "outputHashing": "all"

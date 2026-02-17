@@ -1,0 +1,16 @@
+{
+  "msalConfig": {
+    "auth": {
+      "clientId": "YOUR_CLIENT_ID",
+      "authority": "https://login.microsoftonline.com/YOUR_TENANT_ID"
+    }
+  },
+  "apiConfig": {
+    "scopes": ["user.read"],
+    "uri": "YOUR_API_URI"
+  },
+  "natsUrl": "YOUR_NATS_SERVER_URL",
+  "natsUser": "YOUR_NATS_USERNAME",
+  "natsPassword": "YOUR_NATS_PASSWORD",
+  "platformSelectorServiceUrl": "YOUR_PLATFORM_SELECTOR_SERVICE_URL/api/v1/projects/${project}/platforms"
+}

@@ -6,11 +6,17 @@ import { CommunityScreenComponent } from './screens/community-screen/community-s
 import { MsalGuard } from '@azure/msal-angular';
 import { CatalogResolver } from './services/catalog-resolver.service';
 import { ProductActionScreenComponent } from './screens/product-action-screen/product-action-screen.component';
+import { ProjectComponentsScreenComponent } from './screens/project-components-screen/project-components-screen.component';
+import { PageNotFoundScreenComponent } from './screens/page-not-found-screen/page-not-found-screen.component';
 
 export const routes: Routes = [
+	{ path: '', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: 'notifications', component: NotificationsScreenComponent, canActivate: [ MsalGuard ] },
+	{ path: 'page-not-found', component: PageNotFoundScreenComponent },
+	{ path: ':projectKey/components', component: ProjectComponentsScreenComponent, canActivate: [ MsalGuard ] },
 	{ path: ':catalogSlug', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: ':catalogSlug/community', component: CommunityScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: ':catalogSlug/item/:id', component: ProductViewScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: ':catalogSlug/item/:id/:action', component: ProductActionScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
+	{path: '**', component: PageNotFoundScreenComponent}
 ];

@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Projects info service REST API
+  version: '1.0.0'
+  description: >
+    The Projects Info Service API allows clients to collect project information for a predefined user. This user will be
+    Managed thanks to SSO token.
+    
+    **NOTES**:
+    - The OpenAPI specification file is also used to [generate](https://openapi-generator.tech/) REST client(s) and a server REST API.
+    - Clients and servers generated from the same OpenAPI specification version are guaranteed to be **compatible**.
+  contact:
+    name: OpenDevStack
+    url: https://www.opendevstack.org/
+servers:
+  - url: http://{baseurl}/v1
+    variables: 
+      baseurl:
+        default: localhost:8080
+        description: Default address for a Projects Info Service's backend REST API instance.
+security:
+  - bearerAuth: []
+tags:
+  - name: AzureGroups
+    description: Get azure groups operations.
+  - name: Projects
+    description: Get projects operations.
+paths:
+  /azure/groups:
+    get:
+      tags:
+        - AzureGroups
+      summary: Get all azure groups associated to the user.
+      description: > 
+          This endpoint receives an azure token, and returns all the groups associated to the user.
+      operationId: getAzureGroups
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Azure token used to get the groups.
+      responses:
+        "200":
+          description: List of azure groups associated to the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: Get all the projects a user get access to.
+      description: >
+        Get all the projects a user get access to. For that, first of all it will get all the azure groups associated to the user, 
+        and then it will get all the projects associated to those groups.
+      operationId: getProjects
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Azure token used to get the groups.
+      responses:
+        "200":
+          description: List of projects the user has access to.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+  /projects/{projectKey}/clusters:
+    get:
+      tags:
+        - Projects
+      summary: Get all project info and cluster for a given project key.
+      description: >
+        Get all project info and cluster for a given project key.
+      operationId: getProjectClusters
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Azure token used to get the groups.
+        - name: projectKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project id to get the info and clusters.
+      responses:
+        "200":
+          description: Project info.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInfo'
+
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
+  /projects/{projectKey}/platforms:
+    get:
+      tags:
+        - Projects
+      summary: Get platform information for a given project key.
+      description: Returns disabled platforms and categorized platform links for the specified project.
+      operationId: getProjectPlatforms
+      parameters:
+        - name: projectKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project key to retrieve platform information.
+      responses:
+        '200':
+          description: Platform information for the project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPlatforms'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: > 
+        Authorization via bearer token.
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RestErrorMessage:
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    ProjectInfo:
+      type: object
+      properties:
+        projectKey:
+          type: string
+          description: Project KEY.
+        clusters:
+          type: array
+          items:
+            type: string
+          description: List of clusters associated to the project.
+      required:
+        - projectKey
+        - projectName
+        - clusters
+    Link:
+      type: object
+      properties:
+        label:
+          type: string
+        url:
+          type: string
+        tooltip:
+          type: string
+        type:
+          type: string
+        abbreviation:
+          type: string
+        disabled:
+          type: boolean
+      required:
+        - label
+        - url
+    Section:
+      type: object
+      properties:
+        section:
+          type: string
+        tooltip:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+      required:
+        - section
+        - links
+    ProjectPlatforms:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'

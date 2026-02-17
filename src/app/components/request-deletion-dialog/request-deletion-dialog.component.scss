@@ -1,0 +1,215 @@
+app-request-deletion-dialog {
+    width: 38.25rem;
+    display: block!important;
+    padding: 1.5rem;
+    box-sizing: border-box;
+
+    &>* {
+        padding: 0!important;
+        color: var(--appshell-color-dark-green-main)!important;
+    }
+
+    .dialog-header {
+        margin: 0.5rem 0 0!important;
+        display: inline-flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+
+        h2 {
+            margin: 0!important;
+            padding: 0;
+            font-family: "AppShellHeadingFont";
+            font-size: 20px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 24px; /* 120% */
+
+            &::before, &::after {
+                height: auto!important;
+            }
+        }
+
+        appshell-icon {
+            cursor: pointer;
+        }
+    }
+
+    mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 200px;
+
+        .help-message-ctn {
+            background-color: #D2F2F7;
+            color: #076D7E;
+            padding: 1rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin: 1.5rem 0!important;
+            gap: 0.75rem;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+        }
+        
+        .deployment-status-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+            --mdc-radio-state-layer-size: 2rem;
+
+            mat-radio-button {
+                --mat-radio-label-text-color: var(--appshell-color-dark-green-main)!important;
+                --mat-radio-label-text-size: 14px;
+            }
+        }
+
+        .change-request-section {
+            margin-top: 1rem;
+        }
+        
+        .full-width {
+            width: 100%;
+            margin-bottom: 1.5rem!important;
+            --mat-select-enabled-trigger-text-color: var(--appshell-color-secondary-main);
+            --mdc-outlined-text-field-focus-outline-color: var(--appshell-color-accent-green-main);
+            --mat-form-field-subscript-text-line-height: 1.5rem;
+            --mdc-outlined-text-field-container-shape: 0.125rem;
+            --mdc-outlined-text-field-disabled-input-text-color: var(--appshell-color-grey-strong);
+            --mdc-outlined-text-field-disabled-outline-color: #B7B6B2 !important;
+            --mat-form-field-error-text-color: #E10A0A;
+            --mdc-outlined-text-field-error-outline-color: #E10A0A;
+            --mdc-outlined-text-field-error-caret-color: #E10A0A;
+
+            .mat-mdc-form-field:not(.mat-form-field-invalid) {
+                --mdc-outlined-text-field-error-caret-color: initial;
+            }
+
+            .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+                height: 3rem;
+
+                .mat-mdc-form-field-flex {
+                    height: 100%;
+                }
+
+                .mat-mdc-form-field-infix {
+                    height: 100%;
+                    min-height: unset;
+                    padding: 0.75rem 0;
+                }
+            }
+
+            .mdc-text-field--disabled {
+                background-color: var(--appshell-color-grey-medium);
+            }
+
+            .mat-mdc-form-field-subscript-wrapper {
+
+                .mat-mdc-form-field-hint-wrapper {
+                    padding: 0;
+                    padding-top: .5rem;
+
+                    mat-hint {
+                        opacity: 0.6;
+                    }
+                }
+                
+                .mat-mdc-form-field-error-wrapper {
+                    padding: 0;
+                }
+            }
+            
+            mat-error {
+                display: flex;
+                flex-direction: column;
+                gap: .25rem;
+
+                &::before {
+                    height: .25rem;
+                }
+
+                .error-message {
+                    display: flex;
+                    flex-direction: row;
+                    gap: .25rem;
+                }
+
+            }
+        }
+
+        textarea {
+            resize: none !important;
+            height: 3rem!important;
+        }
+
+        .field-label {
+            width: 100%;
+            display: inline-flex;
+            flex-direction: row;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 400;
+
+            span {
+                color: var(--appshell-color-grey-strong);
+                opacity: 0.6;
+            }
+        }
+    }
+
+    mat-dialog-actions {
+        gap: 1rem;
+
+        button:first-of-type {
+            color: var(--appshell-color-secondary-main);
+            font-family: "AppShellTextFont";
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            text-decoration-line: underline;
+            text-decoration-color: var(--appshell-color-accent-green-main);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 6px;
+            
+            --mat-text-button-hover-state-layer-opacity: 0;
+            --mat-text-button-focus-state-layer-opacity: 0;
+            --mat-text-button-pressed-state-layer-opacity: 0;
+            --mat-text-button-ripple-color: transparent;
+
+            &:hover {
+                color: var(--appshell-color-secondary-medium);
+                background-color: transparent;
+                text-decoration-color: var(--appshell-color-accent-green-medium);
+            }
+        }
+
+        button:last-of-type {
+            --mdc-filled-button-container-height: unset!important;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.125rem;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            height: auto;
+            color: var(--appshell-color-secondary-main)!important;
+            text-decoration: none;
+            font-family: AppShellTextFont;
+            border: 2px solid var(--mdc-filled-button-container-color);
+
+            &:disabled {
+                border: none;
+            }
+        }
+    }
+}

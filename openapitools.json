@@ -6,8 +6,28 @@
     "generators": {
       "component-catalog-client": {
         "generatorName": "typescript-angular",
-        "inputSpec": "openapi-componentcatalog-v1.0.0.yaml",
-        "output": "src/app/openapi",
+        "inputSpec": "openapi-specs/component-catalog-v1.0.0.yaml",
+        "output": "src/app/openapi/component-catalog",
+        "additionalProperties": {
+          "fileNaming": "kebab-case",
+          "withInterfaces": true,
+          "generateAliasAsModel": true
+        }
+      },
+      "component-provisioner-client": {
+        "generatorName": "typescript-angular",
+        "inputSpec": "openapi-specs/component-provisioner-v1.0.0.yaml",
+        "output": "src/app/openapi/component-provisioner",
+        "additionalProperties": {
+          "fileNaming": "kebab-case",
+          "withInterfaces": true,
+          "generateAliasAsModel": true
+        }
+      },
+      "projects-info-service-client": {
+        "generatorName": "typescript-angular",
+        "inputSpec": "openapi-specs/projects-info-service-v1.0.0.yaml",
+        "output": "src/app/openapi/projects-info-service",
         "additionalProperties": {
           "fileNaming": "kebab-case",
           "withInterfaces": true,

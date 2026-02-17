@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { CatalogResolver } from './catalog-resolver.service';
 import { CatalogService } from './catalog.service';
-import { CatalogDescriptor } from '../openapi';
+import { CatalogDescriptor } from '../openapi/component-catalog';
 import { Observable, of } from 'rxjs';
 
 describe('CatalogResolver', () => {

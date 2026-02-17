@@ -1,0 +1,43 @@
+<appshell-page-header 
+    [breadcrumbLinks]="breadcrumbLinks"
+    [title]="pageTitle"></appshell-page-header>
+<div class="project-components-ctn">
+    @if (isLoading) {
+        <div class="components-grid">
+            @for (_ of [].constructor(6); track $index) {
+                <app-component-card 
+                    [name]="''"
+                    [status]="'UNKNOWN'"
+                    [loading]="true">
+                </app-component-card>
+            }
+        </div>
+        
+    } @else if(connectionErrorHtmlMessage || connectionErrorIcon) {
+        <div class="no-results-ctn" role="status" aria-live="polite" tabindex="0">
+            @if(connectionErrorIcon) {
+                <appshell-icon [class]="'no-results-icon'" [icon]="connectionErrorIcon" />
+            }
+            <div [innerHTML]="connectionErrorHtmlMessage"></div>
+        </div>
+    } @else if (projectComponents.length > 0) {
+        <div class="components-grid">
+            @for (component of projectComponents; track component.name) {
+                <app-component-card 
+                    [name]="component.name" 
+                    [status]="component.status" 
+                    [image]="component.logo ?? undefined" 
+                    [url]="component.url"
+                    [canDelete]="component.canDelete"
+                    (requestDeletionClicked)="onRequestDeletionClicked(component)">
+                </app-component-card>
+            }
+        </div>
+    } @else {
+        <div class="no-components-dialog">
+            <appshell-icon icon="package_open" />
+            <h2>No components provisioned yet</h2>
+            <p>This project does not contain any components.<br/>Start exploring our Catalogs to provision your first components.</p>
+        </div>
+    }
+</div>

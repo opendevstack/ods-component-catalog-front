@@ -1,7 +1,7 @@
 app-no-repository-access-dialog {
     --mdc-dialog-supporting-text-line-height: 1.25rem;
-    --mdc-dialog-supporting-text-color: var(--bi-color-secondary-main);
-    --mdc-dialog-subhead-color: var(--bi-color-secondary-main);
+    --mdc-dialog-supporting-text-color: var(--appshell-color-secondary-main);
+    --mdc-dialog-subhead-color: var(--appshell-color-secondary-main);
     --mdc-dialog-supporting-text-size: 0.875rem;
 
     h2 {
@@ -16,10 +16,10 @@ app-no-repository-access-dialog {
         --mdc-filled-button-label-text-weight: 500;
 
         a {
-            color: var(--bi-color-secondary-main);
+            color: var(--appshell-color-secondary-main);
             font-weight: 500;
             text-decoration: none;
-            border-bottom: 2px solid var(--bi-color-accent-green-main);
+            border-bottom: 2px solid var(--appshell-color-accent-green-main);
             cursor: pointer;
         }
     }

@@ -1,10 +1,9 @@
 import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
-import { EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
-import { BehaviorSubject, filter, Subject, takeUntil } from "rxjs";
+import { AuthenticationResult, EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
+import { BehaviorSubject, filter, from, map, Observable, Subject, takeUntil } from "rxjs";
 import { Router } from "@angular/router";
 import { AppUser } from "../models/app-user";
-import { AppConstants } from "../app.constants";
 
 @Injectable({
     providedIn: 'root'
@@ -61,12 +60,18 @@ export class AzureService implements OnDestroy {
         this.loginDisplay = this.msalService.instance.getAllAccounts().length > 0;
     }
 
-    getAccessToken(): string {
+    getIdToken(): string {
         return this.msalService.instance.getActiveAccount()?.idToken ?? '';
     }
 
-    refreshToken() {
+    refreshToken(): Promise<AuthenticationResult> {
         return this.msalService.instance.acquireTokenSilent({scopes: ["User.Read"]});
+    }
+
+    getRefreshedAccessToken(): Observable<string> {
+        return from(this.refreshToken()).pipe(
+            map((azureData: AuthenticationResult) => azureData.accessToken)
+        );
     }
 
     refreshLoggedUser(): void {
@@ -91,56 +96,28 @@ export class AzureService implements OnDestroy {
             
             this.msalService.instance.acquireTokenSilent({
                 scopes: ["User.Read"]
-            }).then(response => {
-                // Start both fetches in parallel
-                const photoPromise = fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
-                    headers: {
-                        'Authorization': `Bearer ${response.accessToken}`
-                    }
-                })
-                .then(res => res.ok ? res.blob() : null)
-                .then(blob => {
-                    if (!blob) {
+            })
+            .then(async response => {
+                try {
+                    const res = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+                        headers: {
+                            'Authorization': `Bearer ${response.accessToken}`
+                        }
+                    });
+                    if (!res.ok) {
                         console.warn('Microsoft profile picture not found');
                         return;
                     }
-                    const url = URL.createObjectURL(blob);
-                    if (loggedUser) {
-                        loggedUser.avatarSrc = url;
-                    }
-                })
-                .catch(error => {
+                    const blob = await res.blob();
+                    loggedUser.avatarSrc = URL.createObjectURL(blob);
+                } catch (error) {
                     console.error('Error fetching profile picture', error);
-                });
-
-                const groupsPromise = fetch('https://graph.microsoft.com/v1.0/me/memberOf', {
-                    headers: {
-                        'Authorization': `Bearer ${response.accessToken}`
-                    }
-                })
-                .then(res => res.ok ? res.json() : null)
-                .then(data => {
-                    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-                    const projects = data?.value?.filter((val: any) => val.displayName.startsWith(AppConstants.EDP_PROJECT_ROLES_GROUP_PREFIX)).map((val: any) => {
-                        const match = val.displayName.match(new RegExp(`^${AppConstants.EDP_PROJECT_ROLES_GROUP_PREFIX}(.*?)-(TEAM|MANAGER|STAKEHOLDER)$`));
-                        return match ? match[1] : null;
-                    }).filter(Boolean);
-                    if(loggedUser) {
-                        loggedUser.projects = projects || [];
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching user groups', error);
-                });
-
-                // Wait for both fetches to finish before emitting
-                return Promise.all([photoPromise, groupsPromise]);
-            }).catch(error => {
+                }
+            })
+            .catch(error => {
                 console.error('Error acquiring token silently', error);
-                // If token acquisition fails, still emit the basic user info
-                // This prevents the app from getting stuck
-                this.loggedUser$.next(loggedUser);
-            }).finally(() => {
+            })
+            .finally(() => {
                 this.loggedUser$.next(loggedUser);
             });
         }

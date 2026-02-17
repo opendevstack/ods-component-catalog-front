@@ -1,19 +1,23 @@
-<appshell-layout
+<appshell-platform-layout
   [headerVariant]="headerVariant"
-  [applicationSymbol]="applicationSymbol"
+  [applicationLogo]="applicationLogo"
   [applicationName]="applicationName"
   [applicationNameLink]=""
   [appShellHelpLink]="appShellHelpLink"
   [headerLinks]="headerLinks"
-  [headerPicker]="catalogPicker"
+  [headerProjectPicker]="projectPicker"
+  [headerSecondaryPicker]="catalogPicker"
   [sidenavSections]="sidenavSections"
   [sidenavLinks]="sidenavLinks"
   [loggedUser]="loggedUser"
   (userLoggedIn)="login()"
   (userLoggedOut)="logout()"
-  (userPick)="pickCatalog($event)"
+  (userProjectPick)="pickProject($event)"
+  (userSecondaryPick)="pickCatalog($event)"
+  (platformPickerClick)="showPlatformSelector()"
+  [isPlatformPickerOpened]="isPlatformSelectorOpened"
   [appShellNotificationsLink]="appShellNotificationsLink"
   [appShellNotificationsCount]="appShellNotificationsCount"
 >
-</appshell-layout>
+</appshell-platform-layout>
 <appshell-toasts [toastsLimit]="toastLimitInScreen"></appshell-toasts>

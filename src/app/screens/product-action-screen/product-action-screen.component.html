@@ -9,7 +9,9 @@
                     <div>
                         <div class="upper-input-text">
                             <mat-label>{{param.label }}</mat-label>
-                            <span>{{ param.required ? 'Mandatory' : 'Optional' }}</span>
+                            @if(param.disabled !== true) {
+                                <span>{{ param.required ? 'Mandatory' : 'Optional' }}</span>
+                            }
                         </div>
                         <mat-form-field appearance="outline">
                             @switch (param.type) {
@@ -41,13 +43,18 @@
                                 }
                             }
                             @if (param.hint && !(formGroup.get(param.name)?.invalid && formGroup.get(param.name)?.touched)) {
-                                <mat-hint>{{ param.hint }}</mat-hint>
+                                <mat-hint [class.with-icon]="param.name === projectKeyVariableName">
+                                    @if (param.name === projectKeyVariableName) {
+                                        <appshell-icon class="info-icon" icon="circle_i"></appshell-icon>
+                                    }
+                                    {{ param.hint }}
+                                </mat-hint>
                             }
                             @if (formGroup.get(param.name)?.invalid && formGroup.get(param.name)?.touched) {
                                 <mat-error>
                                     @for (errorMessage of getValidationErrors(param.name); track errorMessage) {
                                         <div class="error-message">
-                                            <div class="error-icon"><span class="bi-exclamation-mark-circle-icon"></span></div>
+                                            <div class="error-icon"><span class="exclamation-mark-circle"></span></div>
                                             <div>{{ errorMessage }}</div>
                                         </div>
                                     }

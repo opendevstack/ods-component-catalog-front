@@ -1,4 +1,4 @@
-import { AppShellProduct } from "@appshell/ngx-appshell";
+import { AppShellProduct } from "@opendevstack/ngx-appshell";
 import { ProductAction } from "./product-action";
 
 export interface AppProduct extends AppShellProduct {

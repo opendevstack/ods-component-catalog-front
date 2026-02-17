@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Resolve } from '@angular/router';
 import { catchError, Observable, of } from 'rxjs';
 import { CatalogService } from './catalog.service';
-import { CatalogDescriptor } from '../openapi';
+import { CatalogDescriptor } from '../openapi/component-catalog';
 
 @Injectable({
   providedIn: 'root'

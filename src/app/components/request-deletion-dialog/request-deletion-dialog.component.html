@@ -1,0 +1,58 @@
+<div class="dialog-header">
+    <h2 mat-dialog-title>{{ data.componentName }} - Deletion Form</h2>
+    <appshell-icon icon="close" (click)="onCancel()"></appshell-icon>
+</div>
+<mat-dialog-content>
+    <div class="help-message-ctn">
+        <appshell-icon class="info-icon" icon="circle_i"></appshell-icon>
+        <span>Please fill the form, the Support team will receive a Service Now ticket and assist you with the component deletion.</span>
+    </div>
+    
+    <div class="field-label">
+        Deployment status:
+        <span>Mandatory</span>
+    </div>
+    
+    <mat-radio-group [(ngModel)]="deploymentStatus" class="deployment-status-group">
+        <mat-radio-button [value]="true">It is deployed in QA/Prod</mat-radio-button>
+        <mat-radio-button [value]="false">It is in DEV or not deployed</mat-radio-button>
+    </mat-radio-group>
+
+    <div *ngIf="deploymentStatus" class="change-request-section">
+        <div class="help-message-ctn">
+            <appshell-icon class="info-icon" icon="circle_i"></appshell-icon>
+            <span>To request deletion for deployed components, a change requested is needed.</span>
+        </div>
+        <div class="field-label">
+            Number of change requesting deletion:
+            <span>Mandatory</span>
+        </div>
+        <mat-form-field appearance="outline" class="full-width">
+            <input matInput [(ngModel)]="changeNumber" placeholder="Add the number of change" #changeNumberInput="ngModel" required pattern="^CHG\d{7}$">
+            <mat-hint>
+                The change number must follow the pattern CHG + 7 digits (i.e: CHG1234567)
+            </mat-hint>
+            <mat-error *ngIf="changeNumberInput.touched && changeNumberInput.errors?.['required']">
+                This field is mandatory
+            </mat-error>
+            <mat-error *ngIf="changeNumberInput.touched && changeNumberInput.errors?.['pattern'] && !changeNumberInput.errors?.['required']">
+                The change number must follow the pattern CHG + 7 digits (i.e: CHG1234567)
+            </mat-error>
+        </mat-form-field>
+    </div>
+
+    <div class="field-label">
+        Reasons to request deletion:
+        <span>Mandatory</span>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+        <textarea matInput [(ngModel)]="reason" placeholder="Add the reasons here" #reasonInput="ngModel" required></textarea>
+        <mat-error *ngIf="reasonInput.touched && reasonInput.errors?.['required']">
+            This field is mandatory
+        </mat-error>
+    </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-flat-button color="accent" (click)="onAccept()">Request</button>
+</mat-dialog-actions>

@@ -8,5 +8,25 @@
         "secure": false,
         "changeOrigin": true,
         "logLevel": "debug"
+    },
+    "/component-provisioner": {
+        "target": "http://localhost:8081/v1",
+        "pathRewrite": { "^/component-provisioner": "" },
+        "headers": {
+            "Accept": "*/*"
+        },
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    },
+    "/projects-api": {
+        "target": "http://localhost:8082/v1",
+        "pathRewrite": { "^/projects-api": "" },
+        "headers": {
+            "Accept": "*/*"
+        },
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug"
     }
 }

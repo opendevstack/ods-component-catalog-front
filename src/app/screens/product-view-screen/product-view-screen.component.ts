@@ -1,88 +1,151 @@
-import { Component, OnInit } from '@angular/core';
-import { AppShellProductViewScreenComponent, AppShellLink, AppShellPicker } from '@appshell/ngx-appshell';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { AppShellProductViewScreenComponent, AppShellLink, AppShellPicker, AppShellButton } from '@opendevstack/ngx-appshell';
 import { CatalogService } from '../../services/catalog.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NoRepositoryAccessDialogComponent } from '../../components/no-repository-access-dialog/no-repository-access-dialog.component';
-import { HttpClient } from '@angular/common/http';
 import { AppProduct } from '../../models/app-product';
 import { ProductAction } from '../../models/product-action';
+import { ProjectService } from '../../services/project.service';
+import { Subject, takeUntil } from 'rxjs';
+import { CatalogDescriptor } from '../../openapi/component-catalog';
 
 @Component({
     selector: 'app-product-view-screen',
     imports: [AppShellProductViewScreenComponent, MatDialogModule],
     templateUrl: './product-view-screen.component.html',
-    styleUrl: './product-view-screen.component.scss'
+    styleUrl: './product-view-screen.component.scss',
+    encapsulation: ViewEncapsulation.None
 })
-export class ProductViewScreenComponent implements OnInit {
+export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
   product: AppProduct = {} as AppProduct;
-  actionButtonText: string | undefined;
-  secondaryActionButtonText: string | undefined;
+  actionButton: AppShellButton | undefined;
+  secondaryActionButton: AppShellButton | undefined;
   actionPicker: AppShellPicker | undefined;
+  pageTitle = '';
   breadcrumbLinks: AppShellLink[] = []
+
+  currentCatalogItemId: string | undefined;
+  currentCatalog: CatalogDescriptor | undefined;
+
+  private readonly _destroying$ = new Subject<void>();
 
   constructor(
     private readonly catalogService: CatalogService,
     private readonly router: Router, 
     private readonly route: ActivatedRoute,
-    private readonly http: HttpClient,
+    private readonly projectService: ProjectService,
     public dialog: MatDialog
   ) {}
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
-      const id = params['id'] || '';
+    this.projectService.project$
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(() => {
+        if(this.currentCatalog && this.currentCatalogItemId) {
+          this.loadProduct(this.currentCatalogItemId, this.currentCatalog);
+        }
+      });
+
+    this.route.params
+      .pipe(takeUntil(this._destroying$))
+      .subscribe((params: Params) => {
+      this.currentCatalogItemId = params['id'] || '';
       const catalogSlug = params['catalogSlug'] || '';
 
-      const catalog = this.catalogService.getCatalogDescriptors().find(catalog => this.catalogService.getSlugUrl(catalog.slug!) === catalogSlug);
+      this.catalogService.setSelectedCatalogSlug(catalogSlug);
+
+      this.currentCatalog = this.catalogService.getCatalogDescriptors().find(catalog => this.catalogService.getSlugUrl(catalog.slug!) === catalogSlug);
       
-      if(id === '' || !catalog) {
+      if(this.currentCatalogItemId === '' || !this.currentCatalog) {
         this.router.navigate(['/']);
         return;
       }
-      
-      this.catalogService.getProduct(id).subscribe({
-        next: (product) => {
-          this.product = product;
 
-          this.actionButtonText = undefined;
-          this.secondaryActionButtonText = undefined;
-          this.actionPicker = undefined;
-
-          if(product.actions && product.actions.length > 0) {
-            this.actionButtonText = product.actions[0].label;
-
-            if(product.actions.length === 2) {
-              this.secondaryActionButtonText = product.actions[1].label;
-            } else if (product.actions.length > 2) {
-              this.actionPicker = {
-                label: 'More actions',
-                options: [...product.actions.slice(1).map(action => action.label)]
-              };
-            }
-          }
-          this.breadcrumbLinks = [
-            {
-              anchor: '',
-              label: 'Catalogs',
-            },
-            {
-              anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`,
-              label: catalog.slug!,
-            },
-            {
-              anchor: '',
-              label: this.product.title,
-            }
-          ]
-        }, 
-        error: () => {
-          console.log('Error loading product');
-          this.router.navigate(['/']);
-        }
-      });
+      this.loadProduct(this.currentCatalogItemId!, this.currentCatalog);
     });
+  }
+
+  private loadProduct(id: string, catalog: CatalogDescriptor) {
+    const currentProject = this.projectService.getCurrentProject();
+    const productObservable = currentProject
+      ? this.catalogService.getProjectProduct(currentProject.projectKey, id)
+      : this.catalogService.getProduct(id);
+    
+    productObservable.subscribe({
+      next: (product) => this.handleProductLoaded(product, catalog),
+      error: () => this.handleProductLoadError()
+    });
+  }
+
+  private handleProductLoaded(product: AppProduct, catalog: CatalogDescriptor) {
+    this.product = product;
+    this.pageTitle = product.title;
+    this.setupActionButtons();
+    this.setupBreadcrumbs(catalog);
+  }
+
+  private setupActionButtons() {
+    this.actionButton = undefined;
+    this.secondaryActionButton = undefined;
+    this.actionPicker = undefined;
+
+    if (!this.product.actions || this.product.actions.length === 0) {
+      return;
+    }
+
+    this.actionButton = this.createActionButton(this.product.actions[0]);
+
+    if (this.product.actions.length === 2) {
+      this.secondaryActionButton = this.createActionButton(this.product.actions[1]);
+    } else if (this.product.actions.length > 2) {
+      this.actionPicker = {
+        label: 'More actions',
+        options: [...this.product.actions.slice(1).map(action => action.label)]
+      };
+    }
+  }
+
+  private createActionButton(action: ProductAction): AppShellButton {
+    return {
+      label: action.label,
+      disabled: !action.requestable,
+      tooltip: action.requestable ? '' : action.restrictionMessage
+    };
+  }
+
+  private setupBreadcrumbs(catalog: CatalogDescriptor): void {
+    this.breadcrumbLinks = [];
+
+    const currentProject = this.projectService.getCurrentProject();
+    if (currentProject) {
+      this.breadcrumbLinks.push(
+        {
+          anchor: '',
+          label: `Project ${currentProject.projectKey}`,
+        }
+      );
+    }
+    this.breadcrumbLinks.push(
+      {
+        anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`,
+        label: `Catalog ${catalog.slug!}`,
+      },
+      {
+        anchor: '',
+        label: 'Add Components',
+      },
+      {
+        anchor: '',
+        label: this.product.title,
+      }
+    );
+  }
+
+  private handleProductLoadError() {
+    console.log('Error loading product');
+    this.router.navigate(['/']);
   }
 
   actionButtonFn() {
@@ -159,5 +222,10 @@ export class ProductViewScreenComponent implements OnInit {
     }
 
     return atob(str);
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next(undefined);
+    this._destroying$.complete();
   }
 }
