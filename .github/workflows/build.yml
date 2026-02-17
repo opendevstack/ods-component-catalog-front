@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'                      # Enable npm dependency caching
+          cache: 'npm'  # Enable npm dependency caching
           cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
@@ -38,15 +38,14 @@ jobs:
             npm install
           fi
 
-      # Optional: run linter if the project includes one (e.g., ESLint)
-      # - name: Lint
-      #   run: npm run lint --if-present
-
-      - name: Run tests
-        run: npm test --if-present          # Skip gracefully if no test script exists
+      - name: Lint
+        run: npm run lint --if-present  # Skip gracefully if lint error
 
       - name: Build
-        run: npm run build                  # Adjust if your build script has a different name
+        run: npm run build                  
+
+      - name: Run tests
+        run: npm run test --if-present  # Skip gracefully if no test script exists
 
       # SonarCloud scan: assumes sonar-project.properties exists in the repo
       - name: SonarCloud Scan
