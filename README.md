@@ -48,3 +48,13 @@ In order to generate a new client, you can update the contents of the `openapi.y
 For detailed instructions on how to use the AppShell library, including available components, their inputs, outputs, and expected parameters, please refer to our comprehensive guide on Confluence.
 
 [Access the Library Guide](https://confluence.biscrum.com/x/T9rTGw)
+
+# Quality
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=coverage)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=bugs)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=opendevstack_ods-component-catalog-front&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=opendevstack_ods-component-catalog-front)
