@@ -1,0 +1,93 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # Required for CodeQL / SonarCloud
+      pull-requests: write     # Required for PR comments
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history recommended for code analysis tools
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'                      # Enable npm dependency caching
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          # Use npm ci if lockfile exists for reproducible builds
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      # Optional: run linter if the project includes one (e.g., ESLint)
+      # - name: Lint
+      #   run: npm run lint --if-present
+
+      - name: Run tests
+        run: npm test --if-present          # Skip gracefully if no test script exists
+
+      - name: Build
+        run: npm run build                  # Adjust if your build script has a different name
+
+      # SonarCloud scan: assumes sonar-project.properties exists in the repo
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=opendevstack
+            -Dsonar.host.url=https://sonarcloud.io
+
+      # Upload compiled build outputs (adjust dist/ or build/ based on your project)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/**
+            build/**
+          retention-days: 7
+
+      # Upload test reports and coverage files if generated
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/junit.xml
+            **/test-results/**/*.xml
+            **/coverage/**/clover.xml
+            **/coverage/**/cobertura-coverage.xml
+            **/coverage/**/lcov.info
+            **/coverage/**/coverage-final.json
+
+      # Upload packaged artifacts such as .zip, .tgz, etc.
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-artifacts
+          path: |
+            **/*.tgz
+            **/*.zip
+          retention-days: 30
