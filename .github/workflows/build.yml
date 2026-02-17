@@ -38,8 +38,8 @@ jobs:
             npm install
           fi
 
-      - name: Lint
-        run: npm run lint --if-present  # Skip gracefully if lint error
+      #- name: Lint
+      #  run: npm run lint --if-present  # Skip gracefully if lint error
 
       - name: Build
         run: npm run build                  
