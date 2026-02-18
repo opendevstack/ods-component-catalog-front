@@ -19,6 +19,7 @@
           "options": {
             "outputPath": "dist/component-catalog-front",
             "index": "src/index.html",
+            "preserveSymlinks": true,
             "stylePreprocessorOptions": {
               "includePaths": [
                 "node_modules/@opendevstack/ngx-appshell"
