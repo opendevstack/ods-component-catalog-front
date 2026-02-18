@@ -50,7 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
     label: 'Project: ',
     options: [],
     selected: undefined,
-    noOptionsMessage: `You don\'t have access to any projects in the Marketplace.<br/><br/>You can either <a href="${AppShellConfig.createProjectUrl}" target="_blank">create a project</a> or <a href="${AppShellConfig.requestProjectAccessUrl}" target="_blank">request access</a> to an existing project.`,
+    noOptionsMessage: `You don't have access to any projects in the Marketplace.<br/><br/>You can either <a href="${AppShellConfig.createProjectUrl}" target="_blank">create a project</a> or <a href="${AppShellConfig.requestProjectAccessUrl}" target="_blank">request access</a> to an existing project.`,
     noFilteredOptionsMessage: 'No projects match the search term.'
   };
   isPlatformSelectorOpened = false;
