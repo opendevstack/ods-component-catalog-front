@@ -14,4 +14,5 @@ export interface ProductActionParameter {
     hint?: string | null;
     visible: boolean;
     validations?: Array<ProductActionParameterValidation>;
+    disabled?: boolean;
 }

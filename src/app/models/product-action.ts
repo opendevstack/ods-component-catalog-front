@@ -7,4 +7,6 @@ export interface ProductAction {
     url: string | null;
     triggerMessage: string | null;
     parameters: Array<ProductActionParameter>;
+    requestable: boolean;
+    restrictionMessage: string;
 }

@@ -10,10 +10,12 @@
         flex-direction: column!important;
         gap: 1.5rem;
 
-        --mat-select-enabled-trigger-text-color: var(--bi-color-secondary-main);
-        --mdc-outlined-text-field-focus-outline-color: var(--bi-color-accent-green-main);
+        --mat-select-enabled-trigger-text-color: var(--appshell-color-secondary-main);
+        --mdc-outlined-text-field-focus-outline-color: var(--appshell-color-accent-green-main);
         --mat-form-field-subscript-text-line-height: 1.5rem;
         --mdc-outlined-text-field-container-shape: 0.125rem;
+        --mdc-outlined-text-field-disabled-input-text-color: var(--appshell-color-grey-strong);
+        --mdc-outlined-text-field-disabled-outline-color: #B7B6B2 !important;
 
         &>div {
             display: flex;
@@ -25,7 +27,7 @@
             --mdc-outlined-text-field-error-caret-color: #E10A0A;
 
             .upper-input-text {
-                font-family: "BoehringerForward";
+                font-family: "AppShellTextFont";
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 400;
@@ -35,7 +37,7 @@
                 flex-direction: row;
 
                 mat-label {
-                    color: var(--bi-color-secondary-main);
+                    color: var(--appshell-color-secondary-main);
                     flex: 1;
                 }
 
@@ -65,12 +67,34 @@
                 }
             }
 
+            .mdc-text-field--disabled {
+                background-color: var(--appshell-color-grey-medium);
+            }
+
             .mat-mdc-form-field-subscript-wrapper {
 
                 .mat-mdc-form-field-hint-wrapper {
-                    opacity: 0.6;
                     padding: 0;
                     padding-top: .5rem;
+
+                    mat-hint {
+                        opacity: 0.6;
+
+                        &.with-icon {
+                            opacity: 1;
+                            background-color: #D2F2F7;
+                            color: #076D7E;
+                            padding: .5rem;
+                            display: flex;
+                            align-items: center;
+                            
+                            appshell-icon, mat-icon {
+                                height: 1.25rem;
+                                width: 1.25rem;
+                                margin-right: .25rem;
+                            }
+                        }
+                    }
                 }
                 
                 .mat-mdc-form-field-error-wrapper {
@@ -82,6 +106,10 @@
                 display: flex;
                 flex-direction: column;
                 gap: .25rem;
+
+                &::before {
+                    height: .25rem;
+                }
 
                 .error-message {
                     display: flex;
@@ -111,15 +139,15 @@
         align-items: center;
 
         .close-dialog-btn {
-            color: var(--bi-color-secondary-main);
-            font-family: "BoehringerForward";
+            color: var(--appshell-color-secondary-main);
+            font-family: "AppShellTextFont";
             padding: 0.75rem;
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;
             line-height: 1.25rem;
             text-decoration-line: underline;
-            text-decoration-color: var(--bi-color-accent-green-main);
+            text-decoration-color: var(--appshell-color-accent-green-main);
             text-decoration-thickness: 3px;
             text-underline-offset: 6px;
             
@@ -129,9 +157,9 @@
             --mat-text-button-ripple-color: transparent;
 
             &:hover {
-                color: var(--bi-color-secondary-medium);
+                color: var(--appshell-color-secondary-medium);
                 background-color: transparent;
-                text-decoration-color: var(--bi-color-accent-green-medium);
+                text-decoration-color: var(--appshell-color-accent-green-medium);
             }
         }
 
@@ -146,9 +174,9 @@
             font-weight: 500;
             line-height: 1.25rem;
             height: auto;
-            color: var(--bi-color-secondary-main)!important;
+            color: var(--appshell-color-secondary-main)!important;
             text-decoration: none;
-            font-family: BoehringerForward;
+            font-family: AppShellTextFont;
             border: 2px solid var(--mdc-filled-button-container-color);
 
             &:disabled {

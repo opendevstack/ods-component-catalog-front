@@ -1,9 +1,12 @@
 @use '@angular/material' as mat;
-@use "@appshell/ngx-appshell/styles/appshell-typography-config" as config;
-@use '@appshell/ngx-appshell/styles/appshell.theme.scss' as appshell;
+@use "@opendevstack/ngx-appshell/styles/appshell-typography-config" as config;
+@use '@opendevstack/ngx-appshell/styles/appshell.theme.scss' as appshell;
 @use "sass:map";
+@use "fonts";
 
 @include mat.typography-hierarchy(config.$appshell-typography);
+
+
 
 :root {
     --main-color: #{map.get(appshell.$appshell-primary-palette, 800)};
@@ -21,11 +24,11 @@ html, body {
 }
 
 h1,h2,h3 {
-    font-family: BoehringerForwardHead!important;
+    font-family: AppShellHeadingFont!important;
     font-weight: 500!important; // Needed since angular material theming for typographies is not working with all headings
 }
 h4,h5,h6 {
-    font-family: BoehringerForwardHead!important;
+    font-family: AppShellHeadingFont!important;
     font-weight: 700!important; // Needed since angular material theming for typographies is not working with all headings
 }
 
@@ -43,4 +46,11 @@ router-outlet+* {
 .toast-container .appshell-toast .appshell-toast-content h4 {
     line-clamp: unset!important;
     -webkit-line-clamp: unset!important;
+}
+
+.platform-selector-widget-dialog {
+    position: fixed!important;
+    top: 4rem;
+    left: 0;
+    --mdc-dialog-container-shape: 0px;
 }

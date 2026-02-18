@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { CommunityScreenComponent } from './community-screen.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideMarkdown } from 'ngx-markdown';
-import { Catalog, FilesService, FilesServiceInterface } from '../../openapi';
+import { Catalog, FilesService, FilesServiceInterface } from '../../openapi/component-catalog';
 import { of, Subject, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
@@ -19,7 +19,7 @@ describe('CommunityScreenComponent', () => {
   beforeEach(async () => {
     filesServiceSpy = jasmine.createSpyObj('FilesService', ['getFileById']);
     filesServiceSpy.getFileById.and.returnValue(of('mock file content'));
-    mockCatalogService = jasmine.createSpyObj('CatalogService', ['getCatalogDescriptors', 'getCatalog', 'getSlugUrl']);
+    mockCatalogService = jasmine.createSpyObj('CatalogService', ['getCatalogDescriptors', 'getCatalog', 'getSlugUrl', 'setSelectedCatalogSlug']);
     activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {'params': activatedRouteSubject});
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
@@ -67,8 +67,8 @@ describe('CommunityScreenComponent', () => {
     tick();
     fixture.whenStable().then(() => {
       expect(component.pageContent).toEqual('');
-      expect(component.noProductsHtmlMessage).toBeUndefined();
-      expect(component.noProductsIcon).toBeUndefined();
+      expect(component.connectionErrorHtmlMessage).toBeUndefined();
+      expect(component.connectionErrorIcon).toBeUndefined();
     });
   }));
 
@@ -78,8 +78,8 @@ describe('CommunityScreenComponent', () => {
     tick();
     fixture.whenStable().then(() => {
       expect(component.pageContent).toEqual('');
-      expect(component.noProductsHtmlMessage).toBe('Sorry, we are having trouble loading the page.<br/>Please check back in a few minutes.');
-      expect(component.noProductsIcon).toBe('bi-smiley-sad-icon');
+      expect(component.connectionErrorHtmlMessage).toBe('Sorry, we are having trouble loading the page.<br/>Please check back in a few minutes.');
+      expect(component.connectionErrorIcon).toBe('smiley_sad');
     });
   }));
 
@@ -87,5 +87,15 @@ describe('CommunityScreenComponent', () => {
     activatedRouteSubject.next({});
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
   });
+
+  it('should handle error when getCatalog fails', fakeAsync(() => {
+    mockCatalogService.getCatalog.and.returnValue(throwError(() => new Error('Error loading catalog')));
+    activatedRouteSubject.next({'catalogSlug': 'catalog'});
+    tick();
+    fixture.whenStable().then(() => {
+      expect(component.connectionErrorHtmlMessage).toBe('Sorry, we are having trouble loading the page.<br/>Please check back in a few minutes.');
+      expect(component.connectionErrorIcon).toBe('smiley_sad');
+    });
+  }));
   
 });

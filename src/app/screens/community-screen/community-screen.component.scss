@@ -4,7 +4,7 @@
     display: block;
     padding: 0rem 1.5rem 1.5rem;
     box-sizing: border-box;
-    color: var(--bi-color-secondary-main);
+    color: var(--appshell-color-secondary-main);
 
     * {
         max-width: 100%;
@@ -20,7 +20,7 @@
     flex-direction: column;
     align-items: center;
     padding-top: 4.5rem;
-    color: var(--bi-color-secondary-main);
+    color: var(--appshell-color-secondary-main);
     text-align: center;
     font-size: 1rem;
     font-style: normal;
@@ -30,7 +30,13 @@
     .no-results-icon {
         width: 6rem;
         height: 6rem;
-        color: var(--bi-color-secondary-light);
+        color: var(--appshell-color-secondary-light);
         margin-bottom: 1.25rem;
+
+        appshell-icon, mat-icon {
+            height: 6rem;
+            width: 6rem;
+            font-size: 6rem;
+        }
     }
 }

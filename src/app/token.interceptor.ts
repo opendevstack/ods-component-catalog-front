@@ -8,7 +8,7 @@ import { inject } from "@angular/core";
 export function tokenInterceptor(request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const authService = inject(AzureService);
   
-  const token = authService.getAccessToken();
+  const token = authService.getIdToken();
   
   if (token) {
     request = request.clone({
@@ -30,6 +30,7 @@ export function tokenInterceptor(request: HttpRequest<unknown>, next: HttpHandle
             return next(newRequest);
           }),
           catchError((refreshErr) => {
+            authService.login();
             return throwError(() => new Error(refreshErr));
           })
         );

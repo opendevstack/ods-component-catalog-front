@@ -13,7 +13,7 @@ describe('TokenInterceptor', () => {
   let mockAzureService: jasmine.SpyObj<AzureService>;
 
   beforeEach(() => {
-    mockAzureService = jasmine.createSpyObj('AzureService', ['getAccessToken', 'refreshToken']);
+    mockAzureService = jasmine.createSpyObj('AzureService', ['getIdToken', 'refreshToken', 'login']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -33,7 +33,7 @@ describe('TokenInterceptor', () => {
   });
 
   it('should add an Authorization header', fakeAsync(() => {
-    mockAzureService.getAccessToken.and.returnValue('test-token');
+    mockAzureService.getIdToken.and.returnValue('test-token');
 
     http.get('/test').subscribe(() => {});
 
@@ -50,7 +50,7 @@ describe('TokenInterceptor', () => {
   }));
 
   it('should refresh token on 401 or 403 error and retry the request', fakeAsync(() => {
-    mockAzureService.getAccessToken.and.returnValue('expired-token');
+    mockAzureService.getIdToken.and.returnValue('expired-token');
     const newAuthResult: AuthenticationResult = { idToken: 'new-token' } as AuthenticationResult;
     mockAzureService.refreshToken.and.returnValue(Promise.resolve(newAuthResult));
 
@@ -80,7 +80,7 @@ describe('TokenInterceptor', () => {
   }));
 
   it('should do nothing on refresh token failure', fakeAsync(() => {
-    mockAzureService.getAccessToken.and.returnValue('expired-token');
+    mockAzureService.getIdToken.and.returnValue('expired-token');
     mockAzureService.refreshToken.and.returnValue(Promise.reject(() => new Error('Refresh token failed')));
 
     http.get('/test').subscribe({
@@ -94,7 +94,7 @@ describe('TokenInterceptor', () => {
   }));
 
   it('should pass through non-401/403 errors', fakeAsync(() => {
-    mockAzureService.getAccessToken.and.returnValue('test-token');
+    mockAzureService.getIdToken.and.returnValue('test-token');
 
     http.get('/test').subscribe({
       error: (error) => {

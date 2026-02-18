@@ -1,0 +1,35 @@
+<mat-card class="component-card" [class.loading]="loading()" appearance="outlined">
+    @if (loading()) {
+        <mat-card-header>
+            <mat-card-title-group>
+                <mat-card-title class="skeleton skeleton-title"></mat-card-title>
+                <div class="skeleton skeleton-image"></div>
+            </mat-card-title-group>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="skeleton skeleton-status-row"></div>
+        </mat-card-content>
+        <mat-card-actions>
+            <div class="skeleton skeleton-button"></div>
+            <div class="skeleton skeleton-button"></div>
+        </mat-card-actions>
+    } @else {
+        <mat-card-header>
+            <mat-card-title-group>
+                <mat-card-title>{{name()}}</mat-card-title>
+                @if (image()) {
+                    <img mat-card-image [src]="image()" alt="">
+                }
+            </mat-card-title-group>
+        </mat-card-header>
+        <mat-card-content>
+            <span>Status:</span><appshell-chip [label]="statusLabel()" [class]="statusClass()"></appshell-chip>
+        </mat-card-content>
+        <mat-card-actions>
+            <div [matTooltip]="isDeleting() ? deletingTooltip : isProvisioning() ? provisioningTooltip : ''" class="btn-ctn">
+                <button mat-button class="request-deletion-btn" (click)="onRequestDeletionClick()" [disabled]="!canDelete() || isDeleting() || isProvisioning()">Request Deletion</button>
+            </div>
+            <button mat-stroked-button class="view-repository-btn" (click)="onViewRepositoryClick()">View Repository</button>
+        </mat-card-actions>
+    }
+</mat-card>

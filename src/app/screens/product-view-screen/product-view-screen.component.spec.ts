@@ -9,18 +9,23 @@ import { provideMarkdown } from 'ngx-markdown';
 import { NoRepositoryAccessDialogComponent } from '../../components/no-repository-access-dialog/no-repository-access-dialog.component';
 import { AppProduct } from '../../models/app-product';
 import { ProductAction } from '../../models/product-action';
+import { ProjectService } from '../../services/project.service';
+import { AppProject } from '../../models/project';
 
 describe('ProductViewScreenComponent', () => {
   let component: ProductViewScreenComponent;
   let fixture: ComponentFixture<ProductViewScreenComponent>;
   let catalogServiceSpy: jasmine.SpyObj<CatalogService>;
+  let projectServiceSpy: jasmine.SpyObj<ProjectService>;
   let activatedRouteSpy: jasmine.SpyObj<ActivatedRoute>;
   let routerSpy: jasmine.SpyObj<Router>;
   const activatedRouteSubject = new Subject();
+  const projectSubject = new Subject<AppProject>();
 
   beforeEach(async () => {
-    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct', 'getCatalogDescriptors', 'getSlugUrl']);
+    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct', 'getCatalogDescriptors', 'getSlugUrl', 'getProjectProduct', 'setSelectedCatalogSlug']);
     activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {'params': activatedRouteSubject});
+    projectServiceSpy = jasmine.createSpyObj('ProjectService', ['getCurrentProject'], { project$: projectSubject.asObservable() });
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
@@ -36,6 +41,10 @@ describe('ProductViewScreenComponent', () => {
           provide: Router,
           useValue: routerSpy
         },
+        {
+          provide: ProjectService,
+          useValue: projectServiceSpy
+        },
         provideMarkdown()
       ]
     })
@@ -49,6 +58,7 @@ describe('ProductViewScreenComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    projectSubject.next({ projectKey: 'project 1', location: 'location 1' } as AppProject);
   });
 
   it('should create', () => {
@@ -116,21 +126,33 @@ describe('ProductViewScreenComponent', () => {
   });
 
   it('should only inform the actionButtonText if the product has actions', () => {
-    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}]} as AppProduct));
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code',}]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
-    expect(component.actionButtonText).toEqual('View Code');
+    expect(component.actionButton).toEqual({'label': 'View Code', disabled: true, tooltip: undefined});
     catalogServiceSpy.getProduct.and.returnValue(of({actions: [] as ProductAction[]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
-    expect(component.actionButtonText).toBeUndefined();
+    expect(component.actionButton).toBeUndefined();
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code', requestable: true, restrictionMessage: ''}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionButton).toEqual({'label': 'View Code', disabled: false, tooltip: ''});
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code', requestable: false, restrictionMessage: 'Some text'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.actionButton).toEqual({'label': 'View Code', disabled: true, tooltip: 'Some text'});
   });
   
   it('should only inform the secondaryActionButtonText if the product has exactly 2 actions', () => {
     catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
-    expect(component.secondaryActionButtonText).toBeUndefined();
+    expect(component.secondaryActionButton).toBeUndefined();
     catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'Action Two'}]} as AppProduct));
     activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
-    expect(component.secondaryActionButtonText).toEqual('Action Two');
+    expect(component.secondaryActionButton).toEqual({'label': 'Action Two', disabled: true, tooltip: undefined});
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'Action Two', requestable: true, restrictionMessage: ''}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.secondaryActionButton).toEqual({'label': 'Action Two', disabled: false, tooltip: ''});
+    catalogServiceSpy.getProduct.and.returnValue(of({actions: [{id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code'}, {id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'Action Two', requestable: false, restrictionMessage: 'Some text'}]} as AppProduct));
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    expect(component.secondaryActionButton).toEqual({'label': 'Action Two', disabled: true, tooltip: 'Some text'});
   });
   
   it('should inform the actionPicker if the product has more than 2 actions', () => {
@@ -245,4 +267,35 @@ describe('ProductViewScreenComponent', () => {
     component.genericAction(action);
     expect(routerSpy.navigate).toHaveBeenCalledWith(['do-thing_123'], { relativeTo: activatedRouteSpy });
   });
+
+  it('should call getProjectProduct when current project is available', fakeAsync(() => {
+    projectServiceSpy.getCurrentProject.calls.reset();
+    catalogServiceSpy.getProjectProduct.calls.reset();
+    catalogServiceSpy.getProduct.calls.reset();
+    const mockProject = { projectKey: 'TEST_PROJECT', } as AppProject;
+    projectServiceSpy.getCurrentProject.and.returnValue(mockProject);
+    catalogServiceSpy.getProjectProduct.and.returnValue(of({} as AppProduct));
+    
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    tick();
+    
+    expect(projectServiceSpy.getCurrentProject).toHaveBeenCalled();
+    expect(catalogServiceSpy.getProjectProduct).toHaveBeenCalledWith('TEST_PROJECT', 'fakeId');
+    expect(catalogServiceSpy.getProduct).not.toHaveBeenCalled();
+  }));
+
+  it('should call getProduct when current project is not available', fakeAsync(() => {
+    projectServiceSpy.getCurrentProject.calls.reset();
+    catalogServiceSpy.getProjectProduct.calls.reset();
+    catalogServiceSpy.getProduct.calls.reset();
+    projectServiceSpy.getCurrentProject.and.returnValue(null);
+    catalogServiceSpy.getProduct.and.returnValue(of({} as AppProduct));
+    
+    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    tick();
+    
+    expect(projectServiceSpy.getCurrentProject).toHaveBeenCalled();
+    expect(catalogServiceSpy.getProduct).toHaveBeenCalledWith('fakeId');
+    expect(catalogServiceSpy.getProjectProduct).not.toHaveBeenCalled();
+  }));
 });

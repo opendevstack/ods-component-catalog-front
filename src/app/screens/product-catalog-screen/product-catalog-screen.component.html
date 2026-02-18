@@ -1,9 +1,10 @@
 <appshell-product-catalog-screen
-    [pageTitle]="'Our offering'"
+    [pageTitle]="'Add Components'"
     [breadcrumbLinks]="breadcrumbLinks"
     [products]="filteredProducts"
     [filters]="filters"
     [noProductsIcon]="noProductsIcon"
     [noProductsHtmlMessage]="noProductsHtmlMessage"
+    [isLoading]="isLoading"
     (activeFiltersChange)="filterProducts($event)"
 ></appshell-product-catalog-screen>

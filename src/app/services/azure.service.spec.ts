@@ -106,7 +106,6 @@ describe('AzureService', () => {
             if (user) {
                 expect(user.fullName).toBe(msalUser.name);
                 expect(user.avatarSrc).not.toBeUndefined();
-                expect(user.projects).toEqual(['PROJECT1', 'PROJECT2', 'PROJECT3']);
                 done();
             }
         });
@@ -239,19 +238,19 @@ describe('AzureService', () => {
         expect(service[destroyingMethodName].complete).toHaveBeenCalled();
     });
 
-    it('getAccessToken - should return the idToken of the active account', () => {
+    it('getIdToken - should return the idToken of the active account', () => {
         const activeAccount = { idToken: 'test-id-token' };
         msalInstanceSpy.getActiveAccount.and.returnValue(activeAccount);
     
-        const token = service.getAccessToken();
+        const token = service.getIdToken();
     
         expect(token).toBe('test-id-token');
     });
     
-    it('getAccessToken - should return an empty string if no active account', () => {
+    it('getIdToken - should return an empty string if no active account', () => {
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
     
-        const token = service.getAccessToken();
+        const token = service.getIdToken();
     
         expect(token).toBe('');
     });
@@ -285,6 +284,29 @@ describe('AzureService', () => {
         }
     });
     
+    it('getRefreshedAccessToken - should return an observable that emits the access token', (done) => {
+        const expectedToken = 'test-access-token';
+        const authResult = { accessToken: expectedToken } as AuthenticationResult;
+        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve(authResult));
+
+        service.getRefreshedAccessToken().subscribe((token) => {
+            expect(token).toEqual(expectedToken);
+            done();
+        });
+    });
+
+    it('getRefreshedAccessToken - should handle error when acquiring token fails', (done) => {
+        const expectedError = new Error('Error acquiring token');
+        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.reject(expectedError));
+
+        service.getRefreshedAccessToken().subscribe({
+            next: () => fail('Expected observable to error'),
+            error: (error) => {
+                expect(error).toEqual(expectedError);
+                done();
+            }
+        });
+    });
     
 });
 

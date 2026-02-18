@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Component Provisioner REST API
+  version: '1.0.0'
+  description: >
+    The Component Provisioner API allows clients to trigger Ansible Automation Platform (AWX) workflows.
+    
+    **NOTES**:
+    - The OpenAPI specification file is also used to [generate](https://openapi-generator.tech/) REST client(s) and a server REST API.
+    - Clients and servers generated from the same OpenAPI specification version are guaranteed to be **compatible**.
+  contact:
+    name: EDPCore Team
+    url: https://confluence.biscrum.com/pages/viewpage.action?spaceKey=EDP&title=Welcome
+servers:
+  - url: http://{baseurl}/v1
+    variables: 
+      baseurl:
+        default: localhost:8080
+        description: Default address for a Component Provisioner's backend REST API instance.
+security:
+  - bearerAuth: []
+tags:
+  - name: ProvisionerActions
+    description: ProvisionerAction operations.
+  - name: ProvisionerMessagesDefinitions
+    description: Provisioner standardized messages definitions
+  - name: ProvisionResults
+    description: Work with project components statuses
+paths:
+  /provision-actions:
+    post:
+      tags:
+        - ProvisionerActions
+      summary: Execute a provisioning action with parameters
+      description: > 
+          This endpoint receives ProvisionerActions from clients and triggers them in AWX.
+      operationId: triggerProvisionAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvisionAction'
+      responses:
+        "201":
+          description: Provisioning created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvisionActionResponse'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
+  /catalog-items/{catalogItemId}/user-actions/{action}/message-definitions/{id}:
+    post:
+      tags:
+        - ProvisionerMessagesDefinitions
+      summary: Get a message definition by catalogItemId and id.
+      description: >
+        Returns an standard message definition
+      operationId: getMessageDefinitionByCatalogItemIdAndMessageId
+      parameters:
+        - name: catalogItemId
+          in: path
+          description: id for the Catalog Item where Message is defined.
+          required: true
+          schema:
+            type: string
+        - name: action
+          in: path
+          description: Action for the MessageDefinition.
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: id for the MessageDefinition.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: A single message definition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvisionerMessageDefinition'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
+  /provision/{projectKey}/{status}:
+    put:
+      tags:
+        - ProvisionResults
+      summary: Notify provisioning Status Update
+      description: >
+        This endpoint receives provisioning status update notifications from AWX.
+      operationId: notifyProvisioningStatusUpdate
+      parameters:
+        - name: projectKey
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          example: CREATING
+          schema:
+            type: string
+            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                componentId:
+                  type: string
+                  description: The componentId set by the user.
+                  example: "any-component-id-from-backend"
+                catalogItemId:
+                  type: string
+                  description: The base64 encoded path for the catalogItem. Mind that it may include branch reference.
+                  example: "cHJvamVjdHMvQ0FURVNUL3JlcG9zL3VzZXItYWN0aW9ucy1pdGVtL3Jhdy9DYXRhbG9nSXRlbS55YW1sP2F0PXJlZnMvaGVhZHMvbWFzdGVy"
+                componentUrl:
+                  type: string
+                  description: The bitbucket repository url for the provisioned component.
+                  example: "https://bitbucket.com/projects/myproject/repos/repo_name"
+      responses:
+        "200":
+          description: Provisioning completion notified.
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid client token on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+
+  /provision/{projectKey}:
+    delete:
+      security:
+        - basicAuth: [ ]         # Enable ONLY basicAuth
+      tags:
+        - ProvisionResults
+      summary: Delete provision status component from the file
+      description: >
+        This endpoint receives provisioning status delete notifications from Component Provisioner.
+      operationId: deleteProvisioningStatus
+      parameters:
+        - name: projectKey
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvisioningDeleteRequest'
+      responses:
+        "200":
+          description: Project component properly deleted.
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid credentials on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+
+  /support/delete/{projectKey}/{componentId}:
+    post:
+      tags:
+        - ProvisionResults
+      summary: Request App Support to do operations to delete provision status component (and dependencies) from the file
+      description: >
+        This endpoint receives project key and componentId and send an create an incident to app support.
+      operationId: createIncident
+      parameters:
+        - name: projectKey
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: Component id of the provisioned component.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentAction'
+      responses:
+        "201":
+          description: Incident properly created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvisionActionResponse'
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid credentials on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: > 
+        Authorization via bearer token.
+      scheme: bearer
+      bearerFormat: JWT
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication for internal provisioning endpoint
+  schemas:
+    ProvisionAction:
+      properties:
+        id:
+          type: string
+          nullable: false
+          example: 'PROVISION'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProvisionActionParameter'
+      example:
+        id: "PROVISION"
+        triggerMessage: "Provisioning a component custom message"
+        parameters:
+          - name: "workflow"
+            type: "string"
+            required: true
+            defaultValue: "2558"
+            description: "Workflow to execute."
+            visible: false
+    CreateIncidentAction:
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateIncidentParameter'
+      example:
+        parameters:
+          - name: "cluster_location"
+            type: "string"
+            value: "eu"
+    ProvisionActionParameter:
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: 'workflow'
+        type:
+          type: string
+          nullable: false
+          example: 'string'
+        value:
+          type: object
+          nullable: false
+          example: '2558'
+      example:
+        name: "workflow"
+        type: "string"
+        value: "2558"
+    ProvisionActionResponse:
+      properties:
+        failed:
+          title: Job failed to execute
+          type: boolean
+        id:
+          title: Job ID
+          type: integer
+        created:
+          title: Job created timestamp
+          type: string
+          format: date-time
+        modified:
+          title: Job modified timestamp
+          type: string
+          format: date-time
+    ProvisionerMessageDefinition:
+      properties:
+        id:
+          type: string
+          nullable: false
+          example: 'OPENSHIFT_CONNECTION_ERROR'
+        type:
+          $ref: '#/components/schemas/ProvisionerMessageDefinitionType'
+        title:
+          type: string
+          nullable: false
+          example: 'An error occurred while connecting to OpenShift'
+        message:
+          type: string
+          nullable: false
+          example: >
+            Authorization error: please check your user credentials for deployment 
+            and try again later.
+        createsIncident:
+          type: boolean
+          nullable: false
+      example:
+        id: "OPENSHIFT_CONNECTION_ERROR"
+        title: "An error occurred while connecting to OpenShift"
+        message: >
+          Authorization error: please check your user credentials for deployment
+          and try again later.
+    ProvisionerMessageDefinitionType:
+      type: string
+      enum:
+        - success
+        - error
+      example: error
+    RestErrorMessage:
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    ProvisioningDeleteRequest:
+      type: object
+      properties:
+        componentId:
+          type: string
+          description: The componentId set by the user.
+          example: "any-component-id-from-backend"
+
+    CreateIncidentParameter:
+      properties:
+        name:
+          type: string
+          nullable: false
+          example: 'workflow'
+        type:
+          type: string
+          nullable: false
+          example: 'string'
+        value:
+          type: object
+          nullable: false
+          example: '2558'
+      example:
+        name: "workflow"
+        type: "string"
+        value: "2558"

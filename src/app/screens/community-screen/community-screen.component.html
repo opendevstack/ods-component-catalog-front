@@ -2,7 +2,7 @@
     [breadcrumbLinks]="breadcrumbLinks"
     title="Community"
 ></appshell-page-header>
-@if(!noProductsHtmlMessage && !noProductsIcon) {
+@if(!connectionErrorHtmlMessage && !connectionErrorIcon) {
     <div class="community-page-content">
         <markdown
             [data]="pageContent"
@@ -10,11 +10,11 @@
         </markdown>
     </div>
 }
-@if(noProductsHtmlMessage || noProductsIcon) {
+@if(connectionErrorHtmlMessage || connectionErrorIcon) {
     <div class="no-results-ctn" role="status" aria-live="polite" tabindex="0">
-        @if(noProductsIcon) {
-            <span [class]="'no-results-icon ' + noProductsIcon"></span>
+        @if(connectionErrorIcon) {
+            <appshell-icon [class]="'no-results-icon'" [icon]="connectionErrorIcon" />
         }
-        <div [innerHTML]="noProductsHtmlMessage"></div>
+        <div [innerHTML]="connectionErrorHtmlMessage"></div>
     </div>
 }
