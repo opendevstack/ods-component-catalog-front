@@ -98,7 +98,7 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  async ngOnInit(){
+  ngOnInit(): void {
     this.azureService.initialize();
 
     this.catalogService.selectedCatalogSlug$
@@ -339,7 +339,7 @@ export class AppComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           if(this.appShellNotificationsCount > 0) {
             const notification = {
-              id: new Date().getTime().toString() + '-logged',
+              id: Date.now().toString() + '-logged',
               title: `You have ${this.appShellNotificationsCount} unread notifications`,
               read: false,
               subject: 'only-toast'

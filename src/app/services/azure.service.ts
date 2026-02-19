@@ -76,7 +76,7 @@ export class AzureService implements OnDestroy {
 
     refreshLoggedUser(): void {
         const msalUser = this.msalService.instance.getActiveAccount();
-        if (!msalUser) {
+        if (msalUser === null) {
             if(this.isFirstTime && !this.isIframe) {
                 this.isFirstTime = false;
                 // Add a small delay to prevent rapid loops
