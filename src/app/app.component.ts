@@ -54,6 +54,8 @@ export class AppComponent implements OnInit, OnDestroy {
     noFilteredOptionsMessage: 'No projects match the search term.'
   };
   isPlatformSelectorOpened = false;
+  displayTopDisclaimer = !!AppShellConfig.topDisclaimerTextHtml;
+  topDisclaimerTextHtml: string = AppShellConfig.topDisclaimerTextHtml;
 
   loggedUser: AppUser|null = null;
 
@@ -388,5 +390,9 @@ export class AppComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(() => {
       this.isPlatformSelectorOpened = false;
     });
+  }
+
+  closeDisclaimer() {
+    this.displayTopDisclaimer = false;
   }
 }

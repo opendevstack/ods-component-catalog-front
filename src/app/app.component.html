@@ -21,3 +21,6 @@
 >
 </appshell-platform-layout>
 <appshell-toasts [toastsLimit]="toastLimitInScreen"></appshell-toasts>
+@if (displayTopDisclaimer) {
+  <app-top-disclaimer [textHtml]="topDisclaimerTextHtml" (disclaimerClosed)="closeDisclaimer()"></app-top-disclaimer>
+}

@@ -3,3 +3,11 @@ appshell-platform-layout {
     flex-direction: column;
     min-height: 100vh;
 }
+
+app-top-disclaimer {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99;
+}
