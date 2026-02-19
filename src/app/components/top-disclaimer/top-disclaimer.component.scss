@@ -16,6 +16,10 @@
         font-weight: 400; 
         line-height: 20px; 
         word-wrap: break-word;
+
+        a {
+            color: var(--appshell-color-blue-dark)
+        }
     }
 
     button {
