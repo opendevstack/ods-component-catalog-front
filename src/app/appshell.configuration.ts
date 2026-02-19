@@ -19,5 +19,6 @@ export class AppShellConfiguration {
     public static readonly createProjectUrl = 'https://github.com/opendevstack/ods-component-catalog-front';
     public static readonly requestProjectAccessUrl = 'https://github.com/opendevstack/ods-component-catalog-front';
     public static readonly requestCatalogProjectAccessUrl = 'https://github.com/opendevstack/ods-component-catalog-front';
+    public static readonly topDisclaimerTextHtml = 'If this value is set, a disclaimer will be shown at the top of the page. It can be used to inform users about important information, such as maintenance windows or known issues.';
     public static readonly toastLimitInScreen = 3;
 }

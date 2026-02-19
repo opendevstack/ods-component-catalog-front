@@ -775,4 +775,10 @@ describe('AppComponent', () => {
     expect(deepest).toBe(leaf);
     expect((component as any).isNotFoundRouteActive()).toBeTrue();
   });
+
+  it('should set displayTopDisclaimer to false in closeDisclaimer', () => {
+    component.displayTopDisclaimer = true;
+    (component as any).closeDisclaimer();
+    expect(component.displayTopDisclaimer).toBeFalse();
+  });
 });
