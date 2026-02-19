@@ -93,7 +93,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         }
 
         const currentProject = this.projectService.getCurrentProject();
-        if (!currentProject || currentProject.projectKey !== projectKey) {
+        if (currentProject?.projectKey !== projectKey) {
           this.projectService.setCurrentProject(projectKey);
         }
       });

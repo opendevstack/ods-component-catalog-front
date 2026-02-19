@@ -334,7 +334,7 @@ export class AppComponent implements OnInit, OnDestroy {
       // We convert the username to a valid NATS user name based on their validations:
       // validBucketRe = regexp.MustCompile(^[a-zA-Z0-9_-]+$)
       // validKeyRe = regexp.MustCompile(^[-/_=.a-zA-Z0-9]+$)
-      const natsUser = user.username.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_')
+      const natsUser = user.username.split('@')[0].replaceAll(/[^a-zA-Z0-9_-]/g, '_')
       this.natsService.initializeUser(natsUser, user.projects).then(() => {
         setTimeout(() => {
           if(this.appShellNotificationsCount > 0) {

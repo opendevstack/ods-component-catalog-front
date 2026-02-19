@@ -40,7 +40,7 @@ function main(): void {
             const base = fileName.replace(/\.svg$/i, '');
             const key = base
                 .toLowerCase()
-                .replace(/[\s-]+/g, '_');
+                .replaceAll(/[\s-]+/g, '_');
             const relPath = path.posix.join('icons', fileName);
             mapping[key] = relPath;
 

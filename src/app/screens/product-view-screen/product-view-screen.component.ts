@@ -102,7 +102,7 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
     } else if (this.product.actions.length > 2) {
       this.actionPicker = {
         label: 'More actions',
-        options: [...this.product.actions.slice(1).map(action => action.label)]
+        options: this.product.actions.slice(1).map(action => action.label)
       };
     }
   }
@@ -159,7 +159,7 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
   }
 
   secondaryActionButtonFn() {
-    if (this.product.actions && this.product.actions.length === 2) {
+    if (this.product.actions?.length === 2) {
       if (this.product.actions[1].id === CatalogService.CODE_PRODUCT_TYPE) {
         this.viewCodeAction(this.product.actions[1]);
       } else {
@@ -209,8 +209,8 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
   base64URLDecode(originalStr: string): string {
     let str = originalStr
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+      .replaceAll(/-/g, '+')
+      .replaceAll(/_/g, '/');
 
     const pad = str.length % 4;
     if(pad) {
