@@ -35,7 +35,8 @@ export class AzureService implements OnDestroy {
             filter((msg: EventMessage) =>
                 msg.eventType === EventType.ACCOUNT_ADDED ||
                 msg.eventType === EventType.ACCOUNT_REMOVED
-            )
+            ),
+            takeUntil(this._destroying$)
         )
         .subscribe(() => {
             if (this.msalService.instance.getAllAccounts().length === 0) {
@@ -76,7 +77,7 @@ export class AzureService implements OnDestroy {
 
     refreshLoggedUser(): void {
         const msalUser = this.msalService.instance.getActiveAccount();
-        if (msalUser === null) {
+        if (msalUser == null) {
             if(this.isFirstTime && !this.isIframe) {
                 this.isFirstTime = false;
                 // Add a small delay to prevent rapid loops

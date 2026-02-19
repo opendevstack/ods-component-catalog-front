@@ -40,10 +40,15 @@ describe('AzureService', () => {
         service = TestBed.inject(AzureService);
         msalService = TestBed.inject(MsalService) as jasmine.SpyObj<MsalService>;
         msalInstanceSpy.getAllAccounts.and.returnValue([{}]);
+        msalInstanceSpy.getActiveAccount.and.returnValue(null);
         msalService.instance = msalInstanceSpy;
         msalGuardConfig.interactionType = InteractionType.Redirect;
         
         window.onbeforeunload = () => "Oh no!"; // Prevent page reloads during tests 
+    });
+
+    afterEach(() => {
+        service.ngOnDestroy();
     });
 
     it('should be created', () => {
@@ -193,7 +198,7 @@ describe('AzureService', () => {
         expect(msalInstanceSpy.getAllAccounts).toHaveBeenCalled();
     });
 
-    it('checkAndSetActiveAccount - should not set active account if an active account is already set', () => {
+    it('checkAndSetActiveAccount - should not set active account if an active account is already set', fakeAsync(() => {
         msalInstanceSpy.setActiveAccount.calls.reset();
         msalInstanceSpy.getActiveAccount.calls.reset();
         const activeAccount = { username: 'activeuser' };
@@ -201,9 +206,10 @@ describe('AzureService', () => {
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
         spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(new Blob())));
         service.checkAndSetActiveAccount();
+        tick();
         expect(msalInstanceSpy.setActiveAccount).not.toHaveBeenCalled();
         expect(msalInstanceSpy.getActiveAccount).toHaveBeenCalled();
-    });
+    }));
 
     it('checkAndSetActiveAccount - should not set active account if there are no accounts', () => {
         msalInstanceSpy.setActiveAccount.calls.reset();
