@@ -209,8 +209,8 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
   base64URLDecode(originalStr: string): string {
     let str = originalStr
-      .replaceAll(/-/g, '+')
-      .replaceAll(/_/g, '/');
+      .replaceAll('-', '+')
+      .replaceAll('_', '/');
 
     const pad = str.length % 4;
     if(pad) {
