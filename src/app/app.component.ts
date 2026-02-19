@@ -16,11 +16,12 @@ import { AppProject } from './models/project';
 import { PlatformSelectorWidgetDialogData } from './models/platform-selector-widget-dialog-data';
 import { MatDialog } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
+import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
 
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, AppShellPlatformLayoutComponent, AppShellToastsComponent],
+    imports: [CommonModule, AppShellPlatformLayoutComponent, AppShellToastsComponent, TopDisclaimerComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
