@@ -14,10 +14,19 @@ describe('TopDisclaimerComponent', () => {
 
     fixture = TestBed.createComponent(TopDisclaimerComponent);
     component = fixture.componentInstance;
+    
+    fixture.componentRef.setInput('disclaimerTextHtml', 'Fake disclaimer text');
+
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should emit true when closeDisclaimer is called', () => {
+    spyOn(component.disclaimerClosed, 'emit');
+    component.closeDisclaimer();
+    expect(component.disclaimerClosed.emit).toHaveBeenCalledWith(true);
   });
 });
