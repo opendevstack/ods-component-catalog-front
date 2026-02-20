@@ -55,7 +55,7 @@ export class AppComponent implements OnInit, OnDestroy {
     noFilteredOptionsMessage: 'No projects match the search term.'
   };
   isPlatformSelectorOpened = false;
-  displayTopDisclaimer = !!AppShellConfig.topDisclaimerTextHtml;
+  displayTopDisclaimer: boolean | null = null;
   topDisclaimerTextHtml: string = AppShellConfig.topDisclaimerTextHtml;
 
   loggedUser: AppUser|null = null;
@@ -104,6 +104,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.catalogService.selectedCatalogSlug$
       .pipe(takeUntil(this._destroying$))
       .subscribe((catalogSlug) => {
+        if (this.displayTopDisclaimer === null) {
+          this.displayTopDisclaimer = !!AppShellConfig.topDisclaimerTextHtml;
+        }
+
         if (!catalogSlug) {
           return;
         }
