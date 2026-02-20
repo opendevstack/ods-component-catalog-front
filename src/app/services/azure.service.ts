@@ -25,7 +25,7 @@ export class AzureService implements OnDestroy {
 
     initialize() {
         this.msalService.handleRedirectObservable().subscribe();
-        this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal
+        this.isIframe = window !== window.parent && !window.opener; // NOSONAR - Remove this line to use Angular Universal
 
         this.setLoginDisplay();
 
