@@ -12,6 +12,7 @@ import { RequestDeletionDialogResult } from '../../models/request-deletion-dialo
 import { ProvisionerService } from '../../services/provisioner.service';
 import { AzureService } from '../../services/azure.service';
 import { AppUser } from '../../models/app-user';
+import { CreateIncidentParameter } from '../../openapi/component-provisioner';
 
 @Component({
   selector: 'app-project-components-screen',
@@ -93,7 +94,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         }
 
         const currentProject = this.projectService.getCurrentProject();
-        if (!currentProject || currentProject.projectKey !== projectKey) {
+        if (currentProject?.projectKey !== projectKey) {
           this.projectService.setCurrentProject(projectKey);
         }
       });
@@ -123,7 +124,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(RequestDeletionDialogComponent, {
       autoFocus: false,
-      data: { 
+      data: {
         componentName: component.name,
         projectKey: this.selectedProject.projectKey,
         location: this.selectedProject.location
@@ -132,44 +133,83 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result: RequestDeletionDialogResult | undefined) => {
       if (result) {
-        this.azureService.getRefreshedAccessToken().subscribe({
-          next: (accessToken) => {
-            this.provisionerService.requestComponentDeletion(
-              result.projectKey,
-              result.componentName,
-              this.loggedUser?.username || 'unknown',
-              result.location,
-              result.deploymentStatus,
-              result.changeNumber,
-              result.reason,
-              accessToken
-            ).subscribe({
-              next: () => {
-                // Apply optimistic UI and set the current component to deleting status
-                const componentIndex = this.projectComponents.findIndex(c => c.name === result.componentName);
-                if (componentIndex !== -1) {
-                  this.projectComponents[componentIndex].status = 'DELETING';
-                }
-                this.toastService.showToast({
-                  id: '',
-                  read: false,
-                  subject: 'only_toast',
-                  title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
-                } as AppShellNotification, 8000);
-              },
-              error: (error) => {
-                console.error('Error executing action:', error);
-                this.toastService.showToast({
-                  id: '',
-                  read: false,
-                  subject: 'only_toast',
-                  title: 'Something went wrong. Please try again later.'
-                } as AppShellNotification, 8000);
-              }
-            });
-          }});
+        this.submitDeletionRequest(result);
       }
     });
+  }
+
+  private submitDeletionRequest(result: RequestDeletionDialogResult): void {
+    this.azureService.getRefreshedAccessToken().subscribe({
+      next: (accessToken) => {
+        /* eslint-disable @typescript-eslint/no-wrapper-object-types */
+        const incidentParams: CreateIncidentParameter[] = [
+          {
+            name: 'cluster_location',
+            type: 'string',
+            value: result.location as String // NOSONAR
+          },
+          {
+            name: 'caller',
+            type: 'string',
+            value: this.loggedUser?.username as String || 'unknown' // NOSONAR
+          },
+          {
+            name: 'is_deployed',
+            type: 'boolean',
+            value: result.deploymentStatus as Boolean // NOSONAR
+
+          },
+          {
+            name: 'change_number',
+            type: 'string',
+            value: result.changeNumber as String // NOSONAR
+          },
+          {
+            name: 'reason',
+            type: 'string',
+            value: result.reason as String // NOSONAR
+          },
+          {
+            name: 'access_token',
+            type: 'string',
+            value: accessToken as String // NOSONAR
+          },
+        ];
+        /* eslint-enable @typescript-eslint/no-wrapper-object-types */
+        this.provisionerService.requestComponentDeletion(
+          result.projectKey,
+          result.componentName,
+          incidentParams
+        ).subscribe({
+          next: () => this.onDeletionRequestSuccess(result.componentName),
+          error: (error) => this.onDeletionRequestError(error)
+        });
+      }
+    });
+  }
+
+  private onDeletionRequestSuccess(componentName: string): void {
+    // Apply optimistic UI and set the current component to deleting status
+    const componentIndex = this.projectComponents.findIndex(c => c.name === componentName);
+    if (componentIndex !== -1) {
+      this.projectComponents[componentIndex].status = 'DELETING';
+    }
+    this.toastService.showToast({
+      id: '',
+      read: false,
+      subject: 'only_toast',
+      title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
+    } as AppShellNotification, 8000);
+  }
+
+  private onDeletionRequestError(error: unknown): void {
+    console.error('Error executing action:', error);
+    this.toastService.showToast({
+      id: '',
+      read: false,
+      subject: 'only_toast',
+      title: 'Something went wrong. Please try again later.'
+    } as AppShellNotification, 8000);
   }
 
   private setConnectionErrorState() {

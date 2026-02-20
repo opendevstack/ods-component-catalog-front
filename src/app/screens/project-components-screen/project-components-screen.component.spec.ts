@@ -11,6 +11,7 @@ import { ProvisionerService } from '../../services/provisioner.service';
 import { AzureService } from '../../services/azure.service';
 import { AppShellNotification, AppShellToastService } from '@opendevstack/ngx-appshell';
 import { AppUser } from '../../models/app-user';
+import { CreateIncidentParameter } from '../../openapi/component-provisioner';
 
 describe('ProjectComponentsScreenComponent', () => {
   let component: ProjectComponentsScreenComponent;
@@ -237,15 +238,18 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
       expect(component.projectComponents[0].status).toBe('DELETING');
+      const incidentParams: CreateIncidentParameter[] = [
+        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
+        { name: 'caller', type: 'string', value: 'test-user' as String },
+        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
+        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
+        { name: 'reason', type: 'string', value: 'Test reason' as String },
+        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+      ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
         'test-component',
-        'test-user',
-        'LOC_1',
-        true,
-        'CHG1234567',
-        'Test reason',
-        'test-access-token'
+        incidentParams
       );
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
@@ -284,15 +288,18 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
       provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => new Error('Deletion failed')));
       component.onRequestDeletionClicked(testComponent);
+      const incidentParams: CreateIncidentParameter[] = [
+        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
+        { name: 'caller', type: 'string', value: 'test-user' as String },
+        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
+        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
+        { name: 'reason', type: 'string', value: 'Test reason' as String },
+        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+      ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
         'test-component',
-        'test-user',
-        'LOC_1',
-        true,
-        'CHG1234567',
-        'Test reason',
-        'test-access-token'
+        incidentParams
       );
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
@@ -331,15 +338,18 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
       component.loggedUser = null;
       component.onRequestDeletionClicked(testComponent);
+      const incidentParams: CreateIncidentParameter[] = [
+        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
+        { name: 'caller', type: 'string', value: 'unknown' as String },
+        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
+        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
+        { name: 'reason', type: 'string', value: 'Test reason' as String },
+        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+      ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
         'test-component',
-        'unknown',
-        'LOC_1',
-        true,
-        'CHG1234567',
-        'Test reason',
-        'test-access-token'
+        incidentParams
       );
     });
   });

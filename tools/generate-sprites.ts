@@ -28,8 +28,8 @@ function extractViewBox(svg: string): string {
 
 function stripInnerSvg(content: string): string {
   return content
-    .replace(/<svg[^>]*>/i, '')
-    .replace(/<\/svg>/i, '')
+    .replaceAll(/<svg[^>]*>/i, '')
+    .replaceAll(/<\/svg>/i, '')
     .trim();
 }
 

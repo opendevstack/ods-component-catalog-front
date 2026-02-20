@@ -8,7 +8,7 @@ import { AuthenticationResult } from "@azure/msal-browser";
 import { Observable, of, throwError } from 'rxjs';
 import { CatalogService } from './catalog.service';
 import { ProvisionerService } from './provisioner.service';
-import { CreateIncidentAction, ProvisionResultsService } from '../openapi/component-provisioner';
+import { CreateIncidentAction, CreateIncidentParameter, ProvisionResultsService } from '../openapi/component-provisioner';
 
 describe('ProvisionerService', () => {
   let service: ProvisionerService;
@@ -49,19 +49,21 @@ describe('ProvisionerService', () => {
     const changeNumber = '-';
     const accessToken = 'test-access-token';
 
-    service.requestComponentDeletion(projectKey, componentName, username, location, deploymentStatus, changeNumber, reason, accessToken).subscribe();
+    const incidentParams: CreateIncidentParameter[] = [
+      { name: 'cluster_location', type: 'string', value: location as String },
+      { name: 'caller', type: 'string', value: username as String },
+      { name: 'is_deployed', type: 'boolean', value: deploymentStatus as Boolean },
+      { name: 'change_number', type: 'string', value: changeNumber as String },
+      { name: 'reason', type: 'string', value: reason as String },
+      { name: 'access_token', type: 'string', value: accessToken as String }
+    ]
+
+    service.requestComponentDeletion(projectKey, componentName, incidentParams).subscribe();
 
     flushMicrotasks();
 
     const expectedAction = {
-      parameters: [
-        { name: 'cluster_location', type: 'string', value: location as String },
-        { name: 'caller', type: 'string', value: username as String },
-        { name: 'is_deployed', type: 'boolean', value: deploymentStatus as Boolean },
-        { name: 'change_number', type: 'string', value: changeNumber as String },
-        { name: 'reason', type: 'string', value: reason as String },
-        { name: 'access_token', type: 'string', value: accessToken as String }
-      ]
+      parameters: incidentParams
     } as CreateIncidentAction;
 
     expect(provisionResultsServiceSpy.createIncident).toHaveBeenCalledWith(projectKey,componentName,expectedAction);

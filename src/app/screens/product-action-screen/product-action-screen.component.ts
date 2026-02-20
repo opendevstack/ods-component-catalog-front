@@ -150,9 +150,9 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
           return;
         }
 
-        this.action = productAction!;
-        this.setupPageHeader(productAction!, product, catalog);
-        this.setupActionParameters(productAction!);
+        this.action = productAction;
+        this.setupPageHeader(productAction, product, catalog);
+        this.setupActionParameters(productAction);
       },
       error: () => {
         console.log('Error loading product');
@@ -368,26 +368,28 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
               value: this.formGroup.getRawValue()[param.name] || this.getParamDefaultValue(param) || ''
             })),
           };
-          actionBody.parameters.push({
-            name: 'catalog_item_id',
-            type: 'string',
-            value: this.product.id
-          });
-          actionBody.parameters.push({
-            name: 'access_token',
-            type: 'string',
-            value: refreshedAccessToken
-          });
-          actionBody.parameters.push({
-            name: 'caller',
-            type: 'string',
-            value: this.loggedUser?.username || 'unknown'
-          });
-          actionBody.parameters.push({
-            name: 'cluster_location',
-            type: 'string',
-            value: this.selectedProject!.location
-          });
+          actionBody.parameters.push(
+            {
+              name: 'catalog_item_id',
+              type: 'string',
+              value: this.product.id
+            },
+            {
+              name: 'access_token',
+              type: 'string',
+              value: refreshedAccessToken
+            },
+            {
+              name: 'caller',
+              type: 'string',
+              value: this.loggedUser?.username || 'unknown'
+            },
+            {
+              name: 'cluster_location',
+              type: 'string',
+              value: this.selectedProject!.location
+            }
+          );
           this.formGroup.disable();
           return this.http.post(actionUrl, actionBody);
         })
@@ -404,7 +406,7 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
           this.isExecutingAction = false;
 
           if (this.selectedProject?.projectKey) {
-            this.router.navigate([`/${this.selectedProject!.projectKey}/components`]);
+            this.router.navigate([`/${this.selectedProject.projectKey}/components`]);
           } else {
             console.log('Cannot retrieve catalog slug for navigation');
             this.router.navigate(['/']);

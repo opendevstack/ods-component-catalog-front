@@ -279,7 +279,7 @@ export class NatsService implements OnDestroy {
   }
 
   isValidMessage(message: NatsMessageData): boolean {
-    const isValidDate = !isNaN(Date.parse(message.date));
+    const isValidDate = !Number.isNaN(Date.parse(message.date));
     return isValidDate && message.title !== undefined && message.title !== '' && message.type !== undefined && ['info', 'success', 'error'].includes(message.type);
   }
 

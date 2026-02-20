@@ -66,9 +66,9 @@ export class CatalogService {
   getSlugUrl(slug: string): string {
     return slug.trim()
       .toLowerCase() // convert string to lowercase
-      .replace(/[^a-z0-9 -]/g, '') // remove any non-alphanumeric characters
-      .replace(/\s+/g, '-') // replace spaces with hyphens
-      .replace(/-+/g, '-'); // remove consecutive hyphens
+      .replaceAll(/[^a-z0-9 -]/g, '') // remove any non-alphanumeric characters
+      .replaceAll(/\s+/g, '-') // replace spaces with hyphens
+      .replaceAll(/-+/g, '-'); // remove consecutive hyphens
   }
 
   retrieveCatalogDescriptors(): Observable<CatalogDescriptor[]> {
