@@ -99,62 +99,51 @@ export class CatalogService {
 
   getProductsList(catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {
     return this.catalogItemsService.getCatalogItems(catalogDescriptor.id!, 'asc').pipe(
-      switchMap(items => Promise.all(items.map(async item => {
-        return this.mapCatalogItemToAppProductListItem(item, catalogDescriptor.slug!);
-      })))
+      switchMap(items => this.mapItemsToProductListItems(items, catalogDescriptor.slug!))
     );
   }
 
   getProjectProductsList(projectKey: string, catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {
-    return from(this.azureService.getRefreshedAccessToken()).pipe(
-      switchMap((accessToken) => {
-        return this.catalogItemsService.getCatalogItemsForProjectKey(catalogDescriptor.id!, accessToken, 'asc', projectKey).pipe(
-          switchMap(items => Promise.all(items.map(async item => {
-          return this.mapCatalogItemToAppProductListItem(item, catalogDescriptor.slug!);
-          })))
-        );
-      })
+    return this.withAccessToken(accessToken =>
+      this.catalogItemsService.getCatalogItemsForProjectKey(catalogDescriptor.id!, accessToken, 'asc', projectKey).pipe(
+        switchMap(items => this.mapItemsToProductListItems(items, catalogDescriptor.slug!))
+      )
     );
   }
 
   getProduct(id: string): Observable<AppProduct> {
     return this.catalogItemsService.getCatalogItemById(id).pipe(
-      switchMap(async (item) => {
-        let description = '';
-        try {
-          description = await firstValueFrom(this.filesService.getFileById(item.descriptionFileId!, FileFormat.Markdown, 'body', false, { httpHeaderAccept: 'text/*' }));
-        } catch (error: unknown) {
-          if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status !== 422) {
-            throw error;
-          }
-        }
-        const productImage = item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined;
-
-        return this.mapCatalogItemToAppProduct(item, description, productImage);
-      })
+      switchMap(item => this.fetchProductDetails(item))
     );
   }
 
   getProjectProduct(projectKey: string, id: string): Observable<AppProduct> {
-    return from(this.azureService.getRefreshedAccessToken()).pipe(
-      switchMap((accessToken) => {
-        return this.catalogItemsService.getCatalogItemByIdForProjectKey(id, projectKey, accessToken).pipe(
-          switchMap(async (item) => {
-            let description = '';
-            try {
-              description = await firstValueFrom(this.filesService.getFileById(item.descriptionFileId!, FileFormat.Markdown, 'body', false, { httpHeaderAccept: 'text/*' }));
-            } catch (error: unknown) {
-              if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status !== 422) {
-                throw error;
-              }
-            }
-            const productImage = item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined;
-
-            return this.mapCatalogItemToAppProduct(item, description, productImage);
-          })
-        );
-      })
+    return this.withAccessToken(accessToken =>
+      this.catalogItemsService.getCatalogItemByIdForProjectKey(id, projectKey, accessToken).pipe(
+        switchMap(item => this.fetchProductDetails(item))
+      )
     );
+  }
+
+  private withAccessToken<T>(fn: (accessToken: string) => Observable<T>): Observable<T> {
+    return from(this.azureService.getRefreshedAccessToken()).pipe(switchMap(fn));
+  }
+
+  private async fetchProductDetails(item: CatalogItem): Promise<AppProduct> {
+    let description = '';
+    try {
+      description = await firstValueFrom(this.filesService.getFileById(item.descriptionFileId!, FileFormat.Markdown, 'body', false, { httpHeaderAccept: 'text/*' }));
+    } catch (error: unknown) {
+      if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status !== 422) {
+        throw error;
+      }
+    }
+    const productImage = item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined;
+    return this.mapCatalogItemToAppProduct(item, description, productImage);
+  }
+
+  private mapItemsToProductListItems(items: CatalogItem[], slug: string): Promise<AppProduct[]> {
+    return Promise.all(items.map(item => this.mapCatalogItemToAppProductListItem(item, slug)));
   }
 
   getFilters(catalogId: string): Observable<AppShellFilter[]> {
@@ -178,30 +167,35 @@ export class CatalogService {
     }
   }
 
-  private async mapCatalogItemToAppProductListItem(item: CatalogItem, catalogSlug: string): Promise<AppProduct> {
+  private mapTags(tags: CatalogItem['tags']) {
+    return tags?.map(tag => ({ label: tag.label ?? '', options: tag.options ? Array.from(tag.options) : [] }));
+  }
+
+  private mapBaseProductFields(item: CatalogItem): Partial<AppProduct> {
     return {
       id: item.id,
       title: item.title,
       shortDescription: item.shortDescription,
+      tags: this.mapTags(item.tags),
+      authors: item.authors,
+      date: item.authors.length > 0 ? new Date(item.date) : undefined,
+    };
+  }
+
+  private async mapCatalogItemToAppProductListItem(item: CatalogItem, catalogSlug: string): Promise<AppProduct> {
+    return {
+      ...this.mapBaseProductFields(item),
       description: item.descriptionFileId,
       image: item.imageFileId ? await this.getProductImage(item.imageFileId) : undefined,
       link: `${this.getSlugUrl(catalogSlug)}/item/${item.id}`,
-      tags: item.tags?.map(tag => ({label: tag.label, options: tag.options ? Array.from(tag.options) : []})),
-      authors: item.authors,
-      date: item.authors.length > 0 ? new Date(item.date) : undefined,
-    } as AppProduct
+    } as AppProduct;
   }
 
   private mapCatalogItemToAppProduct(item: CatalogItem, description: string, image: string | undefined): AppProduct {
     return {
-      id: item.id,
-      title: item.title,
-      shortDescription: item.shortDescription,
-      description: description,
-      image: image,
-      tags: item.tags?.map(tag => ({ label: tag.label, options: tag.options ? Array.from(tag.options) : [] })),
-      authors: item.authors,
-      date: item.authors.length > 0 ? new Date(item.date) : undefined,
+      ...this.mapBaseProductFields(item),
+      description,
+      image,
       actions: item.userActions?.map(action => ({
         id: action.id,
         label: action.displayName,
