@@ -13,6 +13,7 @@ import { ProvisionerService } from '../../services/provisioner.service';
 import { AzureService } from '../../services/azure.service';
 import { AppUser } from '../../models/app-user';
 import { CreateIncidentParameter } from '../../openapi/component-provisioner';
+import { ComponentStatus } from '../../models/component-status';
 
 @Component({
   selector: 'app-project-components-screen',
@@ -139,6 +140,13 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
   }
 
   private submitDeletionRequest(result: RequestDeletionDialogResult): void {
+    // Apply optimistic UI and set the current component to deleting status
+    const componentIndex = this.projectComponents.findIndex(c => c.name === result.componentName);
+    let originalStatus: ComponentStatus | undefined = undefined;
+    if (componentIndex !== -1) {
+      originalStatus = this.projectComponents[componentIndex].status;
+      this.projectComponents[componentIndex].status = 'DELETING';
+    }
     this.azureService.getRefreshedAccessToken().subscribe({
       next: (accessToken) => {
         /* eslint-disable @typescript-eslint/no-wrapper-object-types */
@@ -181,19 +189,19 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
           result.componentName,
           incidentParams
         ).subscribe({
-          next: () => this.onDeletionRequestSuccess(result.componentName),
-          error: (error) => this.onDeletionRequestError(error)
+          next: () => this.onDeletionRequestSuccess(),
+          error: (error) => {
+            this.onDeletionRequestError(error)
+            if (originalStatus && componentIndex !== -1) {
+              this.projectComponents[componentIndex].status = originalStatus;
+            }
+          }
         });
       }
     });
   }
 
-  private onDeletionRequestSuccess(componentName: string): void {
-    // Apply optimistic UI and set the current component to deleting status
-    const componentIndex = this.projectComponents.findIndex(c => c.name === componentName);
-    if (componentIndex !== -1) {
-      this.projectComponents[componentIndex].status = 'DELETING';
-    }
+  private onDeletionRequestSuccess(): void {
     this.toastService.showToast({
       id: '',
       read: false,
