@@ -13,9 +13,13 @@
         <span>Mandatory</span>
     </div>
     
-    <mat-radio-group [(ngModel)]="deploymentStatus" class="deployment-status-group">
+    <mat-radio-group [(ngModel)]="deploymentStatus" required class="deployment-status-group" #deploymentStatusInput="ngModel">
         <mat-radio-button [value]="true">It is deployed in QA/Prod</mat-radio-button>
         <mat-radio-button [value]="false">It is in DEV or not deployed</mat-radio-button>
+        
+        <mat-error *ngIf="deploymentStatusInput.touched && deploymentStatusInput.errors?.['required']">
+            This field is mandatory
+        </mat-error>
     </mat-radio-group>
 
     <div *ngIf="deploymentStatus" class="change-request-section">

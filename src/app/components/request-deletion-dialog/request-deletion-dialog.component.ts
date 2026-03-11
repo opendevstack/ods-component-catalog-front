@@ -1,11 +1,11 @@
-import { Component, Inject, ViewEncapsulation } from '@angular/core';
+import { Component, Inject, QueryList, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { RequestDeletionDialogData, RequestDeletionDialogResult } from '../../models/request-deletion-dialog-data';
 import { AppShellIconComponent } from '@opendevstack/ngx-appshell';
 
@@ -29,6 +29,8 @@ import { AppShellIconComponent } from '@opendevstack/ngx-appshell';
 })
 export class RequestDeletionDialogComponent {
 
+  @ViewChildren(NgModel) controls!: QueryList<NgModel>;
+
   deploymentStatus: boolean | undefined = undefined;
   changeNumber: string = '';
   reason: string = '';
@@ -41,6 +43,7 @@ export class RequestDeletionDialogComponent {
   ) {}
 
   onAccept(): void {
+    this.controls.forEach(c => c.control.markAsTouched());
     if (this.deploymentStatus === undefined) {
       return;
     }
