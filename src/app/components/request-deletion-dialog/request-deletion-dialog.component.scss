@@ -67,6 +67,17 @@ app-request-deletion-dialog {
                 --mat-radio-label-text-color: var(--appshell-color-dark-green-main)!important;
                 --mat-radio-label-text-size: 14px;
             }
+
+            &.ng-invalid.ng-touched mat-radio-button {
+                --mdc-radio-unselected-icon-color: #E10A0A!important;
+            }
+
+            mat-error {
+                line-height: var(--mat-form-field-subscript-text-line-height);
+                font-size: var(--mat-form-field-subscript-text-size);
+                letter-spacing: var(--mat-form-field-subscript-text-tracking);
+                font-weight: var(--mat-form-field-subscript-text-weight);
+            }
         }
 
         .change-request-section {
