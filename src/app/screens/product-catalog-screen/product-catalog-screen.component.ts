@@ -40,8 +40,7 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._destroying$))
       .subscribe(() => {
         if(this.currentCatalog) {
-          this.loadProducts(this.currentCatalog);
-          this.setupBreadcrumbs(this.currentCatalog);
+          this.initializeCatalogView(this.currentCatalog);
         }
       });
 
