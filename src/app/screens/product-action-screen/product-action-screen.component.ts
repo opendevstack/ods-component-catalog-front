@@ -375,19 +375,9 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
               value: this.product.id
             },
             {
-              name: 'access_token',
+              name: 'access_token', // ToDo: when using access token in headers, this parameter is not needed and the provisioner should retrieve it and add the param.
               type: 'string',
               value: refreshedAccessToken
-            },
-            {
-              name: 'caller',
-              type: 'string',
-              value: this.loggedUser?.username || 'unknown'
-            },
-            {
-              name: 'cluster_location',
-              type: 'string',
-              value: this.selectedProject!.location
             }
           );
           this.formGroup.disable();

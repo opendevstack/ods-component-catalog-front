@@ -257,9 +257,7 @@ describe('ProductActionScreenComponent', () => {
         { name: 'param_5', type: 'string', value: 'value_location_1' },
         { name: 'param_6', type: 'singlelist', value: '' },
         { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
-        { name: 'caller', type: 'string', value: 'unknown' },
-        { name: 'cluster_location', type: 'string', value: 'location 1' }
+        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
       ]
     })
     req.flush({});
@@ -295,9 +293,7 @@ describe('ProductActionScreenComponent', () => {
       id: 'fakeAction',
       parameters: [
         { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
-        { name: 'caller', type: 'string', value: 'test-user' },
-        { name: 'cluster_location', type: 'string', value: 'location 1' }
+        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
       ],
     })
     req.flush({});
@@ -330,9 +326,7 @@ describe('ProductActionScreenComponent', () => {
       id: 'fakeAction',
       parameters: [
         { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
-        { name: 'caller', type: 'string', value: 'test-user' },
-        { name: 'cluster_location', type: 'string', value: 'LOC_1' }
+        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
       ],
     })
     req.flush({});
@@ -373,9 +367,7 @@ describe('ProductActionScreenComponent', () => {
         { name: 'param_1', type: 'string', value: 'value1' },
         { name: 'param_2', type: 'string', value: 'value2' },
         { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
-        { name: 'caller', type: 'string', value: 'test-user' },
-        { name: 'cluster_location', type: 'string', value: 'location 1' }
+        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
       ],
     });
 
@@ -423,8 +415,6 @@ describe('ProductActionScreenComponent', () => {
         { name: 'param_1', type: 'string', value: 'value1' },
         { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
         { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
-        { name: 'caller', type: 'string', value: 'test-user' },
-        { name: 'cluster_location', type: 'string', value: 'location 1' }
       ],
     });
 
