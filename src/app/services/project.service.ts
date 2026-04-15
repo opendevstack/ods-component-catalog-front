@@ -7,7 +7,6 @@ import { ProjectComponentsService } from '../openapi/component-catalog';
 import { ProjectComponent } from '../models/project-component';
 import { ComponentStatus } from '../models/component-status';
 import { CatalogService } from './catalog.service';
-import { AuthenticationResult } from "@azure/msal-browser";
 
 @Injectable({
   providedIn: 'root'
