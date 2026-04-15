@@ -4,7 +4,6 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { Router } from '@angular/router';
 import { AzureService } from './services/azure.service';
 import { tokenInterceptor } from './token.interceptor';
-import { AuthenticationResult } from '@azure/msal-browser';
 
 describe('TokenInterceptor', () => {
 
@@ -13,7 +12,7 @@ describe('TokenInterceptor', () => {
   let mockAzureService: jasmine.SpyObj<AzureService>;
 
   beforeEach(() => {
-    mockAzureService = jasmine.createSpyObj('AzureService', ['getIdToken', 'refreshToken', 'login']);
+    mockAzureService = jasmine.createSpyObj('AzureService', ['getAccessToken', 'login']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -33,9 +32,10 @@ describe('TokenInterceptor', () => {
   });
 
   it('should add an Authorization header', fakeAsync(() => {
-    mockAzureService.getIdToken.and.returnValue('test-token');
+    mockAzureService.getAccessToken.and.returnValue(Promise.resolve('test-token'));
 
     http.get('/test').subscribe(() => {});
+    tick();
 
     const req = httpTestingController.expectOne(
       (r) => {
@@ -50,11 +50,12 @@ describe('TokenInterceptor', () => {
   }));
 
   it('should refresh token on 401 or 403 error and retry the request', fakeAsync(() => {
-    mockAzureService.getIdToken.and.returnValue('expired-token');
-    const newAuthResult: AuthenticationResult = { idToken: 'new-token' } as AuthenticationResult;
-    mockAzureService.refreshToken.and.returnValue(Promise.resolve(newAuthResult));
+    mockAzureService.getAccessToken.and.callFake((forceRefresh?: boolean) =>
+      Promise.resolve(forceRefresh ? 'new-token' : 'expired-token')
+    );
 
     http.get('/test').subscribe(() => {});
+    tick();
 
     const req = httpTestingController.expectOne(
       (r) => {
@@ -65,7 +66,7 @@ describe('TokenInterceptor', () => {
 
     req.flush(null, { status: 401, statusText: 'Unauthorized' });
 
-    tick(); // Simulate the passage of time for the retry
+    tick(); // Resolve the force-refresh getAccessToken(true) promise
 
     const newReq = httpTestingController.expectOne(
       (r) => {
@@ -80,12 +81,14 @@ describe('TokenInterceptor', () => {
   }));
 
   it('should do nothing on refresh token failure', fakeAsync(() => {
-    mockAzureService.getIdToken.and.returnValue('expired-token');
-    mockAzureService.refreshToken.and.returnValue(Promise.reject(() => new Error('Refresh token failed')));
+    mockAzureService.getAccessToken.and.callFake((forceRefresh?: boolean) =>
+      forceRefresh ? Promise.reject(new Error('Refresh token failed')) : Promise.resolve('expired-token')
+    );
 
     http.get('/test').subscribe({
       error: () => {}
     });
+    tick();
 
     const req = httpTestingController.expectOne('/test');
     req.flush(null, { status: 401, statusText: 'Unauthorized' });
@@ -93,14 +96,42 @@ describe('TokenInterceptor', () => {
     httpTestingController.verify();
   }));
 
+  it('should navigate to /page-not-found when retry request fails with 403', fakeAsync(() => {
+    const mockRouter = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    mockAzureService.getAccessToken.and.callFake((forceRefresh?: boolean) =>
+      Promise.resolve(forceRefresh ? 'new-token' : 'expired-token')
+    );
+
+    http.get('/test').subscribe({ error: () => {} });
+    tick();
+
+    const req = httpTestingController.expectOne(
+      (r) => r.headers.get('Authorization') === 'Bearer expired-token'
+    );
+    req.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    tick(); // Resolve the force-refresh getAccessToken(true) promise
+
+    const retryReq = httpTestingController.expectOne(
+      (r) => r.headers.get('Authorization') === 'Bearer new-token'
+    );
+    retryReq.flush(null, { status: 403, statusText: 'Forbidden' });
+
+    tick();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/page-not-found']);
+    httpTestingController.verify();
+  }));
+
   it('should pass through non-401/403 errors', fakeAsync(() => {
-    mockAzureService.getIdToken.and.returnValue('test-token');
+    mockAzureService.getAccessToken.and.returnValue(Promise.resolve('test-token'));
 
     http.get('/test').subscribe({
       error: (error) => {
         expect(error.status).toBe(500);
       }
     });
+    tick();
 
     const req = httpTestingController.expectOne('/test');
     req.flush(null, { status: 500, statusText: 'Server Error' });

@@ -147,56 +147,47 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       originalStatus = this.projectComponents[componentIndex].status;
       this.projectComponents[componentIndex].status = 'DELETING';
     }
-    this.azureService.getRefreshedAccessToken().subscribe({
-      next: (accessToken) => {
-        /* eslint-disable @typescript-eslint/no-wrapper-object-types */
-        const incidentParams: CreateIncidentParameter[] = [
-          {
-            name: 'cluster_location',
-            type: 'string',
-            value: result.location as String // NOSONAR
-          },
-          {
-            name: 'caller',
-            type: 'string',
-            value: this.loggedUser?.username as String || 'unknown' // NOSONAR
-          },
-          {
-            name: 'is_deployed',
-            type: 'boolean',
-            value: result.deploymentStatus as Boolean // NOSONAR
+    /* eslint-disable @typescript-eslint/no-wrapper-object-types */
+    const incidentParams: CreateIncidentParameter[] = [
+      {
+        name: 'cluster_location',
+        type: 'string',
+        value: result.location as String // NOSONAR
+      },
+      {
+        name: 'caller',
+        type: 'string',
+        value: this.loggedUser?.username as String || 'unknown' // NOSONAR
+      },
+      {
+        name: 'is_deployed',
+        type: 'boolean',
+        value: result.deploymentStatus as Boolean // NOSONAR
 
-          },
-          {
-            name: 'change_number',
-            type: 'string',
-            value: result.changeNumber as String // NOSONAR
-          },
-          {
-            name: 'reason',
-            type: 'string',
-            value: result.reason as String // NOSONAR
-          },
-          {
-            name: 'access_token',
-            type: 'string',
-            value: accessToken as String // NOSONAR
-          },
-        ];
-        /* eslint-enable @typescript-eslint/no-wrapper-object-types */
-        this.provisionerService.requestComponentDeletion(
-          result.projectKey,
-          result.componentName,
-          incidentParams
-        ).subscribe({
-          next: () => this.onDeletionRequestSuccess(),
-          error: (error) => {
-            this.onDeletionRequestError(error)
-            if (originalStatus && componentIndex !== -1) {
-              this.projectComponents[componentIndex].status = originalStatus;
-            }
-          }
-        });
+      },
+      {
+        name: 'change_number',
+        type: 'string',
+        value: result.changeNumber as String // NOSONAR
+      },
+      {
+        name: 'reason',
+        type: 'string',
+        value: result.reason as String // NOSONAR
+      }
+    ];
+    /* eslint-enable @typescript-eslint/no-wrapper-object-types */
+    this.provisionerService.requestComponentDeletion(
+      result.projectKey,
+      result.componentName,
+      incidentParams
+    ).subscribe({
+      next: () => this.onDeletionRequestSuccess(),
+      error: (error) => {
+        this.onDeletionRequestError(error)
+        if (originalStatus && componentIndex !== -1) {
+          this.projectComponents[componentIndex].status = originalStatus;
+        }
       }
     });
   }

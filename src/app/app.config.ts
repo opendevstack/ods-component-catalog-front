@@ -1,6 +1,8 @@
 import { AppConfigService } from './services/app-config.service';
 import { msalProviders } from './azure.config';
-import { ApplicationConfig, provideZoneChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, provideAppInitializer, inject, Injector } from '@angular/core';
+import { MsalService } from '@azure/msal-angular';
+import { firstValueFrom } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideMarkdown } from 'ngx-markdown';
@@ -30,9 +32,15 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const appConfigService = inject(AppConfigService);
       const iconService = inject(IconRegistryService);
-      return appConfigService.loadConfig().then(() => 
-        iconService.registerIconsFromManifest()
-      );
+      const injector = inject(Injector);
+      return appConfigService.loadConfig()
+        .then(() => iconService.registerIconsFromManifest())
+        .then(() => {
+          const msalService = injector.get(MsalService);
+          return firstValueFrom(msalService.initialize()).then(() =>
+            firstValueFrom(msalService.handleRedirectObservable())
+          );
+        });
     }),
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,

@@ -243,8 +243,7 @@ describe('ProjectComponentsScreenComponent', () => {
         { name: 'caller', type: 'string', value: 'test-user' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
@@ -293,8 +292,7 @@ describe('ProjectComponentsScreenComponent', () => {
         { name: 'caller', type: 'string', value: 'test-user' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
@@ -343,8 +341,7 @@ describe('ProjectComponentsScreenComponent', () => {
         { name: 'caller', type: 'string', value: 'unknown' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',

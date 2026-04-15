@@ -61,7 +61,7 @@ export function MSALGuardConfigFactory(config: AppConfigService): MsalGuardConfi
   return {
     interactionType: InteractionType.Redirect,
     authRequest: {
-      scopes: [...config.getConfig()?.apiConfig?.scopes || []],
+      scopes: [...config.getConfig()?.apiConfig?.scopes || [], 'User.Read'],
     },
     loginFailedRoute: '/login-failed',
   };

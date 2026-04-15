@@ -41,7 +41,7 @@ describe('AppComponent', () => {
     azureLoggedUser$ = new Subject<AppUser>();
     natsLiveMessage$ = new Subject<NatsMessage | null>();
     natsMessageCount$ = new Subject<number>();
-    mockAzureService = jasmine.createSpyObj('AzureService', ['initialize', 'login', 'logout', 'refreshToken'], { loggedUser$: azureLoggedUser$.asObservable() });
+    mockAzureService = jasmine.createSpyObj('AzureService', ['initialize', 'login', 'logout', 'getAccessToken'], { loggedUser$: azureLoggedUser$.asObservable() });
     mockNatsService = jasmine.createSpyObj('NatsService', ['initialize', 'initializeUser', 'readMessages', 'isValidMessage'], { liveMessage$: natsLiveMessage$.asObservable(), unreadMessagesCount$: natsMessageCount$.asObservable() });
     mockToastService = jasmine.createSpyObj('AppShellToastService', ['showToast'], { toasts$: of([]) });
     mockCatalogService = jasmine.createSpyObj(
@@ -77,7 +77,7 @@ describe('AppComponent', () => {
     mockCatalogService.getSelectedCatalogSlug.and.returnValue(null);
     mockCatalogService.getSelectedCatalogDescriptor.and.returnValue({ slug: 'test-catalog', id: '1' });
     mockAppConfigService.getConfig.and.returnValue({ natsUrl: 'nats://localhost:4222' });
-    mockAzureService.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'new-token' } as any));
+    mockAzureService.getAccessToken.and.returnValue(Promise.resolve('new-token'));
     mockProjectService.getUserProjects.and.returnValue(of([]));
     mockDialogRef.afterClosed.and.returnValue(dialogSubject.asObservable());
     mockMatDialog.open.and.returnValue(mockDialogRef);

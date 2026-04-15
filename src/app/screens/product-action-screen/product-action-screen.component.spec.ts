@@ -256,8 +256,7 @@ describe('ProductActionScreenComponent', () => {
         { name: 'param_4', type: 'string', value: '' },
         { name: 'param_5', type: 'string', value: 'value_location_1' },
         { name: 'param_6', type: 'singlelist', value: '' },
-        { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
+        { name: 'catalog_item_id', type: 'string', value: 'fakeId' }
       ]
     })
     req.flush({});
@@ -292,8 +291,7 @@ describe('ProductActionScreenComponent', () => {
     expect(req.request.body).toEqual({
       id: 'fakeAction',
       parameters: [
-        { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
+        { name: 'catalog_item_id', type: 'string', value: 'fakeId' }
       ],
     })
     req.flush({});
@@ -325,8 +323,7 @@ describe('ProductActionScreenComponent', () => {
     expect(req.request.body).toEqual({
       id: 'fakeAction',
       parameters: [
-        { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
+        { name: 'catalog_item_id', type: 'string', value: 'fakeId' }
       ],
     })
     req.flush({});
@@ -366,8 +363,7 @@ describe('ProductActionScreenComponent', () => {
       parameters: [
         { name: 'param_1', type: 'string', value: 'value1' },
         { name: 'param_2', type: 'string', value: 'value2' },
-        { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' }
+        { name: 'catalog_item_id', type: 'string', value: 'fakeId' }
       ],
     });
 
@@ -413,8 +409,7 @@ describe('ProductActionScreenComponent', () => {
       id: 'fakeAction',
       parameters: [
         { name: 'param_1', type: 'string', value: 'value1' },
-        { name: 'catalog_item_id', type: 'string', value: 'fakeId' },
-        { name: 'access_token', type: 'string', value: 'fakeAccessToken' },
+        { name: 'catalog_item_id', type: 'string', value: 'fakeId' }
       ],
     });
 

@@ -139,8 +139,8 @@ export class AppComponent implements OnInit, OnDestroy {
           // Apply optimistic UI, start with it and later apply validations after fetching projects to avoid empty parts
           this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: currentProjectForUi.projectKey};
         }
-        this.azureService.refreshToken().then((azureData) => {
-          this.projectService.getUserProjects(azureData.accessToken).subscribe((projects: string[]) => {
+        this.azureService.getAccessToken().then((accessToken: string) => {
+          this.projectService.getUserProjects(accessToken).subscribe((projects: string[]) => {
             user.projects = projects;
             this.initializeNats(user);
             if (projects.length > 0) {

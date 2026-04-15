@@ -59,8 +59,8 @@ export class ProjectService {
       return this.userProjectsRequest$;
     }
 
-    this.userProjectsRequest$ = from(this.azureService.refreshToken()).pipe(
-      switchMap((azureData: AuthenticationResult) => this.getUserProjects(azureData.accessToken)),
+    this.userProjectsRequest$ = from(this.azureService.getAccessToken()).pipe(
+      switchMap((accessToken: string) => this.getUserProjects(accessToken)),
       finalize(() => {
         this.userProjectsRequest$ = null;
       }),
@@ -83,11 +83,11 @@ export class ProjectService {
   setCurrentProject(projectKey: string | null): void {
     const requestId = ++this.setProjectRequestId;
     if (projectKey) {
-      this.azureService.refreshToken().then((azureData: AuthenticationResult) => {
+      this.azureService.getAccessToken().then((accessToken: string) => {
         if (requestId !== this.setProjectRequestId) {
           return;
         }
-        this.getProjectCluster(projectKey, azureData.accessToken).subscribe(cluster => {
+        this.getProjectCluster(projectKey, accessToken).subscribe(cluster => {
           if (requestId !== this.setProjectRequestId) {
             return;
           }
@@ -103,9 +103,9 @@ export class ProjectService {
   }
 
   getProjectComponents(projectKey: string): Observable<ProjectComponent[]> {
-    return from(this.azureService.refreshToken()).pipe(
-      switchMap((azureData: AuthenticationResult) =>
-        this.projectComponentsService.getProjectComponents(projectKey, azureData.accessToken).pipe(
+    return from(this.azureService.getAccessToken()).pipe(
+      switchMap((accessToken: string) =>
+        this.projectComponentsService.getProjectComponents(projectKey, accessToken).pipe(
           switchMap(components =>
             from(Promise.all(components.map(async component => ({
               name: component.componentId || '',

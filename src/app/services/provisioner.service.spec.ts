@@ -47,15 +47,13 @@ describe('ProvisionerService', () => {
     const reason = 'No longer needed';
     const deploymentStatus = false;
     const changeNumber = '-';
-    const accessToken = 'test-access-token';
 
     const incidentParams: CreateIncidentParameter[] = [
       { name: 'cluster_location', type: 'string', value: location as String },
       { name: 'caller', type: 'string', value: username as String },
       { name: 'is_deployed', type: 'boolean', value: deploymentStatus as Boolean },
       { name: 'change_number', type: 'string', value: changeNumber as String },
-      { name: 'reason', type: 'string', value: reason as String },
-      { name: 'access_token', type: 'string', value: accessToken as String }
+      { name: 'reason', type: 'string', value: reason as String }
     ]
 
     service.requestComponentDeletion(projectKey, componentName, incidentParams).subscribe();
