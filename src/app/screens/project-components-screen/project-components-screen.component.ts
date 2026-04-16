@@ -128,7 +128,6 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       data: {
         componentName: component.name,
         projectKey: this.selectedProject.projectKey,
-        location: this.selectedProject.location
       }
     });
 
@@ -149,16 +148,6 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     }
     /* eslint-disable @typescript-eslint/no-wrapper-object-types */
     const incidentParams: CreateIncidentParameter[] = [
-      {
-        name: 'cluster_location',
-        type: 'string',
-        value: result.location as String // NOSONAR
-      },
-      {
-        name: 'caller',
-        type: 'string',
-        value: this.loggedUser?.username as String || 'unknown' // NOSONAR
-      },
       {
         name: 'is_deployed',
         type: 'boolean',

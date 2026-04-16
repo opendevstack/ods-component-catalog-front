@@ -78,8 +78,7 @@ describe('RequestDeletionDialogComponent', () => {
       changeNumber: '-',
       reason: 'Test reason',
       projectKey: 'test-project',
-      componentName: 'test-component',
-      location: 'test-location'
+      componentName: 'test-component'
     });
   });
 
@@ -95,8 +94,7 @@ describe('RequestDeletionDialogComponent', () => {
       changeNumber: 'CHG1234567',
       reason: 'Test reason',
       projectKey: 'test-project',
-      componentName: 'test-component',
-      location: 'test-location'
+      componentName: 'test-component'
     });
   });
 
