@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { BASE_PATH, ProjectInfo, ProjectsService } from '../openapi/projects-info-service';
 import { ProjectComponentsService } from '../openapi/component-catalog';
 import { AzureService } from './azure.service';
-import { AuthenticationResult } from "@azure/msal-browser";
 import { Observable, of, throwError } from 'rxjs';
 import { CatalogService } from './catalog.service';
 
@@ -18,7 +17,7 @@ describe('ProjectService', () => {
   beforeEach(() => {
     localStorage.clear();
     projectsServiceSpy = jasmine.createSpyObj('ProjectsService', ['getProjects']);
-    azureServiceSpy = jasmine.createSpyObj('AzureService', ['getAzureProjects', 'refreshToken']);
+    azureServiceSpy = jasmine.createSpyObj('AzureService', ['getAccessToken']);
     projectComponentsServiceSpy = jasmine.createSpyObj('ProjectComponentsService', ['listProjectComponents']);
     catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProductImage']);
 
@@ -33,7 +32,7 @@ describe('ProjectService', () => {
       ]
     });
 
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'dummy-token' } as AuthenticationResult));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('dummy-token'));
     catalogServiceSpy.getProductImage.and.returnValue(Promise.resolve('http://example.com/image.png'));
 
     service = TestBed.inject(ProjectService);
@@ -115,7 +114,7 @@ describe('ProjectService', () => {
       const storedProject = JSON.parse(localStorage.getItem('selectedProject')!);
       expect(storedProject).toEqual({ projectKey: 'project1', location: 'cluster1' });
       expect(service.getCurrentProject()).toEqual({ projectKey: 'project1', location: 'cluster1' });
-      expect(azureServiceSpy.refreshToken).toHaveBeenCalled();
+      expect(azureServiceSpy.getAccessToken).toHaveBeenCalled();
       done();
     }, 100);
   });
@@ -154,17 +153,17 @@ describe('ProjectService', () => {
     service.setCurrentProject('project1');
   });
 
-  it('ensureUserProjectsLoaded should return cached value and not call refreshToken', (done) => {
+  it('ensureUserProjectsLoaded should return cached value and not call getAccessToken', (done) => {
     const mockProjects: string[] = ['project1', 'project2'];
     projectsServiceSpy.getProjects.and.returnValue(of(mockProjects as any) as any);
 
     service.getUserProjects('test-token').subscribe(() => {
       projectsServiceSpy.getProjects.calls.reset();
-      azureServiceSpy.refreshToken.calls.reset();
+      azureServiceSpy.getAccessToken.calls.reset();
 
       service.ensureUserProjectsLoaded().subscribe(projects => {
         expect(projects).toEqual(mockProjects);
-        expect(azureServiceSpy.refreshToken).not.toHaveBeenCalled();
+        expect(azureServiceSpy.getAccessToken).not.toHaveBeenCalled();
         expect(projectsServiceSpy.getProjects).not.toHaveBeenCalled();
         done();
       });
@@ -178,21 +177,21 @@ describe('ProjectService', () => {
       resolveToken = resolve;
     });
 
-    azureServiceSpy.refreshToken.and.returnValue(tokenPromise as any);
+    azureServiceSpy.getAccessToken.and.returnValue(tokenPromise as any);
     projectsServiceSpy.getProjects.and.returnValue(of(mockProjects as any) as any);
 
     const request1$ = service.ensureUserProjectsLoaded();
     const request2$ = service.ensureUserProjectsLoaded();
 
     expect(request2$).toBe(request1$);
-    expect(azureServiceSpy.refreshToken).toHaveBeenCalledTimes(1);
+    expect(azureServiceSpy.getAccessToken).toHaveBeenCalledTimes(1);
 
     let result1: string[] | undefined;
     let result2: string[] | undefined;
     request1$.subscribe(r => (result1 = r));
     request2$.subscribe(r => (result2 = r));
 
-    resolveToken!({ accessToken: 'dummy-token' });
+    resolveToken!('dummy-token');
     flushMicrotasks();
 
     expect(projectsServiceSpy.getProjects).toHaveBeenCalledTimes(1);
@@ -204,7 +203,7 @@ describe('ProjectService', () => {
 
   it('ensureUserProjectsLoaded should load from backend when cache is empty and populate cache', fakeAsync(() => {
     const mockProjects: string[] = ['project1', 'project2'];
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'dummy-token' } as any));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('dummy-token'));
     projectsServiceSpy.getProjects.and.returnValue(of(mockProjects as any) as any);
 
     let result: string[] | undefined;
@@ -213,19 +212,19 @@ describe('ProjectService', () => {
 
     expect(result).toEqual(mockProjects);
     expect(service.getCachedUserProjects()).toEqual(mockProjects);
-    expect(azureServiceSpy.refreshToken).toHaveBeenCalledTimes(1);
+    expect(azureServiceSpy.getAccessToken).toHaveBeenCalledTimes(1);
     expect(projectsServiceSpy.getProjects).toHaveBeenCalledWith('dummy-token');
 
-    azureServiceSpy.refreshToken.calls.reset();
+    azureServiceSpy.getAccessToken.calls.reset();
     projectsServiceSpy.getProjects.calls.reset();
     service.ensureUserProjectsLoaded().subscribe();
 
-    expect(azureServiceSpy.refreshToken).not.toHaveBeenCalled();
+    expect(azureServiceSpy.getAccessToken).not.toHaveBeenCalled();
     expect(projectsServiceSpy.getProjects).not.toHaveBeenCalled();
   }));
 
   it('ensureUserProjectsLoaded should reset in-flight request on error (finalize) and allow retry', fakeAsync(() => {
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'dummy-token' } as any));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('dummy-token'));
     projectsServiceSpy.getProjects.and.returnValue(throwError(() => new Error('backend error')));
 
     let firstError: any;
@@ -242,7 +241,7 @@ describe('ProjectService', () => {
     service.ensureUserProjectsLoaded().subscribe(r => (retryResult = r));
     flushMicrotasks();
 
-    expect(azureServiceSpy.refreshToken).toHaveBeenCalledTimes(2);
+    expect(azureServiceSpy.getAccessToken).toHaveBeenCalledTimes(2);
     expect(retryResult).toEqual(['project1']);
     expect(service.getCachedUserProjects()).toEqual(['project1']);
   }));
@@ -258,9 +257,9 @@ describe('ProjectService', () => {
       });
     });
 
-    azureServiceSpy.refreshToken.and.returnValues(
-      Promise.resolve({ accessToken: 't1' } as any),
-      Promise.resolve({ accessToken: 't2' } as any)
+    azureServiceSpy.getAccessToken.and.returnValues(
+      Promise.resolve('t1'),
+      Promise.resolve('t2')
     );
 
     service.setCurrentProject('project1');
@@ -285,7 +284,7 @@ describe('ProjectService', () => {
     expect(setItemValues.some(v => v.includes('"projectKey":"project2"'))).toBeTrue();
   }));
 
-  it('should ignore stale refreshToken resolution when setCurrentProject is called again (requestId guard before getProjectClusters)', fakeAsync(() => {
+  it('should ignore stale getAccessToken resolution when setCurrentProject is called again (requestId guard before getProjectClusters)', fakeAsync(() => {
     spyOn(localStorage, 'setItem').and.callThrough();
 
     let resolveToken1: ((value: any) => void) | undefined;
@@ -294,7 +293,7 @@ describe('ProjectService', () => {
     const tokenPromise1 = new Promise<any>(resolve => (resolveToken1 = resolve));
     const tokenPromise2 = new Promise<any>(resolve => (resolveToken2 = resolve));
 
-    azureServiceSpy.refreshToken.and.returnValues(tokenPromise1 as any, tokenPromise2 as any);
+    azureServiceSpy.getAccessToken.and.returnValues(tokenPromise1 as any, tokenPromise2 as any);
 
     projectsServiceSpy.getProjectClusters = jasmine.createSpy().and.callFake((token: string, projectKey: string) => {
       return of({ projectKey, clusters: [`${projectKey}-cluster`] } as any);
@@ -304,7 +303,7 @@ describe('ProjectService', () => {
     service.setCurrentProject('project2');
 
     // Resolve the second token first; it should win.
-    resolveToken2!({ accessToken: 't2' });
+    resolveToken2!('t2');
     flushMicrotasks();
 
     expect(projectsServiceSpy.getProjectClusters).toHaveBeenCalledTimes(1);
@@ -317,7 +316,7 @@ describe('ProjectService', () => {
     });
 
     // Now resolve the first token after it's stale; it should be ignored entirely (no backend call, no storage update).
-    resolveToken1!({ accessToken: 't1' });
+    resolveToken1!('t1');
     flushMicrotasks();
 
     expect(projectsServiceSpy.getProjectClusters).toHaveBeenCalledTimes(1);
@@ -346,7 +345,7 @@ describe('ProjectService', () => {
       }
     ];
 
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'test-token' } as AuthenticationResult));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('test-token'));
     projectComponentsServiceSpy.getProjectComponents = jasmine.createSpy().and.returnValue(of(mockComponents as any));
 
     let result: any;
@@ -356,7 +355,7 @@ describe('ProjectService', () => {
 
     flushMicrotasks();
 
-    expect(azureServiceSpy.refreshToken).toHaveBeenCalled();
+    expect(azureServiceSpy.getAccessToken).toHaveBeenCalled();
     expect(projectComponentsServiceSpy.getProjectComponents).toHaveBeenCalledWith('PROJECT_1', 'test-token');
     expect(result).toEqual([
       {
@@ -397,7 +396,7 @@ describe('ProjectService', () => {
       }
     ];
 
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'test-token' } as AuthenticationResult));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('test-token'));
     projectComponentsServiceSpy.getProjectComponents = jasmine.createSpy().and.returnValue(of(mockComponentsWithMissingData as any));
 
     let result: any;
@@ -407,7 +406,7 @@ describe('ProjectService', () => {
 
     flushMicrotasks();
 
-    expect(azureServiceSpy.refreshToken).toHaveBeenCalled();
+    expect(azureServiceSpy.getAccessToken).toHaveBeenCalled();
     expect(projectComponentsServiceSpy.getProjectComponents).toHaveBeenCalledWith('PROJECT_1', 'test-token');
     expect(result).toEqual([
       {
@@ -452,7 +451,7 @@ describe('ProjectService', () => {
       }
     ];
 
-    azureServiceSpy.refreshToken.and.returnValue(Promise.resolve({ accessToken: 'test-token' } as AuthenticationResult));
+    azureServiceSpy.getAccessToken.and.returnValue(Promise.resolve('test-token'));
     projectComponentsServiceSpy.getProjectComponents = jasmine.createSpy().and.returnValue(of(mockComponents as any));
     catalogServiceSpy.getProductImage.and.returnValue(Promise.resolve(undefined));
 

@@ -17,7 +17,7 @@ import { ProductActionParameterValidation } from '../../models/product-action-pa
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { ProjectService } from '../../services/project.service';
-import { Subject, switchMap, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { AppProject } from '../../models/project';
 import { AzureService } from '../../services/azure.service';
 import { AppUser } from '../../models/app-user';
@@ -358,32 +358,23 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
     if (this.formGroup.valid && this.action.url && this.selectedProject) {
       this.isExecutingAction = true;
       const actionUrl = this.action.url;
-      this.azureService.getRefreshedAccessToken().pipe(
-        switchMap((refreshedAccessToken: string) => {
-          const actionBody = {
-            id: this.action.id,
-            parameters: this.actionParams.map(param => ({
-              name: param.name,
-              type: param.type,
-              value: this.formGroup.getRawValue()[param.name] || this.getParamDefaultValue(param) || ''
-            })),
-          };
-          actionBody.parameters.push(
-            {
-              name: 'catalog_item_id',
-              type: 'string',
-              value: this.product.id
-            },
-            {
-              name: 'access_token', // ToDo: when using access token in headers, this parameter is not needed and the provisioner should retrieve it and add the param.
-              type: 'string',
-              value: refreshedAccessToken
-            }
-          );
-          this.formGroup.disable();
-          return this.http.post(actionUrl, actionBody);
-        })
-      ).subscribe({
+      const actionBody = {
+        id: this.action.id,
+        parameters: this.actionParams.map(param => ({
+          name: param.name,
+          type: param.type,
+          value: this.formGroup.getRawValue()[param.name] || this.getParamDefaultValue(param) || ''
+        })),
+      };
+      actionBody.parameters.push(
+        {
+          name: 'catalog_item_id',
+          type: 'string',
+          value: this.product.id
+        }
+      );
+      this.formGroup.disable();
+      this.http.post(actionUrl, actionBody).subscribe({
         next: () => {
           if(this.action.triggerMessage && this.action.triggerMessage !== '') {
             this.toastService.showToast({

@@ -1,9 +1,10 @@
 import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
-import { AuthenticationResult, EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
-import { BehaviorSubject, filter, from, map, Observable, Subject, takeUntil } from "rxjs";
+import { EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
+import { BehaviorSubject, filter, from, Observable, Subject, takeUntil } from "rxjs";
 import { Router } from "@angular/router";
 import { AppUser } from "../models/app-user";
+import { AppConfigService } from "./app-config.service";
 
 @Injectable({
     providedIn: 'root'
@@ -12,6 +13,9 @@ export class AzureService implements OnDestroy {
     isIframe = false;
     loginDisplay = false;
     private readonly _destroying$ = new Subject<void>();
+    private cachedAccessToken: string | null = null;
+    private tokenExpiresOn: Date | null = null;
+    private static readonly TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
     isFirstTime = true;
     loggedUser$ = new BehaviorSubject<AppUser | null >(null);
@@ -20,11 +24,11 @@ export class AzureService implements OnDestroy {
       @Inject(MSAL_GUARD_CONFIG) private readonly msalGuardConfig: MsalGuardConfiguration,
       private readonly msalService: MsalService,
       private readonly msalBroadcastService: MsalBroadcastService,
-      private readonly router: Router
+      private readonly router: Router,
+      private readonly appConfigService: AppConfigService
     ) {}
 
     initialize() {
-        this.msalService.handleRedirectObservable().subscribe();
         this.isIframe = window !== window.parent && !window.opener; // NOSONAR - Remove this line to use Angular Universal
 
         this.setLoginDisplay();
@@ -55,24 +59,37 @@ export class AzureService implements OnDestroy {
             this.setLoginDisplay();
             this.checkAndSetActiveAccount();
         });
+
+        this.checkAndSetActiveAccount();
     }
 
     setLoginDisplay() {
         this.loginDisplay = this.msalService.instance.getAllAccounts().length > 0;
     }
 
-    getIdToken(): string {
-        return this.msalService.instance.getActiveAccount()?.idToken ?? '';
-    }
-
-    refreshToken(): Promise<AuthenticationResult> {
-        return this.msalService.instance.acquireTokenSilent({scopes: ["User.Read"]});
+    async getAccessToken(forceRefresh = false): Promise<string> {
+        const now = new Date(Date.now() + AzureService.TOKEN_EXPIRY_BUFFER_MS);
+        if (!forceRefresh && this.cachedAccessToken && this.tokenExpiresOn && this.tokenExpiresOn > now) {
+            return this.cachedAccessToken;
+        }
+        const scopes = this.appConfigService.getConfig()?.apiConfig?.scopes ?? [];
+        let account = this.msalService.instance.getActiveAccount();
+        if (!account) {
+            const accounts = this.msalService.instance.getAllAccounts();
+            if (accounts.length === 0) {
+                throw new Error('No accounts found. User must sign in first.');
+            }
+            account = accounts[0];
+            this.msalService.instance.setActiveAccount(account);
+        }
+        const result = await this.msalService.instance.acquireTokenSilent({ scopes, account });
+        this.cachedAccessToken = result.accessToken;
+        this.tokenExpiresOn = result.expiresOn;
+        return this.cachedAccessToken;
     }
 
     getRefreshedAccessToken(): Observable<string> {
-        return from(this.refreshToken()).pipe(
-            map((azureData: AuthenticationResult) => azureData.accessToken)
-        );
+        return from(this.getAccessToken(true));
     }
 
     refreshLoggedUser(): void {
@@ -153,6 +170,8 @@ export class AzureService implements OnDestroy {
     }
 
     logout() {
+        this.cachedAccessToken = null;
+        this.tokenExpiresOn = null;
         this.msalService.logout();
     }
 

@@ -179,8 +179,7 @@ describe('ProjectComponentsScreenComponent', () => {
         autoFocus: false,
         data: { 
           componentName: 'test-component',
-          projectKey: 'PROJECT_1',
-          location: 'LOC_1'
+          projectKey: 'PROJECT_1'
         }
       });
     });
@@ -202,8 +201,7 @@ describe('ProjectComponentsScreenComponent', () => {
         autoFocus: false,
         data: { 
           componentName: 'another-test-component',
-          projectKey: 'PROJECT_2',
-          location: 'LOC_2'
+          projectKey: 'PROJECT_2'
         }
       });
     });
@@ -229,8 +227,7 @@ describe('ProjectComponentsScreenComponent', () => {
         changeNumber: 'CHG1234567',
         reason: 'Test reason',
         projectKey: 'PROJECT_1',
-        componentName: 'test-component',
-        location: 'LOC_1'
+        componentName: 'test-component'
       };
       spyOn(component.dialog, 'open').and.returnValue({ 
         afterClosed: () => of(mockResult) 
@@ -239,12 +236,9 @@ describe('ProjectComponentsScreenComponent', () => {
       component.onRequestDeletionClicked(testComponent);
       expect(component.projectComponents[0].status).toBe('DELETING');
       const incidentParams: CreateIncidentParameter[] = [
-        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
-        { name: 'caller', type: 'string', value: 'test-user' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
@@ -280,8 +274,7 @@ describe('ProjectComponentsScreenComponent', () => {
         changeNumber: 'CHG1234567',
         reason: 'Test reason',
         projectKey: 'PROJECT_1',
-        componentName: 'test-component',
-        location: 'LOC_1'
+        componentName: 'test-component'
       };
       spyOn(component.dialog, 'open').and.returnValue({ 
         afterClosed: () => of(mockResult) 
@@ -289,12 +282,9 @@ describe('ProjectComponentsScreenComponent', () => {
       provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => new Error('Deletion failed')));
       component.onRequestDeletionClicked(testComponent);
       const incidentParams: CreateIncidentParameter[] = [
-        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
-        { name: 'caller', type: 'string', value: 'test-user' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
@@ -330,8 +320,7 @@ describe('ProjectComponentsScreenComponent', () => {
         changeNumber: 'CHG1234567',
         reason: 'Test reason',
         projectKey: 'PROJECT_1',
-        componentName: 'test-component',
-        location: 'LOC_1'
+        componentName: 'test-component'
       };
       spyOn(component.dialog, 'open').and.returnValue({ 
         afterClosed: () => of(mockResult) 
@@ -339,12 +328,9 @@ describe('ProjectComponentsScreenComponent', () => {
       component.loggedUser = null;
       component.onRequestDeletionClicked(testComponent);
       const incidentParams: CreateIncidentParameter[] = [
-        { name: 'cluster_location', type: 'string', value: 'LOC_1' as String },
-        { name: 'caller', type: 'string', value: 'unknown' as String },
         { name: 'is_deployed', type: 'boolean', value: true as Boolean },
         { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String },
-        { name: 'access_token', type: 'string', value: 'test-access-token' as String }
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
       ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',

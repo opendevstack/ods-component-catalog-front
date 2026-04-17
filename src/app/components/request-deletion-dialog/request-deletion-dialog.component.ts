@@ -60,8 +60,7 @@ export class RequestDeletionDialogComponent {
       changeNumber: this.deploymentStatus ? this.changeNumber : '-',
       reason: this.reason,
       projectKey: this.data.projectKey,
-      componentName: this.data.componentName,
-      location: this.data.location
+      componentName: this.data.componentName
     };
     this.dialogRef.close(result);
   }

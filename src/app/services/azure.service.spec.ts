@@ -4,6 +4,7 @@ import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalSe
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { AuthenticationResult, EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
 import { Router } from '@angular/router';
+import { AppConfigService } from './app-config.service';
 
 const destroyingMethodName = '_destroying$';
 const fakeToken = 'test-token';
@@ -16,6 +17,7 @@ describe('AzureService', () => {
     let inProgress$: Subject<InteractionStatus>;
     const msalInstanceSpy = jasmine.createSpyObj('instance', ['enableAccountStorageEvents', 'getAllAccounts', 'getActiveAccount', 'setActiveAccount', 'acquireTokenSilent']);
     const mockRouter: jasmine.SpyObj<Router> =  jasmine.createSpyObj('Router', ['navigate']);;
+    const appConfigServiceSpy = jasmine.createSpyObj('AppConfigService', ['getConfig']);
 
     beforeEach(() => {
         msalSubject$ = new Subject<EventMessage>();
@@ -26,6 +28,7 @@ describe('AzureService', () => {
             msalSubject$: msalSubject$.asObservable(),
             inProgress$: inProgress$.asObservable()
         });
+        appConfigServiceSpy.getConfig.and.returnValue({ apiConfig: { scopes: ['User.Read'] } });
         
         TestBed.configureTestingModule({
             providers: [
@@ -33,7 +36,8 @@ describe('AzureService', () => {
                 { provide: MSAL_GUARD_CONFIG, useValue: msalGuardConfig },
                 { provide: MsalService, useValue: msalServiceSpy },
                 { provide: MsalBroadcastService, useValue: msalBroadcastServiceSpy },
-                { provide: Router, useValue: mockRouter }
+                { provide: Router, useValue: mockRouter },
+                { provide: AppConfigService, useValue: appConfigServiceSpy }
             ]
         });
 
@@ -41,7 +45,11 @@ describe('AzureService', () => {
         msalService = TestBed.inject(MsalService) as jasmine.SpyObj<MsalService>;
         msalInstanceSpy.getAllAccounts.and.returnValue([{}]);
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
+        msalInstanceSpy.acquireTokenSilent.calls.reset();
         msalService.instance = msalInstanceSpy;
+        // Clear the token cache so each test starts fresh
+        (service as any).cachedAccessToken = null;
+        (service as any).tokenExpiresOn = null;
         msalGuardConfig.interactionType = InteractionType.Redirect;
         
         window.onbeforeunload = () => "Oh no!"; // Prevent page reloads during tests 
@@ -64,15 +72,13 @@ describe('AzureService', () => {
     });
 
     it('initialize method works', () => {
-        msalService.handleRedirectObservable.and.returnValue(of({} as AuthenticationResult));
         service.initialize();
         msalSubject$.next({eventType: EventType.ACCOUNT_ADDED} as EventMessage);
         inProgress$.next(InteractionStatus.None);
-        expect(msalService.handleRedirectObservable).toHaveBeenCalled();
+        expect(msalService.instance.enableAccountStorageEvents).toHaveBeenCalled();
     });
 
     it('initialize - should set window.location.pathname to "/" when all accounts are removed', fakeAsync(() => {
-        msalService.handleRedirectObservable.and.returnValue(of({} as AuthenticationResult));
         msalInstanceSpy.getAllAccounts.and.returnValue([]);
         service.initialize();
         msalSubject$.next({ eventType: EventType.ACCOUNT_REMOVED } as EventMessage);
@@ -136,7 +142,7 @@ describe('AzureService', () => {
         msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
 
-        spyOn(window, 'fetch').and.returnValue(Promise.reject(new Error('Error fetching profile picture')));
+        spyOn(window, 'fetch').and.callFake(() => Promise.reject(new Error('Error fetching profile picture')));
 
         service.refreshLoggedUser();
 
@@ -180,9 +186,15 @@ describe('AzureService', () => {
         expect(msalService.loginRedirect).toHaveBeenCalledWith();
     });
 
-    it('logout - should call logout on msalService', () => {
+    it('logout - should call logout on msalService and clear the token cache', () => {
+        (service as any).cachedAccessToken = 'cached-token';
+        (service as any).tokenExpiresOn = new Date(Date.now() + 10 * 60 * 1000);
+
         service.logout();
+
         expect(msalService.logout).toHaveBeenCalled();
+        expect((service as any).cachedAccessToken).toBeNull();
+        expect((service as any).tokenExpiresOn).toBeNull();
     });
 
     it('checkAndSetActiveAccount - should set the first account as active if no active account is set', () => {
@@ -244,56 +256,10 @@ describe('AzureService', () => {
         expect(service[destroyingMethodName].complete).toHaveBeenCalled();
     });
 
-    it('getIdToken - should return the idToken of the active account', () => {
-        const activeAccount = { idToken: 'test-id-token' };
-        msalInstanceSpy.getActiveAccount.and.returnValue(activeAccount);
-    
-        const token = service.getIdToken();
-    
-        expect(token).toBe('test-id-token');
-    });
-    
-    it('getIdToken - should return an empty string if no active account', () => {
-        msalInstanceSpy.getActiveAccount.and.returnValue(null);
-    
-        const token = service.getIdToken();
-    
-        expect(token).toBe('');
-    });
-
-    it('refreshToken - should call acquireTokenSilent with correct scopes', () => {
-        const acquireTokenSilentSpy = msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
-    
-        service.refreshToken();
-    
-        expect(acquireTokenSilentSpy).toHaveBeenCalledWith({ scopes: ["User.Read"] });
-    });
-    
-    it('refreshToken - should return a promise that resolves with the access token', async () => {
-        const expectedToken = { accessToken: fakeToken } as AuthenticationResult;
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve(expectedToken));
-    
-        const result = await service.refreshToken();
-    
-        expect(result).toEqual(expectedToken);
-    });
-    
-    it('refreshToken - should return a promise that rejects with an error', async () => {
-        const expectedError = new Error('Error acquiring token silently');
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.reject(expectedError));
-    
-        try {
-            await service.refreshToken();
-            fail('Expected promise to be rejected');
-        } catch (error) {
-            expect(error).toEqual(expectedError);
-        }
-    });
-    
     it('getRefreshedAccessToken - should return an observable that emits the access token', (done) => {
         const expectedToken = 'test-access-token';
-        const authResult = { accessToken: expectedToken } as AuthenticationResult;
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve(authResult));
+        const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
+        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: expectedToken, expiresOn }));
 
         service.getRefreshedAccessToken().subscribe((token) => {
             expect(token).toEqual(expectedToken);
@@ -313,6 +279,85 @@ describe('AzureService', () => {
             }
         });
     });
-    
-});
 
+    describe('getAccessToken', () => {
+        it('should call acquireTokenSilent and return access token', async () => {
+            const expectedToken = 'test-access-token';
+            const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
+            msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: expectedToken, expiresOn }));
+
+            const token = await service.getAccessToken();
+
+            expect(token).toBe(expectedToken);
+            expect(msalInstanceSpy.acquireTokenSilent).toHaveBeenCalledWith(jasmine.objectContaining({ scopes: ['User.Read'] }));
+        });
+
+        it('should return cached token if still valid', async () => {
+            const expectedToken = 'cached-token';
+            const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
+            msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: expectedToken, expiresOn }));
+
+            await service.getAccessToken(); // Populate cache
+            msalInstanceSpy.acquireTokenSilent.calls.reset();
+
+            const token = await service.getAccessToken(); // Should use cache
+
+            expect(token).toBe(expectedToken);
+            expect(msalInstanceSpy.acquireTokenSilent).not.toHaveBeenCalled();
+        });
+
+        it('should call acquireTokenSilent when forceRefresh is true even if cached', async () => {
+            const initialToken = 'initial-token';
+            const refreshedToken = 'refreshed-token';
+            const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
+            msalInstanceSpy.acquireTokenSilent.and.returnValues(
+                Promise.resolve({ accessToken: initialToken, expiresOn }),
+                Promise.resolve({ accessToken: refreshedToken, expiresOn })
+            );
+
+            await service.getAccessToken(); // Populate cache
+            const token = await service.getAccessToken(true); // Force refresh
+
+            expect(token).toBe(refreshedToken);
+            expect(msalInstanceSpy.acquireTokenSilent).toHaveBeenCalledTimes(2);
+        });
+
+        it('should call acquireTokenSilent when cached token is within expiry buffer', async () => {
+            const expiredToken = 'near-expiry-token';
+            const newToken = 'new-token';
+            // Expires in 4 minutes — within the 5-minute buffer, so should be treated as expired
+            const nearExpiryDate = new Date(Date.now() + 4 * 60 * 1000);
+            const validDate = new Date(Date.now() + 10 * 60 * 1000);
+            msalInstanceSpy.acquireTokenSilent.and.returnValues(
+                Promise.resolve({ accessToken: expiredToken, expiresOn: nearExpiryDate }),
+                Promise.resolve({ accessToken: newToken, expiresOn: validDate })
+            );
+
+            await service.getAccessToken(); // Populate cache with near-expiry token
+            const token = await service.getAccessToken(); // Should fetch a new token
+
+            expect(token).toBe(newToken);
+            expect(msalInstanceSpy.acquireTokenSilent).toHaveBeenCalledTimes(2);
+        });
+
+        it('should throw an error when there is no active account and no accounts are available', async () => {
+            msalInstanceSpy.getActiveAccount.and.returnValue(null);
+            msalInstanceSpy.getAllAccounts.and.returnValue([]);
+
+            await expectAsync(service.getAccessToken()).toBeRejectedWithError('No accounts found. User must sign in first.');
+        });
+
+        it('should fall back to empty scopes when getConfig returns null', async () => {
+            appConfigServiceSpy.getConfig.and.returnValue(null);
+            const expectedToken = 'test-token';
+            const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
+            msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: expectedToken, expiresOn }));
+
+            const token = await service.getAccessToken();
+
+            expect(token).toBe(expectedToken);
+            expect(msalInstanceSpy.acquireTokenSilent).toHaveBeenCalledWith(jasmine.objectContaining({ scopes: [] }));
+        });
+    });
+
+});

@@ -10,5 +10,4 @@ export interface RequestDeletionDialogResult {
     deploymentStatus: boolean;
     changeNumber: string;
     reason: string;
-    location: string;
 }
