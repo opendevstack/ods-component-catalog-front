@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppShellFilter } from '@opendevstack/ngx-appshell';
-import { BehaviorSubject, firstValueFrom, from, map, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable, switchMap } from 'rxjs';
 import { Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService } from '../openapi/component-catalog';
 import { AppProduct } from '../models/app-product';
 import { ProductActionParameter } from '../models/product-action-parameter';
