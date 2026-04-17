@@ -5,7 +5,6 @@ import { Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersSe
 import { AppProduct } from '../models/app-product';
 import { ProductActionParameter } from '../models/product-action-parameter';
 import { ProductAction } from '../models/product-action';
-import { AzureService } from './azure.service';
 
 @Injectable({
   providedIn: 'root'
@@ -27,8 +26,7 @@ export class CatalogService {
     private readonly catalogsService: CatalogsService,
     private readonly catalogItemsService: CatalogItemsService,
     private readonly catalogFiltersService: CatalogFiltersService,
-    private readonly filesService: FilesService,
-    private readonly azureService: AzureService
+    private readonly filesService: FilesService
   ) {}
 
   setSelectedCatalogSlug(slug: string | null): void {
@@ -104,10 +102,8 @@ export class CatalogService {
   }
 
   getProjectProductsList(projectKey: string, catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {
-    return this.withAccessToken(accessToken =>
-      this.catalogItemsService.getCatalogItemsForProjectKey(catalogDescriptor.id!, accessToken, 'asc', projectKey).pipe(
-        switchMap(items => this.mapItemsToProductListItems(items, catalogDescriptor.slug!))
-      )
+    return this.catalogItemsService.getCatalogItemsForProjectKey(catalogDescriptor.id!, 'asc', projectKey).pipe(
+      switchMap(items => this.mapItemsToProductListItems(items, catalogDescriptor.slug!))
     );
   }
 
@@ -118,15 +114,9 @@ export class CatalogService {
   }
 
   getProjectProduct(projectKey: string, id: string): Observable<AppProduct> {
-    return this.withAccessToken(accessToken =>
-      this.catalogItemsService.getCatalogItemByIdForProjectKey(id, projectKey, accessToken).pipe(
-        switchMap(item => this.fetchProductDetails(item))
-      )
+    return this.catalogItemsService.getCatalogItemByIdForProjectKey(id, projectKey).pipe(
+      switchMap(item => this.fetchProductDetails(item))
     );
-  }
-
-  private withAccessToken<T>(fn: (accessToken: string) => Observable<T>): Observable<T> {
-    return from(this.azureService.getRefreshedAccessToken()).pipe(switchMap(fn));
   }
 
   private async fetchProductDetails(item: CatalogItem): Promise<AppProduct> {

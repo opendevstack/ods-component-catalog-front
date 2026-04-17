@@ -48,12 +48,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: accessToken
-          in: query
-          description: access token for azure queries.
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           description: A list of Project Component Information
@@ -152,6 +146,72 @@ paths:
                 $ref: '#/components/schemas/RestErrorMessage'
         "404":
           description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+  /catalog-items/slug/{slug}:
+    get:
+      tags:
+        - CatalogItems
+      summary: Returns the CatalogItem associated to the provided slug.
+      description: >
+        Returns the CatalogItem identified by a composite slug with format `{project-key}_{catalog-item-repository-name}`.<br/>
+        The separator is the first underscore (`_`); everything after it (the repo name) may itself contain underscores.<br/>
+        The project-key is the normalised (lowercase) Bitbucket project key that owns the item's repository.
+        The catalog-item-repository-name is matched against the Bitbucket repository slug of the item.<br/>
+        Returns 404 if no catalog item matches the provided slug.
+      operationId: getCatalogItemBySlug
+      parameters:
+        - name: slug
+          in: path
+          description: >
+            Composite slug with format `{project-key}_{catalog-item-repository-name}`.
+            The separator is the first underscore; the repo name may contain additional underscores.
+            Example: `myproject_my-component-repo`
+          required: true
+          schema:
+            type: string
+            example: 'myproject_my-component-repo'
+      responses:
+        "200":
+          description: The CatalogItem.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItem'
+        "400":
+          description: Invalid or malformed slug provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: No CatalogItem associated to the provided slug.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "422":
+          description: Invalid CatalogItem associated to the provided slug.
           content:
             application/json:
               schema:
@@ -291,12 +351,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: accessToken
-          in: query
-          description: access token for azure queries.
-          required: true
-          schema:
-            type: string
         - name: sortByTitle
           in: query
           description: Sort the returned CatalogItems by title, either in ascending or descending order.
@@ -367,12 +421,6 @@ paths:
         - name: projectKey
           in: path
           description: project key.
-          required: true
-          schema:
-            type: string
-        - name: accessToken
-          in: query
-          description: access token for azure queries.
           required: true
           schema:
             type: string
@@ -642,10 +690,49 @@ paths:
     put:
       tags:
         - ProvisionerActions
-      summary: Notify provisioning Status Update
+      summary: Create new project component
+      description: >
+        This endpoint will create a new project component.
+      operationId: notifyProvisioningStatusUpdate
+      parameters:
+        - name: project-key
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: path
+          description: Provisioning status for the component.
+          required: true
+          example: CREATING
+          schema:
+            type: string
+            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvisioningStatusUpdateRequest'
+      responses:
+        "200":
+          description: Provisioning status update completed.
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid client token on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+    patch:
+      tags:
+        - ProvisionerActions
+      summary: Update an existing project component
       description: >
         This endpoint receives provisioning status update notifications from AWX.
-      operationId: notifyProvisioningStatusUpdate
+      operationId: notifyProvisioningStatusUpdatePartially
       parameters:
         - name: project-key
           in: path
@@ -787,6 +874,12 @@ components:
         id:
           type: string
           example: 'aSdFam...yCg=='
+        slug:
+          type: string
+          description: >
+            Composite slug computed from the normalised Bitbucket project key and the repository slug of the item,
+            in the format `{project-key}_{repo-name}`. Calculated at mapping time; not retrieved from Bitbucket.
+          example: 'myproject_my-component-repo'
         path:
           type: string
           example: projects/SOMEPROJECT/repos/some-repo/raw/CatalogItem.yaml?at=refs/heads/master
@@ -836,6 +929,7 @@ components:
         - date
       example:
         id: aSdFam...yCg==
+        slug: myproject_some-repo
         path: projects/SOMEPROJECT/repos/some-repo/raw/CatalogItem.yaml?at=refs/heads/master
         title: An item title
         shortDescription: This is a short description for the item
@@ -974,6 +1068,10 @@ components:
           type: string
           nullable: true
           example: 'some hint for a workflow'
+        sendOnDeletion:
+          type: boolean
+          nullable: true
+          example: false
         visible:
           type: boolean
           example: 'true'
@@ -1096,15 +1194,40 @@ components:
           pattern: '^(?!\s*$).+'      # reject whitespace-only
           description: The componentId set by the user.
           example: "any-component-id-from-backend"
+
         catalogItemId:
           type: string
           description: The base64 encoded path for the catalogItem. It may include branch reference.
           example: "cHJvamVjdHMvQ0FURVNUL3JlcG9zL3VzZXItYWN0aW9ucy1pdGVtL3Jhdy9DYXRhbG9nSXRlbS55YW1sP2F0PXJlZnMvaGVhZHMvbWFzdGVy"
+
         componentUrl:
           type: string
           description: the repository url where the component was provisioned
           example: "https://bitbucket.com/projects/DEVSTACK/repos/devstack-component-catalog"
           nullable: true
+
+        parameters:
+          type: array
+          description: List of name/value string parameters.
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+                description: Parameter name
+                example: "environment"
+              values:
+                type: array
+                description: Parameter values
+                items:
+                  type: string
+                example:
+                  - "production"
+                  - "staging"
+
     ProvisioningDeleteRequest:
       type: object
       properties:
@@ -1114,3 +1237,25 @@ components:
           pattern: '^(?!\s*$).+'      # reject whitespace-only
           description: The componentId set by the user.
           example: "any-component-id-from-backend"
+
+        parameters:
+          type: array
+          description: List of name/value string parameters.
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+                description: Parameter name
+                example: "environment"
+              values:
+                type: array
+                description: Parameter values
+                items:
+                  type: string
+                example:
+                  - "production"
+                  - "staging"

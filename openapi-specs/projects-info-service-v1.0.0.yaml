@@ -34,13 +34,6 @@ paths:
       description: > 
           This endpoint receives an azure token, and returns all the groups associated to the user.
       operationId: getAzureGroups
-      parameters:
-        - name: token
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Azure token used to get the groups.
       responses:
         "200":
           description: List of azure groups associated to the user.
@@ -77,13 +70,6 @@ paths:
         Get all the projects a user get access to. For that, first of all it will get all the azure groups associated to the user, 
         and then it will get all the projects associated to those groups.
       operationId: getProjects
-      parameters:
-        - name: token
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Azure token used to get the groups.
       responses:
         "200":
           description: List of projects the user has access to.
@@ -120,12 +106,6 @@ paths:
         Get all project info and cluster for a given project key.
       operationId: getProjectClusters
       parameters:
-        - name: token
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Azure token used to get the groups.
         - name: projectKey
           in: path
           required: true
