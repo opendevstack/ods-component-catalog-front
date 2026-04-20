@@ -139,25 +139,22 @@ export class AppComponent implements OnInit, OnDestroy {
           // Apply optimistic UI, start with it and later apply validations after fetching projects to avoid empty parts
           this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: currentProjectForUi.projectKey};
         }
-        this.azureService.getAccessToken().then((accessToken: string) => {
-          this.projectService.getUserProjects(accessToken).subscribe((projects: string[]) => {
-            user.projects = projects;
-            this.initializeNats(user);
-            if (projects.length > 0) {
-              const latestCurrentProject = this.projectService.getCurrentProject();
-              if (latestCurrentProject != null && projects.includes(latestCurrentProject.projectKey)) {
-                this.pickProject(latestCurrentProject.projectKey);
-                this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: latestCurrentProject.projectKey, options: projects};
-              } else {
-                this.pickProject(projects[0]);
-                this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: projects[0], options: projects};
-              }
+        this.projectService.getUserProjects().subscribe((projects: string[]) => {
+          user.projects = projects;
+          this.initializeNats(user);
+          if (projects.length > 0) {
+            const latestCurrentProject = this.projectService.getCurrentProject();
+            if (latestCurrentProject != null && projects.includes(latestCurrentProject.projectKey)) {
+              this.pickProject(latestCurrentProject.projectKey);
+              this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: latestCurrentProject.projectKey, options: projects};
             } else {
-              this.pickProject(null);
-              this.projectPicker = {...this.projectPicker, label: 'Select project', selected: undefined, options: [] };
+              this.pickProject(projects[0]);
+              this.projectPicker = {...this.projectPicker, label: 'Project: ', selected: projects[0], options: projects};
             }
-
-          });
+          } else {
+            this.pickProject(null);
+            this.projectPicker = {...this.projectPicker, label: 'Select project', selected: undefined, options: [] };
+          }
         });
       }
     });

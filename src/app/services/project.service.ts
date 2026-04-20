@@ -35,8 +35,8 @@ export class ProjectService {
     }
   }
   
-  getUserProjects(userToken: string): Observable<string[]> {
-    return this.projectsService.getProjects(userToken).pipe(
+  getUserProjects(): Observable<string[]> {
+    return this.projectsService.getProjects().pipe(
       tap(projects => {
         this.userProjects = projects;
         this.userProjectsSubject.next(projects);
@@ -58,8 +58,7 @@ export class ProjectService {
       return this.userProjectsRequest$;
     }
 
-    this.userProjectsRequest$ = from(this.azureService.getAccessToken()).pipe(
-      switchMap((accessToken: string) => this.getUserProjects(accessToken)),
+    this.userProjectsRequest$ = this.getUserProjects().pipe(
       finalize(() => {
         this.userProjectsRequest$ = null;
       }),
@@ -69,8 +68,8 @@ export class ProjectService {
     return this.userProjectsRequest$;
   }
 
-  getProjectCluster(project: string, userToken: string): Observable<string> {
-    return this.projectsService.getProjectClusters(userToken, project).pipe(
+  getProjectCluster(project: string): Observable<string> {
+    return this.projectsService.getProjectClusters(project).pipe(
       map(projectInfo => projectInfo.clusters.length > 0 ? projectInfo.clusters[0] : '')
     );
   }
@@ -82,18 +81,13 @@ export class ProjectService {
   setCurrentProject(projectKey: string | null): void {
     const requestId = ++this.setProjectRequestId;
     if (projectKey) {
-      this.azureService.getAccessToken().then((accessToken: string) => {
+      this.getProjectCluster(projectKey).subscribe(cluster => {
         if (requestId !== this.setProjectRequestId) {
           return;
         }
-        this.getProjectCluster(projectKey, accessToken).subscribe(cluster => {
-          if (requestId !== this.setProjectRequestId) {
-            return;
-          }
-          const project: AppProject = { projectKey: projectKey, location: cluster };
-          localStorage.setItem(this.PROJECT_STORAGE_KEY, JSON.stringify(project));
-          this.projectSubject.next(project);
-        });
+        const project: AppProject = { projectKey: projectKey, location: cluster };
+        localStorage.setItem(this.PROJECT_STORAGE_KEY, JSON.stringify(project));
+        this.projectSubject.next(project);
       });
     } else {
       localStorage.removeItem(this.PROJECT_STORAGE_KEY);
@@ -102,19 +96,15 @@ export class ProjectService {
   }
 
   getProjectComponents(projectKey: string): Observable<ProjectComponent[]> {
-    return from(this.azureService.getAccessToken()).pipe(
-      switchMap((accessToken: string) =>
-        this.projectComponentsService.getProjectComponents(projectKey, accessToken).pipe(
-          switchMap(components =>
-            from(Promise.all(components.map(async component => ({
-              name: component.componentId || '',
-              status: (component.status as ComponentStatus) || 'UNKNOWN',
-              logo: component.logoUrl ? (await this.catalogService.getProductImage(component.logoUrl)) ?? null : null,
-              url: component.componentUrl || '',
-              canDelete: component.canBeDeleted || false
-            }))))
-          )
-        )
+    return this.projectComponentsService.getProjectComponents(projectKey).pipe(
+      switchMap(components =>
+        from(Promise.all(components.map(async component => ({
+          name: component.componentId || '',
+          status: (component.status as ComponentStatus) || 'UNKNOWN',
+          logo: component.logoUrl ? (await this.catalogService.getProductImage(component.logoUrl)) ?? null : null,
+          url: component.componentUrl || '',
+          canDelete: component.canBeDeleted || false
+        }))))
       )
     );
   }

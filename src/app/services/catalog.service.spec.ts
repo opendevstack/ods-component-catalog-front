@@ -6,8 +6,6 @@ import { BASE_PATH, Catalog, CatalogDescriptor, CatalogDescriptorsService, Catal
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { AppProduct } from '../models/app-product';
-import { AzureService } from './azure.service';
-
 
 const currentDate = new Date();
 
@@ -21,8 +19,6 @@ const fakeProductsFromItems: AppProduct[] = [
   { id: '2', title: 'Product 2', shortDescription: 'Short description 2', description: 'Description 2', image: undefined, tags: [{label: 'cat1', options: []}, {label: '', options: ['tag-without-label']}], authors: ['author2'], date: currentDate, actions: [{label: 'action', id: 'name', triggerMessage: 'fake', url: 'url', requestable: false, restrictionMessage: '', parameters: [{name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{regex: '*', errorMessage: 'Error'}]}, {name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{location: 'location 1', value: 'test 2'}, {location: 'location 2', value: 'test 22'}]}]}, {label: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2', requestable: false, restrictionMessage: '', parameters: []}] }
 ];
 
-const userAccessToken = 'fakeToken';
-
 describe('CatalogService', () => {
   let service: CatalogService;
   let catalogItemsServiceSpy: jasmine.SpyObj<CatalogItemsServiceInterface>;
@@ -30,7 +26,6 @@ describe('CatalogService', () => {
   let filesServiceSpy: jasmine.SpyObj<FilesServiceInterface>;
   let catalogsServiceSpy: jasmine.SpyObj<CatalogsServiceInterface>;
   let catalogDescriptorsServiceSpy: jasmine.SpyObj<CatalogDescriptorsServiceInterface>;
-  let azureServiceSpy: jasmine.SpyObj<AzureService>;
 
   beforeEach(() => {
     try {
@@ -44,7 +39,6 @@ describe('CatalogService', () => {
     filesServiceSpy = jasmine.createSpyObj('FilesService', ['getFileById']);
     catalogsServiceSpy = jasmine.createSpyObj('CatalogsService', ['getCatalog']);
     catalogDescriptorsServiceSpy = jasmine.createSpyObj('CatalogDescriptorsService', ['getCatalogDescriptors']);
-    azureServiceSpy = jasmine.createSpyObj('AzureService', ['getRefreshedAccessToken']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -54,14 +48,12 @@ describe('CatalogService', () => {
         { provide: FilesService, useValue: filesServiceSpy },
         { provide: CatalogsService, useValue: catalogsServiceSpy },
         { provide: CatalogDescriptorsService, useValue: catalogDescriptorsServiceSpy },
-        { provide: AzureService, useValue: azureServiceSpy },
         { provide: BASE_PATH, useValue: '/component-catalog' },
         provideHttpClient()
       ]
     });
 
     service = TestBed.inject(CatalogService);
-    azureServiceSpy.getRefreshedAccessToken.and.returnValue(of(userAccessToken));
   });
 
   it('should be created', () => {
@@ -505,8 +497,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
-      filesServiceSpy as unknown as FilesService,
-      azureServiceSpy
+      filesServiceSpy as unknown as FilesService
     );
 
     expect(getItemSpy).toHaveBeenCalledWith('catalogSlug');
@@ -523,8 +514,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
-      filesServiceSpy as unknown as FilesService,
-      azureServiceSpy
+      filesServiceSpy as unknown as FilesService
     );
 
     expect(getItemSpy).toHaveBeenCalledWith('catalogSlug');
@@ -560,7 +550,7 @@ describe('CatalogService', () => {
         expect(product.tags).toEqual(expectedProduct.tags);
         expect(product.title).toEqual(expectedProduct.title);
       }
-      expect(catalogItemsServiceSpy.getCatalogItemsForProjectKey).toHaveBeenCalledWith(catalogDescriptor.id!, userAccessToken, 'asc', projectKey);
+      expect(catalogItemsServiceSpy.getCatalogItemsForProjectKey).toHaveBeenCalledWith(catalogDescriptor.id!, 'asc', projectKey);
       done();
     });
   });
@@ -583,7 +573,7 @@ describe('CatalogService', () => {
       expect(product.shortDescription).toEqual(expectedProduct.shortDescription);
       expect(product.tags).toEqual(expectedProduct.tags);
       expect(product.title).toEqual(expectedProduct.title);
-      expect(catalogItemsServiceSpy.getCatalogItemByIdForProjectKey).toHaveBeenCalledWith(expectedProduct.id, projectKey, userAccessToken);
+      expect(catalogItemsServiceSpy.getCatalogItemByIdForProjectKey).toHaveBeenCalledWith(expectedProduct.id, projectKey);
       done();
     });
   });
