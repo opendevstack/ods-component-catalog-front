@@ -194,7 +194,7 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
   }
 
   private setupActionParameters(productAction: ProductAction): void {
-    const productActionParams = productAction.parameters?.filter(param => param.name !== 'project_key') || [];
+    const productActionParams = productAction.parameters?.filter(param => param.name !== 'project_key' && param.visible !== false) || [];
     
     if (productActionParams.length > 0) {
       this.addProjectKeyParameter(productActionParams);

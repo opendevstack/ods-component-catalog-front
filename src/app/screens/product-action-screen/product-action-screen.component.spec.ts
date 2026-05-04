@@ -972,4 +972,29 @@ describe('ProductActionScreenComponent', () => {
     expect(toastServiceSpy.showToast).not.toHaveBeenCalled();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/project 1/components']);
   });
+
+  it('should not include parameters with visible set to false in actionParams', () => {
+    catalogServiceSpy.getProjectProduct.and.returnValue(of({
+      title: 'fakeProduct',
+      actions: [
+        {
+          id: 'fakeAction',
+          label: 'Fake Action',
+          requestable: true,
+          parameters: [
+            { name: 'visible_param', required: true, type: 'string', visible: true },
+            { name: 'hidden_param', required: false, type: 'string', visible: false },
+            { name: 'another_visible_param', required: false, type: 'string' }
+          ]
+        }
+      ]
+    } as AppProduct));
+
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
+    const paramNames = component.actionParams.map(p => p.name);
+    expect(paramNames).not.toContain('hidden_param');
+    expect(paramNames).toContain('visible_param');
+    expect(paramNames).toContain('another_visible_param');
+  });
 });
