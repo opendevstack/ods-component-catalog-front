@@ -14,6 +14,7 @@ import { AzureService } from '../../services/azure.service';
 import { AppUser } from '../../models/app-user';
 import { CreateIncidentParameter } from '../../openapi/component-provisioner';
 import { ComponentStatus } from '../../models/component-status';
+import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
 
 @Component({
   selector: 'app-project-components-screen',
@@ -123,7 +124,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.dialog.open(RequestDeletionDialogComponent, {
+    const dialogRef = this.dialog.open(component.hasAutomatedDeletionWorkflow ? RequestDeletionSimpleDialogComponent : RequestDeletionDialogComponent, {
       autoFocus: false,
       data: {
         componentName: component.name,
@@ -186,7 +187,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       id: '',
       read: false,
       subject: 'only_toast',
-      title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
+      title: 'The request has successfully been sent.'
     } as AppShellNotification, 8000);
   }
 
