@@ -75,6 +75,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
+  /project/{projectKey}/component/{componentId}:
+    get:
+      tags:
+        - Project-components
+      summary: Returns the extended information of a project component given both its project key and component ID in the Bitbucket repository.
+      operationId: getProjectComponentById
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The extended information of a project component.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectComponentExtendedInfo'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
   /catalog-descriptors:
     get:
       tags:
@@ -847,12 +891,51 @@ components:
         canBeDeleted:
           type: boolean
           example: true
+        hasAutomatedDeletionWorkflow:
+          type: boolean
+          example: true
         logoUrl:
           type: string
           example: https://somepic.jpg
         componentUrl:
           type: string
           example: 'https://bitbucket.com/projects/CATALOGS/repos/project-components/browse/projects'
+    ProjectComponentParameter:
+      properties:
+        name:
+          type: string
+          example: 'environment'
+        values:
+          type: array
+          items:
+            type: string
+          example:
+            - 'dev'
+            - 'test'
+    ProjectComponentExtendedInfo:
+      properties:
+        componentId:
+          type: string
+          example: 'nextjs-basic-app'
+        catalogItemId:
+          type: string
+          example: 'some-encoded-info'
+        catalogItemRef:
+          type: string
+          example: 'more-encoded-info'
+        status:
+          type: string
+          example: 'CREATING'
+        componentUrl:
+          type: string
+          example: 'https://bitbucket.com/projects/CATALOGS/repos/project-components/browse/projects'
+        workflowJobId:
+          type: string
+          example: '123456'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectComponentParameter'
     CatalogDescriptor:
       properties:
         id:
@@ -1204,6 +1287,12 @@ components:
           type: string
           description: the repository url where the component was provisioned
           example: "https://bitbucket.com/projects/DEVSTACK/repos/devstack-component-catalog"
+          nullable: true
+
+        workflowJobId:
+          type: string
+          description: the workflow job id from AWX to correlate provisioning status with AWX job status updates
+          example: "123456"
           nullable: true
 
         parameters:
