@@ -10,7 +10,7 @@ import { RequestDeletionDialogData } from "../../models/request-deletion-dialog-
 import { AppShellIconComponent } from "@opendevstack/ngx-appshell";
 
 @Component({
-  selector: 'app-request-deletion-dialog',
+  selector: 'app-request-deletion-simple-dialog',
   imports: [
     CommonModule,
     MatButtonModule,

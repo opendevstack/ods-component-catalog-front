@@ -1,99 +1,110 @@
-app-request-deletion-dialog {
-  width: 38.25rem;
-  display: block !important;
-  padding: 1.5rem;
-  box-sizing: border-box;
+app-request-deletion-simple-dialog {
+    width: 38.25rem;
+    display: block!important;
+    padding: 1.5rem;
+    box-sizing: border-box;
 
-  > * {
-    padding: 0 !important;
-    color: var(--appshell-color-dark-green-main) !important;
-  }
-
-  .dialog-header {
-    margin: 0.5rem 0 0 !important;
-    display: inline-flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-
-    h2 {
-      margin: 0 !important;
-      padding: 0;
-      font-family: "AppShellHeadingFont";
-      font-size: 20px;
-      font-weight: 500;
-      line-height: 24px;
-
-      &::before,
-      &::after {
-        height: auto !important;
-      }
+    &>* {
+        padding: 0!important;
+        color: var(--appshell-color-dark-green-main)!important;
     }
 
-    appshell-icon {
-      cursor: pointer;
+    .dialog-header {
+        margin: 0.5rem 0 0!important;
+        display: inline-flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+
+        h2 {
+            margin: 0!important;
+            padding: 0;
+            font-family: "AppShellHeadingFont";
+            font-size: 20px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 24px; /* 120% */
+
+            &::before, &::after {
+                height: auto!important;
+            }
+        }
+
+        appshell-icon {
+            cursor: pointer;
+        }
     }
-  }
 
-  mat-dialog-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-height: 100px;
+    mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 100px;
 
-    .help-message-ctn {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 0.75rem;
-      margin: 1.5rem 0 !important;
-      padding: 1rem;
-
-      background-color: #d2f2f7;
-      color: #076d7e;
-
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 20px;
+        .help-message-ctn {
+            background-color: #D2F2F7;
+            color: #076D7E;
+            padding: 1rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin: 1.5rem 0!important;
+            gap: 0.75rem;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+        }
     }
-  }
 
     mat-dialog-actions {
-    gap: 1rem;
+        gap: 1rem;
 
-    button:first-of-type {
-        padding: 0.75rem 1rem;
+        button:first-of-type {
+            color: var(--appshell-color-secondary-main);
+            font-family: "AppShellTextFont";
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            text-decoration-line: underline;
+            text-decoration-color: var(--appshell-color-accent-green-main);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 6px;
+            
+            --mat-text-button-hover-state-layer-opacity: 0;
+            --mat-text-button-focus-state-layer-opacity: 0;
+            --mat-text-button-pressed-state-layer-opacity: 0;
+            --mat-text-button-ripple-color: transparent;
 
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-
-        --mdc-text-button-container-height: unset !important;
-        --mdc-text-button-container-padding-horizontal: 0;
-
-        &:hover {
-        background-color: transparent;
+            &:hover {
+                color: var(--appshell-color-secondary-medium);
+                background-color: transparent;
+                text-decoration-color: var(--appshell-color-accent-green-medium);
+            }
         }
-    }
 
-    button:last-of-type {
-        padding: 0.75rem 1.5rem;
-        height: auto;
+        button:last-of-type {
+            --mdc-filled-button-container-height: unset!important;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.125rem;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            height: auto;
+            color: var(--appshell-color-secondary-main)!important;
+            text-decoration: none;
+            font-family: AppShellTextFont;
+            border: 2px solid var(--mdc-filled-button-container-color);
 
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-
-        --mdc-filled-button-container-height: unset !important;
-
-        display: inline-flex;
-        align-items: center;
-
-        border: 2px solid var(--mdc-filled-button-container-color);
-        border-radius: 0.125rem;
-
-        &:disabled {
-        border: none;
+            &:disabled {
+                border: none;
+            }
         }
-    }
     }
 }
