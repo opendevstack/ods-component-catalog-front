@@ -12,6 +12,7 @@ import { AzureService } from '../../services/azure.service';
 import { AppShellNotification, AppShellToastService } from '@opendevstack/ngx-appshell';
 import { AppUser } from '../../models/app-user';
 import { CreateIncidentParameter } from '../../openapi/component-provisioner';
+import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
 
 describe('ProjectComponentsScreenComponent', () => {
   let component: ProjectComponentsScreenComponent;
@@ -206,40 +207,42 @@ describe('ProjectComponentsScreenComponent', () => {
       });
     });
 
-    it('should show success toast when deletion request succeeds and status is set to deleting', () => {
+    it('should show success toast when automatic deletion request succeeds and status is set to deleting', () => {
       component.projectComponents = [{
         name: 'test-component',
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: true
       } as ProjectComponent];
       const testComponent = {
         name: 'test-component',
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: true
       } as ProjectComponent;
       component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
       const mockResult = {
-        deploymentStatus: true,
-        changeNumber: 'CHG1234567',
-        reason: 'Test reason',
         projectKey: 'PROJECT_1',
         componentName: 'test-component'
       };
-      spyOn(component.dialog, 'open').and.returnValue({ 
+      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({ 
         afterClosed: () => of(mockResult) 
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
+        autoFocus: false,
+        data: {
+          componentName: 'test-component',
+          projectKey: 'PROJECT_1'
+        }
+      });
       expect(component.projectComponents[0].status).toBe('DELETING');
-      const incidentParams: CreateIncidentParameter[] = [
-        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
-        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String }
-      ]
+      const incidentParams: CreateIncidentParameter[] = [];
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
         'test-component',
@@ -250,6 +253,62 @@ describe('ProjectComponentsScreenComponent', () => {
         read: false,
         subject: 'only_toast',
         title: 'The request has successfully been sent.'
+      } as AppShellNotification, 8000);
+    });
+
+    it('should show success toast when automatic deletion request succeeds and status is set to deleting', () => {
+      component.projectComponents = [{
+        name: 'test-component',
+        status: 'CREATED',
+        logo: 'http://example.com/logo.png',
+        url: 'http://example.com',
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: false
+      } as ProjectComponent];
+      const testComponent = {
+        name: 'test-component',
+        status: 'CREATED',
+        logo: 'http://example.com/logo.png',
+        url: 'http://example.com',
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: false
+      } as ProjectComponent;
+      component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
+      const mockResult = {
+        deploymentStatus: true,
+        changeNumber: 'CHG1234567',
+        reason: 'Test reason',
+        projectKey: 'PROJECT_1',
+        componentName: 'test-component'
+      };
+      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({ 
+        afterClosed: () => of(mockResult) 
+      } as any);
+
+      component.onRequestDeletionClicked(testComponent);
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
+        autoFocus: false,
+        data: {
+          componentName: 'test-component',
+          projectKey: 'PROJECT_1'
+        }
+      });
+      expect(component.projectComponents[0].status).toBe('DELETING');
+      const incidentParams: CreateIncidentParameter[] = [
+        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
+        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
+      ];
+      expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
+        'PROJECT_1',
+        'test-component',
+        incidentParams
+      );
+      expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
+        id: '',
+        read: false,
+        subject: 'only_toast',
+        title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
       } as AppShellNotification, 8000);
     });
 
