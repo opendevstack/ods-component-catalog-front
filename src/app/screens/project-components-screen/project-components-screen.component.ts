@@ -145,7 +145,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     });
   }
 
-  private submitDeletionRequest(result: RequestDeletionDialogResult, notificationMsg: String): void {
+  private submitDeletionRequest(result: RequestDeletionDialogResult, notificationMsg: string): void {
     // Apply optimistic UI and set the current component to deleting status
     const componentIndex = this.projectComponents.findIndex(c => c.name === result.componentName);
     let originalStatus: ComponentStatus | undefined = undefined;
@@ -188,7 +188,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     });
   }
 
-  private onDeletionRequestSuccess(notificationMsg: String): void {
+  private onDeletionRequestSuccess(notificationMsg: string): void {
     this.toastService.showToast({
       id: '',
       read: false,
