@@ -308,7 +308,7 @@ describe('ProjectComponentsScreenComponent', () => {
         id: '',
         read: false,
         subject: 'only_toast',
-        title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
+        title: 'The request has successfully been sent. Support will receive a ticket and manage the component deletion.'
       } as AppShellNotification, 8000);
     });
 
