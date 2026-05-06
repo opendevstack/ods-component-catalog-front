@@ -136,7 +136,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     // Extended message when automatic deletion is incorrect, since no human intervention is expected
     const msg = shouldRequestAutomaticDeletion ?
       'The request has successfully been sent.' :
-      'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.';
+      'The request has successfully been sent. Support will receive a ticket and manage the component deletion.';
 
     dialogRef.afterClosed().subscribe((result: RequestDeletionDialogResult | undefined) => {
       if (result) {
