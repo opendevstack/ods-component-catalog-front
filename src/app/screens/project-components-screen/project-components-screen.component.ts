@@ -133,7 +133,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         projectKey: this.selectedProject.projectKey,
       }
     });
-    // Extended message when automatic deletion is not available, to inform users about the manual process that will be triggered
+    // Extended message when automatic deletion is incorrect, since no human intervention is expected
     const msg = shouldRequestAutomaticDeletion ?
       'The request has successfully been sent.' :
       'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.';
