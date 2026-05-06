@@ -103,7 +103,8 @@ export class ProjectService {
           status: (component.status as ComponentStatus) || 'UNKNOWN',
           logo: component.logoUrl ? (await this.catalogService.getProductImage(component.logoUrl)) ?? null : null,
           url: component.componentUrl || '',
-          canDelete: component.canBeDeleted || false
+          canDelete: component.canBeDeleted || false,
+          hasAutomatedDeletionWorkflow: component.hasAutomatedDeletionWorkflow || false
         }))))
       )
     );

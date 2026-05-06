@@ -6,4 +6,5 @@ export interface ProjectComponent {
     logo: string | null;
     url: string;
     canDelete: boolean;
+    hasAutomatedDeletionWorkflow: boolean;
 }

@@ -14,6 +14,7 @@ import { AzureService } from '../../services/azure.service';
 import { AppUser } from '../../models/app-user';
 import { CreateIncidentParameter } from '../../openapi/component-provisioner';
 import { ComponentStatus } from '../../models/component-status';
+import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
 
 @Component({
   selector: 'app-project-components-screen',
@@ -123,22 +124,28 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.dialog.open(RequestDeletionDialogComponent, {
+    const shouldRequestAutomaticDeletion = component.hasAutomatedDeletionWorkflow;
+
+    const dialogRef = this.dialog.open(shouldRequestAutomaticDeletion ? RequestDeletionSimpleDialogComponent : RequestDeletionDialogComponent, {
       autoFocus: false,
       data: {
         componentName: component.name,
         projectKey: this.selectedProject.projectKey,
       }
     });
+    // Extended message when automatic deletion is incorrect, since no human intervention is expected
+    const msg = shouldRequestAutomaticDeletion ?
+      'The request has successfully been sent.' :
+      'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.';
 
     dialogRef.afterClosed().subscribe((result: RequestDeletionDialogResult | undefined) => {
       if (result) {
-        this.submitDeletionRequest(result);
+        this.submitDeletionRequest(result, msg);
       }
     });
   }
 
-  private submitDeletionRequest(result: RequestDeletionDialogResult): void {
+  private submitDeletionRequest(result: RequestDeletionDialogResult, notificationMsg: string): void {
     // Apply optimistic UI and set the current component to deleting status
     const componentIndex = this.projectComponents.findIndex(c => c.name === result.componentName);
     let originalStatus: ComponentStatus | undefined = undefined;
@@ -164,14 +171,14 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         type: 'string',
         value: result.reason as String // NOSONAR
       }
-    ];
+    ].filter(p => p.value); // Filter by defined values, which are undefined when the simple dialog is called
     /* eslint-enable @typescript-eslint/no-wrapper-object-types */
     this.provisionerService.requestComponentDeletion(
       result.projectKey,
       result.componentName,
       incidentParams
     ).subscribe({
-      next: () => this.onDeletionRequestSuccess(),
+      next: () => this.onDeletionRequestSuccess(notificationMsg),
       error: (error) => {
         this.onDeletionRequestError(error)
         if (originalStatus && componentIndex !== -1) {
@@ -181,12 +188,12 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     });
   }
 
-  private onDeletionRequestSuccess(): void {
+  private onDeletionRequestSuccess(notificationMsg: string): void {
     this.toastService.showToast({
       id: '',
       read: false,
       subject: 'only_toast',
-      title: 'The request has successfully been sent. Support will receive a Service Now ticket and manage the component deletion.'
+      title: notificationMsg
     } as AppShellNotification, 8000);
   }
 
