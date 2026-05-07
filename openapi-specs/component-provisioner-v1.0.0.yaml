@@ -140,7 +140,7 @@ paths:
         - ProvisionResults
       summary: Notify provisioning Status Update
       description: >
-        This endpoint receives provisioning status update notifications from AWX.
+        This endpoint receives provisioning updates.
       operationId: notifyProvisioningStatusUpdate
       parameters:
         - name: projectKey
@@ -162,20 +162,46 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                componentId:
-                  type: string
-                  description: The componentId set by the user.
-                  example: "any-component-id-from-backend"
-                catalogItemId:
-                  type: string
-                  description: The base64 encoded path for the catalogItem. Mind that it may include branch reference.
-                  example: "cHJvamVjdHMvQ0FURVNUL3JlcG9zL3VzZXItYWN0aW9ucy1pdGVtL3Jhdy9DYXRhbG9nSXRlbS55YW1sP2F0PXJlZnMvaGVhZHMvbWFzdGVy"
-                componentUrl:
-                  type: string
-                  description: The bitbucket repository url for the provisioned component.
-                  example: "https://bitbucket.com/projects/myproject/repos/repo_name"
+              $ref: '#/components/schemas/ProvisioningStatusUpdateRequest'
+      responses:
+        "200":
+          description: Provisioning completion notified.
+        "400":
+          description: Bad request.
+        "401":
+          description: Invalid client token on the request.
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          description: Server error.
+    patch:
+      tags:
+        - ProvisionResults
+      summary: Notify provisioning Status Update
+      description: >
+        This endpoint receives provisioning status update notifications from AAP.
+      operationId: notifyProvisioningStatusUpdatePartially
+      parameters:
+        - name: projectKey
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: path
+          description: Project key of the provisioned component.
+          required: true
+          example: CREATING
+          schema:
+            type: string
+            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvisioningStatusPartialUpdateRequest'
       responses:
         "200":
           description: Provisioning completion notified.
@@ -194,10 +220,10 @@ paths:
         - basicAuth: [ ]         # Enable ONLY basicAuth
       tags:
         - ProvisionResults
-      summary: Delete provision status component from the file
+      summary: Delete project component from the file
       description: >
-        This endpoint receives provisioning status delete notifications from Component Provisioner.
-      operationId: deleteProvisioningStatus
+        This endpoint receives provisioning status delete notifications from Project Component.
+      operationId: deleteProjectComponent
       parameters:
         - name: projectKey
           in: path
@@ -212,7 +238,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ProvisioningDeleteRequest'
       responses:
-        "200":
+        "204":
           description: Project component properly deleted.
         "400":
           description: Bad request.
@@ -223,14 +249,14 @@ paths:
         "500":
           description: Server error.
 
-  /support/delete/{projectKey}/{componentId}:
+  /provision/delete/{projectKey}/{componentId}:
     post:
       tags:
         - ProvisionResults
       summary: Request App Support to do operations to delete provision status component (and dependencies) from the file
       description: >
         This endpoint receives project key and componentId and send an create an incident to app support.
-      operationId: createIncident
+      operationId: requestDeletion
       parameters:
         - name: projectKey
           in: path
@@ -265,6 +291,51 @@ paths:
           description: Insufficient permissions for the client to access the resource.
         "500":
           description: Server error.
+
+  /project/{projectKey}/component/{componentId}:
+    get:
+      tags:
+        - Project-components-with-provision-status
+      summary: Returns the provision status of a project component given both its project key and component ID.
+      operationId: getProjectComponentProvisionStatusById
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The provision status information of a project component, including fail reason if exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectComponentProvisionStatus'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
 components:
   securitySchemes:
     bearerAuth:
@@ -383,6 +454,61 @@ components:
       required:
         - message
 
+    ProvisioningStatusPartialUpdateRequest:
+      type: object
+      properties:
+        componentId:
+          type: string
+          minLength: 1                # disallows empty string ""
+          pattern: '^(?!\s*$).+'      # reject whitespace-only
+          description: The componentId set by the user.
+          example: "any-component-id-from-backend"
+        catalogItemId:
+          type: string
+          description: The base64 encoded path for the catalogItem. It may include branch reference.
+          example: "cHJvamVjdHMvQ0FURVNUL3JlcG9zL3VzZXItYWN0aW9ucy1pdGVtL3Jhdy9DYXRhbG9nSXRlbS55YW1sP2F0PXJlZnMvaGVhZHMvbWFzdGVy"
+        catalogItemSlug:
+          type: string
+          description: The slug for the provisioned component.
+          example: "myproject_repo_name"
+        componentUrl:
+          type: string
+          description: the repository url where the component was provisioned
+          example: "https://bitbucket.com/projects/DEVSTACK/repos/devstack-component-catalog"
+          nullable: true
+
+    ProvisioningStatusUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ProvisioningStatusPartialUpdateRequest'
+        - type: object
+          properties:
+            workflowJobId:
+              type: string
+              description: the workflow job id from AWX to correlate provisioning status with AWX job status updates
+              example: "123456"
+              nullable: true
+            parameters:
+              type: array
+              description: List of name/value string parameters.
+              items:
+                type: object
+                required:
+                  - name
+                  - values
+                properties:
+                  name:
+                    type: string
+                    description: Parameter name
+                    example: "environment"
+                  values:
+                    type: array
+                    description: Parameter values
+                    items:
+                      type: string
+                    example:
+                      - "production"
+                      - "staging"
+
     ProvisioningDeleteRequest:
       type: object
       properties:
@@ -409,3 +535,49 @@ components:
         name: "workflow"
         type: "string"
         value: "2558"
+
+    ProjectComponentStatusParameter:
+      properties:
+        name:
+          type: string
+          example: 'environment'
+        values:
+          type: array
+          items:
+            type: string
+          example:
+            - 'dev'
+            - 'test'
+    ProjectComponentProvisionStatus:
+      properties:
+        projectKey:
+          type: string
+          example: 'simple-project-sample'
+        componentId:
+          type: string
+          example: 'nextjs-basic-app'
+        catalogItemId:
+          type: string
+          example: 'some-encoded-info'
+        catalogItemRef:
+          type: string
+          example: 'more-encoded-info'
+        status:
+          type: string
+          example: 'CREATING'
+        componentUrl:
+          type: string
+          example: 'https://bitbucket.com/projects/CATALOGS/repos/project-components/browse/projects'
+        workflowJobId:
+          type: string
+          example: '1316315'
+        errorTask:
+          type: string
+          example: '08-01-fail if validations or checks did not pass'
+        errorMessage:
+          type: string
+          example: 'JIRA_ERROR'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectComponentStatusParameter'
