@@ -17,7 +17,7 @@ export class ProvisionerService {
       parameters: incidentParams
     };
     /* eslint-enable @typescript-eslint/no-wrapper-object-types */
-    return this.provisionerResultService.createIncident(projectKey, componentId, action).pipe(
+    return this.provisionerResultService.requestDeletion(projectKey, componentId, action).pipe(
       // The API returns a 201 on success, so we map it to void
       // If there's an error, it will be propagated as an error in the Observable
       map(() => {})

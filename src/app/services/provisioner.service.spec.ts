@@ -16,7 +16,7 @@ describe('ProvisionerService', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    provisionResultsServiceSpy = jasmine.createSpyObj('ProvisionResultsService', ['createIncident']);
+    provisionResultsServiceSpy = jasmine.createSpyObj('ProvisionResultsService', ['requestDeletion']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -26,7 +26,7 @@ describe('ProvisionerService', () => {
       ]
     });
 
-    provisionResultsServiceSpy.createIncident.and.returnValue(of({} as any));
+    provisionResultsServiceSpy.requestDeletion.and.returnValue(of({} as any));
 
     service = TestBed.inject(ProvisionerService);
   });
@@ -39,7 +39,7 @@ describe('ProvisionerService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('requestComponentDeletion should call createIncident with correct parameters', fakeAsync(() => {
+  it('requestComponentDeletion should call requestDeletion with correct parameters', fakeAsync(() => {
     const projectKey = 'TEST_PROJECT';
     const componentName = 'TEST_COMPONENT';
     const username = 'test-user';
@@ -64,7 +64,7 @@ describe('ProvisionerService', () => {
       parameters: incidentParams
     } as CreateIncidentAction;
 
-    expect(provisionResultsServiceSpy.createIncident).toHaveBeenCalledWith(projectKey,componentName,expectedAction);
+    expect(provisionResultsServiceSpy.requestDeletion).toHaveBeenCalledWith(projectKey,componentName,expectedAction);
   }));
 
 });
