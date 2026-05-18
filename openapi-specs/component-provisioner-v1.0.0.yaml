@@ -446,6 +446,8 @@ components:
       enum:
         - success
         - error
+        - deletion_success
+        - deletion_error
       example: error
     RestErrorMessage:
       properties:
