@@ -28,7 +28,7 @@ export class ComponentCardComponent {
       case 'CREATED':
         return 'Provisioned Successfully';
       case 'FAILED':
-        return 'Provisioned Failed';
+        return 'Provisioning Failed';
       case 'DELETING':
         return 'Deletion Requested';
       case 'UNKNOWN':
