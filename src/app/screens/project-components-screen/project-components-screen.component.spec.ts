@@ -312,6 +312,49 @@ describe('ProjectComponentsScreenComponent', () => {
       } as AppShellNotification, 8000);
     });
 
+    it('should not filter out incident params with boolean false value', () => {
+      component.projectComponents = [{
+        name: 'test-component',
+        status: 'CREATED',
+        logo: 'http://example.com/logo.png',
+        url: 'http://example.com',
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: false
+      } as ProjectComponent];
+      const testComponent = {
+        name: 'test-component',
+        status: 'CREATED',
+        logo: 'http://example.com/logo.png',
+        url: 'http://example.com',
+        canDelete: true,
+        hasAutomatedDeletionWorkflow: false
+      } as ProjectComponent;
+      component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
+      const mockResult = {
+        deploymentStatus: false,
+        changeNumber: 'CHG1234567',
+        reason: 'Test reason',
+        projectKey: 'PROJECT_1',
+        componentName: 'test-component'
+      };
+      spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of(mockResult)
+      } as any);
+
+      component.onRequestDeletionClicked(testComponent);
+
+      const incidentParams: CreateIncidentParameter[] = [
+        { name: 'is_deployed', type: 'boolean', value: false as Boolean },
+        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
+        { name: 'reason', type: 'string', value: 'Test reason' as String }
+      ];
+      expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
+        'PROJECT_1',
+        'test-component',
+        incidentParams
+      );
+    });
+
     it('should show error toast when deletion request fails', () => {
       component.projectComponents = [{
         name: 'test-component',
