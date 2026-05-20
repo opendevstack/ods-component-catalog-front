@@ -171,7 +171,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         type: 'string',
         value: result.reason as String // NOSONAR
       }
-    ].filter(p => p.value); // Filter by defined values, which are undefined when the simple dialog is called
+    ].filter(p => p.value != null); // Filter by defined values, which are undefined when the simple dialog is called
     /* eslint-enable @typescript-eslint/no-wrapper-object-types */
     this.provisionerService.requestComponentDeletion(
       result.projectKey,
