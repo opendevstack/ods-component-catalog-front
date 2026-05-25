@@ -403,7 +403,9 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
             subject: 'only_toast',
             title: `${errorMessage}`
           } as AppShellNotification, 8000);
-          this.formGroup.enable();
+          this.actionParams.filter(param => !param.disabled).forEach(param => {
+            this.formGroup.get(param.name)?.enable();
+          });
         },
         complete: () => { }
       });
