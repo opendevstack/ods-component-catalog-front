@@ -997,4 +997,37 @@ describe('ProductActionScreenComponent', () => {
     expect(paramNames).toContain('visible_param');
     expect(paramNames).toContain('another_visible_param');
   });
+
+  it('should re-enable only non-disabled params when HTTP POST fails', () => {
+    const actionParams: ProductActionParameter[] = [
+      { name: 'project_key', type: 'string', required: true, disabled: true } as ProductActionParameter,
+      { name: 'param_1', type: 'string', required: true, disabled: false } as ProductActionParameter,
+      { name: 'param_2', type: 'string', required: false } as ProductActionParameter,
+    ];
+    component.action = {
+      id: 'fakeAction',
+      url: '/api/action',
+      parameters: actionParams,
+      triggerMessage: '',
+      requestable: true,
+      restrictionMessage: '',
+      label: 'Fake Action'
+    } as ProductAction;
+    component.product = { id: 'fakeId', title: 'fakeProduct' } as AppProduct;
+    component.actionParams = actionParams;
+    component.formGroup = component['fb'].group({
+      project_key: [{ value: 'project 1', disabled: true }],
+      param_1: ['value1'],
+      param_2: ['value2']
+    });
+
+    component.onActionClick();
+
+    const req: TestRequest = httpTesting.expectOne('/api/action');
+    req.flush('error', { status: 500, statusText: 'Internal Server Error' });
+
+    expect(component.formGroup.get('project_key')?.disabled).toBeTrue();
+    expect(component.formGroup.get('param_1')?.enabled).toBeTrue();
+    expect(component.formGroup.get('param_2')?.enabled).toBeTrue();
+  });
 });
