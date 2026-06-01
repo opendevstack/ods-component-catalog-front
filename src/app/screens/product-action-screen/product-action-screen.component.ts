@@ -195,11 +195,11 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
 
   private setupActionParameters(productAction: ProductAction): void {
     const productActionParams = productAction.parameters?.filter(param => param.name !== 'project_key' && param.visible !== false) || [];
-    
+
     if (productActionParams.length > 0) {
       this.addProjectKeyParameter(productActionParams);
     }
-    
+
     this.initForm(productActionParams);
     this.actionParams = productActionParams;
   }
@@ -219,7 +219,7 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
 
   private initForm(actionParams?: Array<ProductActionParameter>) {
     this.formGroup = this.fb.group({});
-    
+
     if (!actionParams || actionParams.length === 0) {
       return;
     }
@@ -234,14 +234,14 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
   private createFormControlForParam(param: ProductActionParameter) {
     const validators = this.getValidatorsForParam(param);
     const formControl = this.fb.control(
-      this.getParamDefaultValue(param), 
+      this.getParamDefaultValue(param),
       validators.length > 0 ? validators : null
     );
-    
+
     if (param.disabled) {
       formControl.disable();
     }
-    
+
     return formControl;
   }
 
@@ -256,7 +256,31 @@ export class ProductActionScreenComponent implements OnInit, OnDestroy {
       validators.push(this.createCustomValidator(param.validations));
     }
 
+    if (param.name === 'component_id') {
+      validators.push(this.createComponentNameValidator());
+    }
+
     return validators;
+  }
+
+  private createComponentNameValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control?.value) {
+        return null;
+      }
+
+      const value = control.value.toString().trim();
+      const productTitle = this.product?.title ? this.product.title.toString().trim() : '';
+      if (!productTitle) {
+        return null;
+      }
+
+      if (value.toLowerCase() === productTitle.toLowerCase()) {
+        return { customValidation: { messages: ['Component name must not be identical to the product name'] } };
+      }
+
+      return null;
+    };
   }
 
   private getParamDefaultValue(param: ProductActionParameter): string | string[] | null | undefined {
