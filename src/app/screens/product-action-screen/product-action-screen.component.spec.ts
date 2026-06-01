@@ -515,6 +515,32 @@ describe('ProductActionScreenComponent', () => {
     expect(errors.messages).toContain('Component name must not be identical to the product name');
   });
 
+  it('should validate component_id when not equal to product title', () => {
+    component.action = {
+      id: 'fakeAction',
+      label: 'Fake Action',
+      requestable: true,
+      parameters: [
+        { name: 'component_id', required: true, type: 'string' }
+      ]
+    } as ProductAction;
+
+    component.product = { id: 'fakeId', title: 'fakeProduct' } as AppProduct;
+    component.actionParams = component.action.parameters || [];
+
+    // Initialize the form controls using the component's initForm (private, access via any)
+    (component as any).initForm(component.actionParams);
+
+    const control = component.formGroup.get('component_id');
+    expect(control).toBeTruthy();
+
+    control?.setValue('fakeProductWithDifferentName');
+    control?.markAsTouched();
+
+    expect(control?.invalid).toBeFalse();
+    expect(control?.hasError('customValidation')).toBeFalse();
+  });
+
   it('should have a fallback message for validations without message defined', () => {
     const mockProductWithValidations = {
       title: 'fakeProduct',
