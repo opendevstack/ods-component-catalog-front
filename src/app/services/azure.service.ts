@@ -113,7 +113,8 @@ export class AzureService implements OnDestroy {
             } as AppUser;
             
             this.msalService.instance.acquireTokenSilent({
-                scopes: ["User.Read"]
+                scopes: ["User.Read"],
+                account: msalUser
             })
             .then(async response => {
                 try {
