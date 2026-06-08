@@ -1,14 +1,40 @@
 import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpRequest } from "@angular/common/http";
 import { AzureService } from "./services/azure.service";
-import { catchError, from, Observable, switchMap, throwError } from "rxjs";
+import { catchError, EMPTY, from, Observable, switchMap, throwError } from "rxjs";
 import { inject } from "@angular/core";
 import { Router } from "@angular/router";
+
+const PROTECTED_API_PREFIXES = ['/component-catalog', '/projects-api', '/component-provisioner'];
+
+function isProtectedApiRequest(url: string): boolean {
+  if (PROTECTED_API_PREFIXES.some((prefix) => url.startsWith(prefix))) {
+    return true;
+  }
+
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    return PROTECTED_API_PREFIXES.some((prefix) => parsedUrl.pathname.startsWith(prefix));
+  } catch {
+    return false;
+  }
+}
 
 export function tokenInterceptor(request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const authService = inject(AzureService);
   const router = inject(Router);
 
+  if (!isProtectedApiRequest(request.url)) {
+    return next(request);
+  }
+
   return from(authService.getAccessToken()).pipe(
+    catchError((tokenErr: unknown) => {
+      if (tokenErr instanceof Error && tokenErr.message.includes('No accounts found. User must sign in first.')) {
+        authService.login();
+        return EMPTY;
+      }
+      return throwError(() => tokenErr);
+    }),
     switchMap((token) => {
       if (token) {
         request = request.clone({

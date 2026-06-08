@@ -1,7 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AzureService } from './azure.service';
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { AuthenticationResult, EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
 import { Router } from '@angular/router';
 import { AppConfigService } from './app-config.service';
@@ -24,6 +24,7 @@ describe('AzureService', () => {
         inProgress$ = new Subject<InteractionStatus>();
         
         const msalServiceSpy = jasmine.createSpyObj('MsalService', ['handleRedirectObservable', 'instance', 'loginRedirect', 'logout']);
+        msalServiceSpy.loginRedirect.and.returnValue(of(void 0));
         const msalBroadcastServiceSpy = jasmine.createSpyObj('MsalBroadcastService', [], {
             msalSubject$: msalSubject$.asObservable(),
             inProgress$: inProgress$.asObservable()
@@ -170,6 +171,7 @@ describe('AzureService', () => {
 
     it('login - should call loginRedirect with authRequest if msalGuardConfig.authRequest is defined', () => {
         msalGuardConfig.authRequest = { scopes: ['User.Read'] }
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
 
         service.login();
 
@@ -180,10 +182,51 @@ describe('AzureService', () => {
 
     it('login - should call loginRedirect without parameters if msalGuardConfig.authRequest is not defined', () => {
         msalGuardConfig.authRequest = undefined;
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
 
         service.login();
 
         expect(msalService.loginRedirect).toHaveBeenCalledWith();
+    });
+
+    it('login - should reset loginInProgress when loginRedirect fails with non-interaction error', () => {
+        msalGuardConfig.authRequest = { scopes: ['User.Read'] };
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'some_other_error' })));
+
+        service.login();
+
+        expect((service as any).loginInProgress).toBeFalse();
+    });
+
+    it('login - should keep loginInProgress when loginRedirect fails with interaction_in_progress', () => {
+        msalGuardConfig.authRequest = { scopes: ['User.Read'] };
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'interaction_in_progress' })));
+
+        service.login();
+
+        expect((service as any).loginInProgress).toBeTrue();
+    });
+
+    it('login - should reset loginInProgress when loginRedirect without authRequest fails with non-interaction error', () => {
+        msalGuardConfig.authRequest = undefined;
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'some_other_error' })));
+
+        service.login();
+
+        expect((service as any).loginInProgress).toBeFalse();
+    });
+
+    it('login - should keep loginInProgress when loginRedirect without authRequest fails with interaction_in_progress', () => {
+        msalGuardConfig.authRequest = undefined;
+        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'interaction_in_progress' })));
+
+        service.login();
+
+        expect((service as any).loginInProgress).toBeTrue();
     });
 
     it('logout - should call logout on msalService and clear the token cache', () => {
