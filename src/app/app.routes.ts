@@ -12,6 +12,7 @@ import { PageNotFoundScreenComponent } from './screens/page-not-found-screen/pag
 export const routes: Routes = [
 	{ path: '', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: 'notifications', component: NotificationsScreenComponent, canActivate: [ MsalGuard ] },
+	{ path: 'login-failed', component: PageNotFoundScreenComponent },
 	{ path: 'page-not-found', component: PageNotFoundScreenComponent },
 	{ path: ':projectKey/components', component: ProjectComponentsScreenComponent, canActivate: [ MsalGuard ] },
 	{ path: ':catalogSlug', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },

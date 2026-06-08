@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { AzureService } from './services/azure.service';
 import { tokenInterceptor } from './token.interceptor';
 
+type URLConstructor = typeof URL;
+
 describe('TokenInterceptor', () => {
 
   let http: HttpClient;
@@ -34,7 +36,7 @@ describe('TokenInterceptor', () => {
   it('should add an Authorization header', fakeAsync(() => {
     mockAzureService.getAccessToken.and.returnValue(Promise.resolve('test-token'));
 
-    http.get('/test').subscribe(() => {});
+    http.get('/component-catalog/test').subscribe(() => {});
     tick();
 
     const req = httpTestingController.expectOne(
@@ -54,7 +56,7 @@ describe('TokenInterceptor', () => {
       Promise.resolve(forceRefresh ? 'new-token' : 'expired-token')
     );
 
-    http.get('/test').subscribe(() => {});
+    http.get('/component-catalog/test').subscribe(() => {});
     tick();
 
     const req = httpTestingController.expectOne(
@@ -85,12 +87,12 @@ describe('TokenInterceptor', () => {
       forceRefresh ? Promise.reject(new Error('Refresh token failed')) : Promise.resolve('expired-token')
     );
 
-    http.get('/test').subscribe({
+    http.get('/component-catalog/test').subscribe({
       error: () => {}
     });
     tick();
 
-    const req = httpTestingController.expectOne('/test');
+    const req = httpTestingController.expectOne('/component-catalog/test');
     req.flush(null, { status: 401, statusText: 'Unauthorized' });
     tick();
     httpTestingController.verify();
@@ -102,7 +104,7 @@ describe('TokenInterceptor', () => {
       Promise.resolve(forceRefresh ? 'new-token' : 'expired-token')
     );
 
-    http.get('/test').subscribe({ error: () => {} });
+    http.get('/component-catalog/test').subscribe({ error: () => {} });
     tick();
 
     const req = httpTestingController.expectOne(
@@ -126,17 +128,80 @@ describe('TokenInterceptor', () => {
   it('should pass through non-401/403 errors', fakeAsync(() => {
     mockAzureService.getAccessToken.and.returnValue(Promise.resolve('test-token'));
 
-    http.get('/test').subscribe({
+    http.get('/component-catalog/test').subscribe({
       error: (error) => {
         expect(error.status).toBe(500);
       }
     });
     tick();
 
-    const req = httpTestingController.expectOne('/test');
+    const req = httpTestingController.expectOne('/component-catalog/test');
     req.flush(null, { status: 500, statusText: 'Server Error' });
 
     httpTestingController.verify();
+  }));
+
+  it('should bypass token injection for non-protected requests', fakeAsync(() => {
+    http.get('/assets/logo.svg').subscribe(() => {});
+    tick();
+
+    const req = httpTestingController.expectOne('/assets/logo.svg');
+    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(mockAzureService.getAccessToken).not.toHaveBeenCalled();
+    req.flush({});
+  }));
+
+  it('should bypass token injection when URL parsing throws', fakeAsync(() => {
+    const originalUrl = window.URL;
+    // Force the URL parsing branch in isProtectedApiRequest to hit catch.
+    (window as unknown as { URL: URLConstructor }).URL = function () {
+      throw new TypeError('Invalid URL');
+    } as unknown as URLConstructor;
+
+    try {
+      http.get('http://example.invalid/test').subscribe(() => {});
+      tick();
+
+      const req = httpTestingController.expectOne('http://example.invalid/test');
+      expect(req.request.headers.has('Authorization')).toBeFalse();
+      expect(mockAzureService.getAccessToken).not.toHaveBeenCalled();
+      req.flush({});
+    } finally {
+      (window as unknown as { URL: URLConstructor }).URL = originalUrl;
+    }
+  }));
+
+  it('should trigger login and cancel protected request when no account is available', fakeAsync(() => {
+    mockAzureService.getAccessToken.and.returnValue(Promise.reject(new Error('No accounts found. User must sign in first.')));
+
+    let completed = false;
+    http.get('/component-catalog/test').subscribe({
+      complete: () => {
+        completed = true;
+      }
+    });
+    tick();
+
+    httpTestingController.expectNone('/component-catalog/test');
+    expect(mockAzureService.login).toHaveBeenCalled();
+    expect(completed).toBeTrue();
+  }));
+
+  it('should rethrow token acquisition errors that are not no-account errors', fakeAsync(() => {
+    const expectedError = new Error('Unexpected token failure');
+    mockAzureService.getAccessToken.and.returnValue(Promise.reject(expectedError));
+
+    let actualError: unknown;
+    http.get('/component-catalog/test').subscribe({
+      error: (error) => {
+        actualError = error;
+      }
+    });
+    tick();
+
+    httpTestingController.expectNone('/component-catalog/test');
+    expect(mockAzureService.login).not.toHaveBeenCalled();
+    expect(actualError).toBe(expectedError);
   }));
   
 });

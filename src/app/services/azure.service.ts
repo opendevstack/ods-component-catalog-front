@@ -15,6 +15,7 @@ export class AzureService implements OnDestroy {
     private readonly _destroying$ = new Subject<void>();
     private cachedAccessToken: string | null = null;
     private tokenExpiresOn: Date | null = null;
+    private loginInProgress = false;
     private static readonly TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
     isFirstTime = true;
@@ -56,6 +57,7 @@ export class AzureService implements OnDestroy {
             takeUntil(this._destroying$)
         )
         .subscribe(() => {
+            this.loginInProgress = false;
             this.setLoginDisplay();
             this.checkAndSetActiveAccount();
         });
@@ -161,12 +163,32 @@ export class AzureService implements OnDestroy {
     }
 
     login() {
+        if (this.loginInProgress || this.msalService.instance.getAllAccounts().length > 0) {
+            return;
+        }
+
+        this.loginInProgress = true;
+
         if (this.msalGuardConfig.authRequest) {
             this.msalService.loginRedirect({
                 ...this.msalGuardConfig.authRequest,
-            } as RedirectRequest);
+            } as RedirectRequest).subscribe({
+                error: (error: unknown) => {
+                    if (!(error && typeof error === 'object' && 'errorCode' in error && (error as { errorCode?: string }).errorCode === 'interaction_in_progress')) {
+                        this.loginInProgress = false;
+                        console.error('Error during login redirect', error);
+                    }
+                }
+            });
         } else {
-            this.msalService.loginRedirect();
+            this.msalService.loginRedirect().subscribe({
+                error: (error: unknown) => {
+                    if (!(error && typeof error === 'object' && 'errorCode' in error && (error as { errorCode?: string }).errorCode === 'interaction_in_progress')) {
+                        this.loginInProgress = false;
+                        console.error('Error during login redirect', error);
+                    }
+                }
+            });
         }
     }
 
