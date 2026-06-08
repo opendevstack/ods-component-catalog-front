@@ -12,7 +12,7 @@ function isProtectedApiRequest(url: string): boolean {
   }
 
   try {
-    const parsedUrl = new URL(url, window.location.origin);
+    const parsedUrl = new URL(url, globalThis.location.origin);
     return PROTECTED_API_PREFIXES.some((prefix) => parsedUrl.pathname.startsWith(prefix));
   } catch {
     return false;
