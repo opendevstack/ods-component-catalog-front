@@ -4,7 +4,7 @@ import { catchError, EMPTY, from, Observable, switchMap, throwError } from "rxjs
 import { inject } from "@angular/core";
 import { Router } from "@angular/router";
 
-const PROTECTED_API_PREFIXES = ['/component-catalog', '/projects-api', '/component-provisioner'];
+const PROTECTED_API_PREFIXES = ['/component-catalog', '/projects-api', '/component-provisioner', 'https://component-provisioner-devstack'];
 
 function isProtectedApiRequest(url: string): boolean {
   if (PROTECTED_API_PREFIXES.some((prefix) => url.startsWith(prefix))) {
