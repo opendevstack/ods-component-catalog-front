@@ -10,7 +10,7 @@ describe('CatalogResolver', () => {
   let catalogServiceSpy: jasmine.SpyObj<CatalogService>;
 
   beforeEach(() => {
-    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getCatalogDescriptors', 'retrieveCatalogDescriptors']);
+    catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getCatalogDescriptors', 'retrieveCatalogDescriptors', 'setCatalogDescriptors']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -27,16 +27,21 @@ describe('CatalogResolver', () => {
   });
 
   it('should resolve catalog descriptors calling the service if not present in memory', () => {
+    const descriptors = [{} as CatalogDescriptor];
     catalogServiceSpy.getCatalogDescriptors.and.returnValue([]);
-    catalogServiceSpy.retrieveCatalogDescriptors.and.returnValue(of([{} as CatalogDescriptor]));
-    service.resolve();
+    catalogServiceSpy.retrieveCatalogDescriptors.and.returnValue(of(descriptors));
+
+    service.resolve().subscribe();
+
     expect(catalogServiceSpy.retrieveCatalogDescriptors).toHaveBeenCalled();
+    expect(catalogServiceSpy.setCatalogDescriptors).toHaveBeenCalledWith(descriptors);
   });
   
   it('should resolve catalog descriptors without calling the service if present in memory', () => {
     catalogServiceSpy.getCatalogDescriptors.and.returnValue([{} as CatalogDescriptor]);
     service.resolve();
     expect(catalogServiceSpy.retrieveCatalogDescriptors).not.toHaveBeenCalled();
+    expect(catalogServiceSpy.setCatalogDescriptors).not.toHaveBeenCalled();
   });
   
   it('should handle errors from retrieveCatalogDescriptors and return empty array', (done) => {
@@ -52,6 +57,7 @@ describe('CatalogResolver', () => {
     service.resolve().subscribe(result => {
       expect(result).toEqual([]);
       expect(console.error).toHaveBeenCalledWith('Error retrieving catalog descriptors', error);
+      expect(catalogServiceSpy.setCatalogDescriptors).toHaveBeenCalledWith([]);
       done();
     });
   });

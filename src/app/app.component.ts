@@ -33,6 +33,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly natsUrl: string | undefined;
   private unreadMessagesCountSubscription: Subscription | undefined;
   private liveMessageSubscription: Subscription | undefined;
+  private hasShownInitialNotificationToast = false;
+  private suppressLiveToastUntil = 0;
   headerVariant: string = AppShellConfig.headerVariant;
   applicationLogo: string = AppShellConfig.applicationLogo;
   applicationName: string = AppShellConfig.applicationName;
@@ -334,9 +336,11 @@ export class AppComponent implements OnInit, OnDestroy {
       // validBucketRe = regexp.MustCompile(^[a-zA-Z0-9_-]+$)
       // validKeyRe = regexp.MustCompile(^[-/_=.a-zA-Z0-9]+$)
       const natsUser = user.username.split('@')[0].replaceAll(/[^a-zA-Z0-9_-]/g, '_')
+      this.hasShownInitialNotificationToast = false;
+      this.suppressLiveToastUntil = 0;
       this.natsService.initializeUser(natsUser, user.projects).then(() => {
         setTimeout(() => {
-          if(this.appShellNotificationsCount > 0) {
+          if(this.appShellNotificationsCount > 0 && !this.hasShownInitialNotificationToast) {
             const notification = {
               id: Date.now().toString() + '-logged',
               title: `You have ${this.appShellNotificationsCount} unread notifications`,
@@ -344,6 +348,8 @@ export class AppComponent implements OnInit, OnDestroy {
               subject: 'only-toast'
             } as AppShellNotification;
             this.toastService.showToast(notification, 8000);
+            this.hasShownInitialNotificationToast = true;
+            this.suppressLiveToastUntil = Date.now() + 5000;
           }
         }, 1000);
       });
@@ -356,6 +362,9 @@ export class AppComponent implements OnInit, OnDestroy {
     });
     this.liveMessageSubscription = this.natsService.liveMessage$.subscribe((message) => {
       if (!message?.data) {
+        return;
+      }
+      if (Date.now() < this.suppressLiveToastUntil) {
         return;
       }
       try {
@@ -371,6 +380,7 @@ export class AppComponent implements OnInit, OnDestroy {
           };
           // If you want to show the actual notification, you can show message.data instead of notification
           this.toastService.showToast(notification, 8000);
+          this.hasShownInitialNotificationToast = true;
         } else {
           console.log('Invalid message format:', message);
         }

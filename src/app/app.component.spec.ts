@@ -279,6 +279,15 @@ describe('AppComponent', () => {
     natsLiveMessage$.next({data: {}} as NatsMessage);
     await fixture.whenStable();
     expect(mockToastService.showToast).not.toHaveBeenCalled();
+
+    // Suppression window should short-circuit before validation and toast rendering.
+    component['suppressLiveToastUntil'] = Date.now() + 5000;
+    mockNatsService.isValidMessage.and.returnValue(true);
+    natsLiveMessage$.next({data: {}} as NatsMessage);
+    await fixture.whenStable();
+    expect(mockToastService.showToast).not.toHaveBeenCalled();
+
+    component['suppressLiveToastUntil'] = 0;
     mockNatsService.isValidMessage.and.returnValue(true);
     natsLiveMessage$.next({data: {}} as NatsMessage);
     await fixture.whenStable();
