@@ -1,6 +1,6 @@
 import { AppShellToastsComponent, AppShellToastService } from '@opendevstack/ngx-appshell'
 import { NatsMessage, NatsService } from './services/nats.service'
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { of, Subject } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -49,7 +49,8 @@ describe('AppComponent', () => {
       ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor'],
       { selectedCatalogSlug$: selectedCatalogSlugSubject.asObservable() }
     );
-    routerSpy = jasmine.createSpyObj('Router', ['navigate', 'getCurrentNavigation'], { events: routerEventsSubject.asObservable(), url: '/' });
+    routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl', 'getCurrentNavigation'], { events: routerEventsSubject.asObservable(), url: '/' });
+    routerSpy.navigateByUrl.and.resolveTo(true);
     mockAppConfigService = jasmine.createSpyObj('AppConfigService', ['getConfig']);
     mockProjectService = jasmine.createSpyObj('ProjectService', ['getCurrentProject', 'setCurrentProject', 'getUserProjects', 'getProjectCluster'], { project$: projectSubject.asObservable() });
     mockMatDialog = jasmine.createSpyObj('MatDialog', ['open']);
@@ -790,4 +791,70 @@ describe('AppComponent', () => {
     (component as any).closeDisclaimer();
     expect(component.displayTopDisclaimer).toBeFalse();
   });
+
+  it('should redirect to home when user is logged in on login-failed route', () => {
+    const loginFailedLeaf: any = { routeConfig: { path: 'login-failed' }, firstChild: null };
+    const root: any = { routeConfig: { path: 'root' }, firstChild: loginFailedLeaf };
+
+    Object.defineProperty(routerSpy, 'routerState', {
+      get: () => ({ snapshot: { root } }),
+      configurable: true
+    });
+
+    routerSpy.navigateByUrl.calls.reset();
+
+    azureLoggedUser$.next({ fullName: 'User', username: 'user@example.com', projects: [] } as AppUser);
+
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/', { replaceUrl: true });
+  });
+
+  it('should prevent duplicate redirects while login-failed redirect is in progress', () => {
+    const loginFailedLeaf: any = { routeConfig: { path: 'login-failed' }, firstChild: null };
+    const root: any = { routeConfig: { path: 'root' }, firstChild: loginFailedLeaf };
+
+    Object.defineProperty(routerSpy, 'routerState', {
+      get: () => ({ snapshot: { root } }),
+      configurable: true
+    });
+
+    let resolveNavigation: ((value: boolean) => void) | undefined;
+    const pendingNavigation = new Promise<boolean>((resolve) => {
+      resolveNavigation = resolve;
+    });
+    routerSpy.navigateByUrl.and.returnValue(pendingNavigation as any);
+    routerSpy.navigateByUrl.calls.reset();
+
+    const user = { fullName: 'User', username: 'user@example.com', projects: [] } as AppUser;
+    azureLoggedUser$.next(user);
+    azureLoggedUser$.next(user);
+
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledTimes(1);
+    expect((component as any)._loginFailedRedirectInProgress).toBeTrue();
+
+    resolveNavigation?.(true);
+  });
+
+  it('should reset login-failed redirect lock after navigation settles', fakeAsync(() => {
+    const loginFailedLeaf: any = { routeConfig: { path: 'login-failed' }, firstChild: null };
+    const root: any = { routeConfig: { path: 'root' }, firstChild: loginFailedLeaf };
+
+    Object.defineProperty(routerSpy, 'routerState', {
+      get: () => ({ snapshot: { root } }),
+      configurable: true
+    });
+
+    let resolveNavigation: ((value: boolean) => void) | undefined;
+    const pendingNavigation = new Promise<boolean>((resolve) => {
+      resolveNavigation = resolve;
+    });
+    routerSpy.navigateByUrl.and.returnValue(pendingNavigation as any);
+
+    azureLoggedUser$.next({ fullName: 'User', username: 'user@example.com', projects: [] } as AppUser);
+    expect((component as any)._loginFailedRedirectInProgress).toBeTrue();
+
+    resolveNavigation?.(true);
+    flushMicrotasks();
+
+    expect((component as any)._loginFailedRedirectInProgress).toBeFalse();
+  }));
 });

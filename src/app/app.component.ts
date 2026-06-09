@@ -65,6 +65,7 @@ export class AppComponent implements OnInit, OnDestroy {
   platformSelectorData = {} as PlatformSelectorWidgetDialogData;
 
   private _lastNotFoundState = false;
+  private _loginFailedRedirectInProgress = false;
   
   private readonly _destroying$ = new Subject<void>();
 
@@ -136,6 +137,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.azureService.loggedUser$.subscribe((user: AppUser | null) => {
       this.loggedUser = user;
       if (user) {
+        if (this.isLoginFailedRouteActive() && !this._loginFailedRedirectInProgress) {
+          this._loginFailedRedirectInProgress = true;
+          this.router.navigateByUrl('/', { replaceUrl: true }).finally(() => {
+            this._loginFailedRedirectInProgress = false;
+          });
+          return;
+        }
         const currentProjectForUi = this.projectService.getCurrentProject();
         if(currentProjectForUi) {
           // Apply optimistic UI, start with it and later apply validations after fetching projects to avoid empty parts
@@ -304,6 +312,12 @@ export class AppComponent implements OnInit, OnDestroy {
     const routeSnapshot = this.getDeepestRouteSnapshot();
     const routePath = routeSnapshot?.routeConfig?.path;
     return routePath === 'page-not-found' || routePath === '**';
+  }
+
+  private isLoginFailedRouteActive(): boolean {
+    const routeSnapshot = this.getDeepestRouteSnapshot();
+    const routePath = routeSnapshot?.routeConfig?.path;
+    return routePath === 'login-failed';
   }
 
   private getDeepestRouteSnapshot(): ActivatedRouteSnapshot | null {
