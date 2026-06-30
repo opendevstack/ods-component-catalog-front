@@ -12,5 +12,13 @@
   "natsUrl": "YOUR_NATS_SERVER_URL",
   "natsUser": "YOUR_NATS_USERNAME",
   "natsPassword": "YOUR_NATS_PASSWORD",
-  "platformSelectorServiceUrl": "YOUR_PLATFORM_SELECTOR_SERVICE_URL/api/v1/projects/${project}/platforms"
+  "platformSelectorServiceUrl": "YOUR_PLATFORM_SELECTOR_SERVICE_URL/api/v1/projects/${project}/platforms",
+  "chatbotConfig": {
+    "widgetConfig": {
+      "baseUrl": "YOUR_CHATBOT_PLATFORM_BASE_URL",
+      "embedToken": "YOUR_CHATBOT_TOKEN",
+      "theme": "light"
+    },
+    "scriptSrc": "YOUR_CHATBOT_SCRIPT_SOURCE"
+  }
 }

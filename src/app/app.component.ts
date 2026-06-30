@@ -69,6 +69,8 @@ export class AppComponent implements OnInit, OnDestroy {
   
   private readonly _destroying$ = new Subject<void>();
 
+  private _script?: HTMLScriptElement;
+
   constructor(
     private readonly catalogService: CatalogService, 
     private readonly router: Router, 
@@ -168,6 +170,16 @@ export class AppComponent implements OnInit, OnDestroy {
         });
       }
     });
+
+    const chatbotConfig = this.appConfigService.getConfig()?.chatbotConfig;
+    (window as Window & { ONB_CHAT_CONFIG?: object }).ONB_CHAT_CONFIG = chatbotConfig.widgetConfig;
+    
+    this._script = document.createElement('script');
+    this._script.src = chatbotConfig.scriptSrc;
+    this._script.async = true;
+
+    document.body.appendChild(this._script);
+
   }
 
   async initializeNats(user: AppUser | null) {
@@ -266,6 +278,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this._destroying$.complete();
     this.liveMessageSubscription?.unsubscribe();
     this.unreadMessagesCountSubscription?.unsubscribe();
+    this._script?.remove();
   }
 
   private listenForProjectInUrl(): void {
