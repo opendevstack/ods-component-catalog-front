@@ -13,7 +13,7 @@ info:
     url: https://confluence.biscrum.com/pages/viewpage.action?spaceKey=EDP&title=Welcome
 servers:
   - url: http://{baseurl}/v1
-    variables: 
+    variables:
       baseurl:
         default: localhost:8080
         description: Default address for a Component Provisioner's backend REST API instance.
@@ -336,6 +336,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
+
+  /project/components:
+    get:
+      operationId: getAllProjectComponents
+      parameters:
+        - name: page
+          in: query
+          description: Page number (from 0 until limit)
+          required: false
+          schema:
+            type: integer
+            default: 0
+
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectComponentsMetrics"
+          description: A paginated list of all the provisioned project components
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Invalid client token on the request.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Server error.
+      summary: Returns the information of the project's components in the Bitbucket
+        repository.
+      tags:
+        - Project-components-with-provision-status
+      x-accepts:
+        - application/json
 components:
   securitySchemes:
     bearerAuth:
@@ -583,3 +634,108 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProjectComponentStatusParameter'
+    ProjectComponentMetrics:
+      type: object
+      example:
+        projectKey: SOMEPROJECT
+        componentId: any-component-id-from-backend
+        caller: some-person@email.com
+        catalogItemSlug: some_technology-name
+        createdAt: 1707043200000
+        updatedAt: 1707043200000
+      properties:
+        projectKey:
+          description: The projectKey which the component is provisioned for.
+          example: SOMEPROJECT
+          type: string
+        componentId:
+          description: The componentId set by the user.
+          example: any-component-id-from-backend
+          minLength: 1
+          pattern: ^(?!\s*$).+
+          type: string
+        caller:
+          description: The email of who provisioned the component.
+          example: some-person@email.com
+          type: string
+        catalogItemSlug:
+          description: The provisioned catalog item slug.
+          example: some_technology-name
+          type: string
+        createdAt:
+          description: The timestamp of the provision action.
+          example: 1707043200000
+          type: number
+        updatedAt:
+          description: The timestamp of the last change of the provisioned component.
+          example: 1707043200000
+          type: number
+    Pagination:
+      type: object
+      example:
+        page: 0
+        size: 20
+        totalElements: 117
+        totalPages: 6
+        next: "https://api.example.com/resources?page=1&size=20"
+        previous: null
+      properties:
+        page:
+          type: integer
+          example: 0
+          description: Current page of the response.
+        size:
+          type: integer
+          example: 20
+          description: Current page size of the response.
+        totalElements:
+          type: integer
+          format: integer
+          example: 117
+          description: Total number of elements.
+        totalPages:
+          type: integer
+          example: 6
+          description: Total number of pages of this exact size.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://api.example.com/resources?page=1&size=20"
+          description: URL of the next page (or null if the current is the last one)
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://api.example.com/resources?page=0&size=20"
+          description: URL of the previous page (or null if the current is the first one)
+    ProjectComponentsMetrics:
+      type: object
+      example:
+        data:
+          - projectKey: SOMEPROJECT
+            componentId: any-component-id-from-backend
+            caller: some-person@email.com
+            catalogItemSlug: some_technology-name
+            createdAt: 1707043200000
+            updatedAt: 1707043200000
+          - projectKey: ANOTHERPROJECT
+            componentId: another-component-id-from-backend
+            caller: some-person2@email.com
+            catalogItemSlug: another_technology-name
+            createdAt: 1707043200001
+            updatedAt: 1707043200002
+        pagination:
+          page: 0
+          size: 20
+          totalElements: 117
+          totalPages: 6
+          next: https://api.example.com/resources?page=1&size=20
+          previous: null
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectComponentMetrics'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

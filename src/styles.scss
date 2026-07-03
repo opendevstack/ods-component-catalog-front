@@ -54,3 +54,10 @@ router-outlet+* {
     left: 0;
     --mdc-dialog-container-shape: 0px;
 }
+
+appshell-product-catalog-screen.owner-view appshell-chip:first-of-type mat-chip.appshell-chip,
+    appshell-product-view-screen.owner-view appshell-chip:first-child mat-chip.appshell-chip {
+  --mdc-chip-elevated-container-color: var(--appshell-color-grey-warm) !important;
+  --mdc-chip-elevated-disabled-container-color: var(--appshell-color-grey-warm) !important;
+  --mdc-chip-label-text-color: var(--appshell-color-grey-strong) !important;
+}

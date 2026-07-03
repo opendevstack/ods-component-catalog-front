@@ -29,6 +29,8 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
   currentCatalogItemId: string | undefined;
   currentCatalog: CatalogDescriptor | undefined;
 
+  isOwnerView: boolean = false;
+
   private readonly _destroying$ = new Subject<void>();
 
   constructor(
@@ -80,8 +82,24 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
   }
 
   private handleProductLoaded(product: AppProduct, catalog: CatalogDescriptor) {
-    this.product = product;
-    this.pageTitle = product.title;
+    const hasComponentCount = product.componentCount !== undefined;
+    this.isOwnerView = hasComponentCount;
+    
+    const modifiedForOwnersProduct = {
+      ...product,
+      tags: hasComponentCount
+          ? [
+              {
+                label: 'owner-view',
+                options: [ `${product.componentCount} component${product.componentCount === 1 ? '' : 's'}` ]
+              },
+              ...(product.tags ?? [])
+            ]
+          : product.tags
+    } as AppProduct;
+
+    this.product = modifiedForOwnersProduct;
+    this.pageTitle = modifiedForOwnersProduct.title;
     this.setupActionButtons();
     this.setupBreadcrumbs(catalog);
   }

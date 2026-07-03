@@ -35,6 +35,56 @@ tags:
   - name: ProvisionerActions
     description: Provisioning notifications from AWX/Provisioner
 paths:
+  /project/components:
+    get:
+      operationId: getAllProjectComponents
+      parameters:
+        - name: page
+          in: query
+          description: Page number (from 0 until limit)
+          required: false
+          schema:
+            type: integer
+            default: 0
+
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectComponentsMetrics"
+          description: A paginated list of all the provisioned project components
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Invalid client token on the request.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Insufficient permissions for the client to access the resource.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestErrorMessage"
+          description: Server error.
+      summary: Returns the information of the project's components in the Bitbucket
+        repository.
+      tags:
+        - Project-components
+      x-accepts:
+        - application/json
   /project/{projectKey}/components:
     get:
       tags:
@@ -279,7 +329,7 @@ paths:
         - name: catalogId
           in: query
           description: id for the Catalog.
-          required: true
+          required: false
           schema:
             type: string
         - name: sortByTitle
@@ -996,6 +1046,20 @@ components:
           type: string
           format: date-time
           example: '2021-07-01T00:00:00Z'
+        updatedAt:
+          type: integer
+          format: int64
+          example: 1625097600000
+          description: Timestamp in milliseconds since Unix epoch
+        componentCount:
+          type: integer
+          example: 5
+          description: Number of project components provisioned from this catalog item
+          x-field-extra-annotation: |
+            @com.fasterxml.jackson.annotation.JsonInclude(
+              com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
+            )
+
         userActions:
           type: array
           items:
@@ -1006,10 +1070,10 @@ components:
         - id
         - title
         - shortDescription
-        - description
-        - image
+        - itemSrc
         - authors
         - date
+        - updatedAt
       example:
         id: aSdFam...yCg==
         slug: myproject_some-repo
@@ -1350,3 +1414,111 @@ components:
                 example:
                   - "production"
                   - "staging"
+
+    ProjectComponentMetrics:
+      type: object
+      example:
+        projectKey: SOMEPROJECT
+        componentId: any-component-id-from-backend
+        caller: some-person@example.com
+        catalogItemSlug: some_technology-name
+        createdAt: 1707043200000
+        updatedAt: 1707043200000
+      properties:
+        projectKey:
+          description: The projectKey which the component is provisioned for.
+          example: SOMEPROJECT
+          type: string
+        componentId:
+          description: The componentId set by the user.
+          example: any-component-id-from-backend
+          minLength: 1
+          pattern: ^(?!\s*$).+
+          type: string
+        caller:
+          description: The email of who provisioned the component.
+          example: some-person@example.com
+          type: string
+        catalogItemSlug:
+          description: The provisioned catalog item slug.
+          example: some_technology-name
+          type: string
+        createdAt:
+          description: The timestamp of the provision action.
+          example: 1707043200000
+          type: number
+        updatedAt:
+          description: The timestamp of the last change of the provisioned component.
+          example: 1707043200000
+          type: number
+
+    Pagination:
+      type: object
+      example:
+        page: 0
+        size: 20
+        totalElements: 117
+        totalPages: 6
+        next: "https://api.example.com/resources?page=1&size=20"
+        previous: null
+      properties:
+        page:
+          type: integer
+          example: 0
+          description: Current page of the response.
+        size:
+          type: integer
+          example: 20
+          description: Current page size of the response.
+        totalElements:
+          type: integer
+          format: integer
+          example: 117
+          description: Total number of elements.
+        totalPages:
+          type: integer
+          example: 6
+          description: Total number of pages of this exact size.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://api.example.com/resources?page=1&size=20"
+          description: URL of the next page (or null if the current is the last one)
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://api.example.com/resources?page=0&size=20"
+          description: URL of the previous page (or null if the current is the first one)
+
+    ProjectComponentsMetrics:
+      type: object
+      example:
+        data:
+          - projectKey: SOMEPROJECT
+            componentId: any-component-id-from-backend
+            caller: some-person@example.com
+            catalogItemSlug: some_technology-name
+            createdAt: 1707043200000
+            updatedAt: 1707043200000
+          - projectKey: ANOTHERPROJECT
+            componentId: another-component-id-from-backend
+            caller: some-person2@example.com
+            catalogItemSlug: another_technology-name
+            createdAt: 1707043200001
+            updatedAt: 1707043200002
+        pagination:
+          page: 0
+          size: 20
+          totalElements: 117
+          totalPages: 6
+          next: https://api.example.com/resources?page=1&size=20
+          previous: null
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectComponentMetrics'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

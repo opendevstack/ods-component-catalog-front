@@ -18,6 +18,7 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
   filteredProducts: AppProduct[] = [];
   filters: AppShellFilter[] = [];
   isLoading: boolean = false;
+  isOwnerView: boolean = false;
 
   noProductsIcon?: string = undefined;
   noProductsHtmlMessage?: string = undefined;
@@ -158,6 +159,24 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
         return true
       });
     }
+
+    const hasComponentCount = this.filteredProducts.some(p => p.componentCount !== undefined);
+    this.isOwnerView = hasComponentCount;
+
+    if (hasComponentCount) {
+      this.filteredProducts = [...this.filteredProducts.map(product => ({
+        ...product,
+        tags: 
+            [
+              {
+                label: 'owner-view',
+                options: [ `${product.componentCount} component${product.componentCount === 1 ? '' : 's'}` ]
+              },
+              ...(product.tags ?? [])
+            ]
+      }))];
+    }
+
     if (this.products && this.products.length > 0 && (!this.filteredProducts || this.filteredProducts.length === 0)) {
       this.showNoProductsMatchingFilters();
     }
