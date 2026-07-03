@@ -159,11 +159,14 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
         return true
       });
     }
-    this.isOwnerView = this.filteredProducts.some(p => p.componentCount !== undefined);
-    if (this.isOwnerView) {
+
+    const hasComponentCount = this.filteredProducts.some(p => p.componentCount !== undefined);
+    this.isOwnerView = hasComponentCount;
+
+    if (hasComponentCount) {
       this.filteredProducts = [...this.filteredProducts.map(product => ({
         ...product,
-        tags: product.componentCount !== undefined
+        tags: hasComponentCount
           ? [
               {
                 label: 'owner-view',
