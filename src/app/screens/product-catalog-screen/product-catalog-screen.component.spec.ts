@@ -344,4 +344,72 @@ describe('ProductCatalogScreenComponent', () => {
   it('should clean up on destroy', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
+
+  it('should enable owner view when at least one product has componentCount', () => {
+    component.products = [
+      { 
+        id: '1',
+        title: 'Product 1',
+        shortDescription: 'Short 1',
+        description: 'Desc 1',
+        image: 'Img 1',
+        authors: [],
+        date: new Date(),
+        tags: [{ label: 'label 1', options: ['value 1']}],
+        componentCount: 2
+      }
+    ] as AppProduct[];
+
+    component.filterProducts(new Map());
+
+    expect(component.isOwnerView).toBeTrue();
+  });
+
+  it('should disable owner view when no product has componentCount', () => {
+    component.products = [
+      { 
+        id: '1',
+        title: 'Product 1',
+        shortDescription: 'Short 1',
+        description: 'Desc 1',
+        image: 'Img 1',
+        authors: [],
+        date: new Date(),
+        tags: [],
+        componentCount: undefined
+      }
+    ] as AppProduct[];
+
+    component.filterProducts(new Map());
+
+    expect(component.isOwnerView).toBeFalse();
+  });
+
+  it('should prepend owner-view tag when componentCount exists', () => {
+    component.products = [
+      { 
+        id: '1',
+        title: 'Product 1',
+        shortDescription: 'Short 1',
+        description: 'Desc 1',
+        image: 'Img 1',
+        authors: [],
+        date: new Date(),
+        tags: [{ label: 'existing', options: ['value']}],
+        componentCount: 5
+      }
+    ] as AppProduct[];
+
+    component.filterProducts(new Map());
+
+    expect(component.filteredProducts[0].tags?.[0]).toEqual({
+      label: 'owner-view',
+      options: ['5 components']
+    });
+
+    expect(component.filteredProducts[0].tags?.[1]).toEqual({
+      label: 'existing',
+      options: ['value']
+    });
+  });
 });
