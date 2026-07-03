@@ -166,15 +166,14 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
     if (hasComponentCount) {
       this.filteredProducts = [...this.filteredProducts.map(product => ({
         ...product,
-        tags: hasComponentCount
-          ? [
+        tags: 
+            [
               {
                 label: 'owner-view',
                 options: [ `${product.componentCount} component${product.componentCount === 1 ? '' : 's'}` ]
               },
               ...(product.tags ?? [])
             ]
-          : product.tags
       }))];
     }
 
