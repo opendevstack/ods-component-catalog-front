@@ -96,7 +96,7 @@ export class CatalogService {
   }
 
   getProductsList(catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {
-    return this.catalogItemsService.getCatalogItems(catalogDescriptor.id!, 'asc').pipe(
+    return this.catalogItemsService.getCatalogItems('asc', catalogDescriptor.id!).pipe(
       switchMap(items => this.mapItemsToProductListItems(items, catalogDescriptor.slug!))
     );
   }
@@ -213,7 +213,8 @@ export class CatalogService {
             errorMessage: validation.errorMessage,
           })) || []
         } as ProductActionParameter)) ?? []
-      } as ProductAction))
+      } as ProductAction)),
+      componentCount: item.componentCount || undefined
     } as AppProduct;
   }
 }
