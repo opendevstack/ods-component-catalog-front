@@ -83,7 +83,7 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
   private handleProductLoaded(product: AppProduct, catalog: CatalogDescriptor) {
     this.isOwnerView = product.componentCount !== undefined;
-    let modifiedForOwnersProduct = {
+    const modifiedForOwnersProduct = {
       ...product,
       tags: product.componentCount !== undefined
           ? [
