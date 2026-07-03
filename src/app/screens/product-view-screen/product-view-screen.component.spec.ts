@@ -11,6 +11,7 @@ import { AppProduct } from '../../models/app-product';
 import { ProductAction } from '../../models/product-action';
 import { ProjectService } from '../../services/project.service';
 import { AppProject } from '../../models/project';
+import { CatalogDescriptor } from '../../openapi/component-catalog';
 
 describe('ProductViewScreenComponent', () => {
   let component: ProductViewScreenComponent;
@@ -298,4 +299,73 @@ describe('ProductViewScreenComponent', () => {
     expect(catalogServiceSpy.getProduct).toHaveBeenCalledWith('fakeId');
     expect(catalogServiceSpy.getProjectProduct).not.toHaveBeenCalled();
   }));
+
+  it('should enable owner view when product has componentCount', () => {
+    const product = { 
+      id: '1',
+      title: 'Product 1',
+      shortDescription: 'Short 1',
+      description: 'Desc 1',
+      image: 'Img 1',
+      authors: [],
+      date: new Date(),
+      tags: [{ label: 'existing', options: ['value']}],
+      componentCount: 0
+    } as AppProduct;
+
+    (component as any).handleProductLoaded(
+      product,
+      { slug: 'catalog', id: 'fake' } as CatalogDescriptor
+    );
+
+    expect(component.isOwnerView).toBeTrue();
+  });
+
+  it('should disable owner view when product does not have componentCount', () => {
+    const product = { 
+      id: '1',
+      title: 'Product 1',
+      shortDescription: 'Short 1',
+      description: 'Desc 1',
+      image: 'Img 1',
+      authors: [],
+      date: new Date(),
+      tags: [{ label: 'existing', options: ['value']}],
+    } as AppProduct;
+
+    (component as any).handleProductLoaded(
+      product,
+      { slug: 'catalog', id: 'fake' } as CatalogDescriptor
+    );
+
+    expect(component.isOwnerView).toBeFalse();
+  });
+
+  it('should prepend owner-view tag when componentCount exists', () => {
+    const product = {
+      title: 'Product',
+      componentCount: 1,
+      tags: [
+        {
+          label: 'existing',
+          options: ['value']
+        }
+      ]
+    } as AppProduct;
+
+    (component as any).handleProductLoaded(
+      product,
+      { slug: 'catalog', id: 'fake' } as CatalogDescriptor
+    );
+
+    expect(component.product.tags?.[0]).toEqual({
+      label: 'owner-view',
+      options: ['1 component']
+    });
+
+    expect(component.product.tags?.[1]).toEqual({
+      label: 'existing',
+      options: ['value']
+    });
+  });
 });
