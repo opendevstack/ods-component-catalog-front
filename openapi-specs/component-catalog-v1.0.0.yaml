@@ -1051,6 +1051,15 @@ components:
           format: int64
           example: 1625097600000
           description: Timestamp in milliseconds since Unix epoch
+        componentCount:
+          type: integer
+          example: 5
+          description: Number of project components provisioned from this catalog item
+          x-field-extra-annotation: |
+            @com.fasterxml.jackson.annotation.JsonInclude(
+              com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
+            )
+
         userActions:
           type: array
           items:
@@ -1061,10 +1070,10 @@ components:
         - id
         - title
         - shortDescription
-        - description
-        - image
+        - itemSrc
         - authors
         - date
+        - updatedAt
       example:
         id: aSdFam...yCg==
         slug: myproject_some-repo
