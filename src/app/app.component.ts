@@ -175,10 +175,7 @@ export class AppComponent implements OnInit, OnDestroy {
     (window as Window & { ONB_CHAT_CONFIG?: object }).ONB_CHAT_CONFIG = chatbotConfig.widgetConfig;
     
     this._script = document.createElement('script');
-    //this._script.src = chatbotConfig.scriptSrc;
-    this._script.src = 'https://platforms-agent-onbcore-prod.apps.eu-prod.ocp.aws.boehringer.com/assets/onboarding-chat-widget.js';
-    this._script.async = true;
-
+    this._script.src = chatbotConfig.scriptSrc;
     document.body.appendChild(this._script);
 
   }

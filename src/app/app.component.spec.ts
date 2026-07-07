@@ -77,7 +77,7 @@ describe('AppComponent', () => {
     mockCatalogService.getCatalog.and.returnValue(of({ slug: 'test-catalog', id: '1', links: [] } as Catalog));
     mockCatalogService.getSelectedCatalogSlug.and.returnValue(null);
     mockCatalogService.getSelectedCatalogDescriptor.and.returnValue({ slug: 'test-catalog', id: '1' });
-    mockAppConfigService.getConfig.and.returnValue({ natsUrl: 'nats://localhost:4222' });
+    mockAppConfigService.getConfig.and.returnValue({ natsUrl: 'nats://localhost:4222', chatbotConfig: { widgetConfig: { baseUrl: 'https://example.com', theme: 'light' }, scriptSrc: 'https://example.com/chat-widget.js' } });
     mockAzureService.getAccessToken.and.returnValue(Promise.resolve('new-token'));
     mockProjectService.getUserProjects.and.returnValue(of([]));
     mockDialogRef.afterClosed.and.returnValue(dialogSubject.asObservable());
