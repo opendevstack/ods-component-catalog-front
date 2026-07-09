@@ -16,7 +16,6 @@
   "chatbotConfig": {
     "widgetConfig": {
       "baseUrl": "YOUR_CHATBOT_PLATFORM_BASE_URL",
-      "embedToken": "YOUR_CHATBOT_TOKEN",
       "theme": "light"
     },
     "scriptSrc": "YOUR_CHATBOT_SCRIPT_SOURCE"
