@@ -8,6 +8,8 @@ import { CatalogResolver } from './services/catalog-resolver.service';
 import { ProductActionScreenComponent } from './screens/product-action-screen/product-action-screen.component';
 import { ProjectComponentsScreenComponent } from './screens/project-components-screen/project-components-screen.component';
 import { PageNotFoundScreenComponent } from './screens/page-not-found-screen/page-not-found-screen.component';
+import { CatalogActivityScreenComponent } from './screens/catalog-activity-screen/catalog-activity-screen.component';
+import { GroupsGuard } from './guards/groups.guard';
 
 export const routes: Routes = [
 	{ path: '', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
@@ -17,6 +19,7 @@ export const routes: Routes = [
 	{ path: ':projectKey/components', component: ProjectComponentsScreenComponent, canActivate: [ MsalGuard ] },
 	{ path: ':catalogSlug', component: ProductCatalogScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: ':catalogSlug/community', component: CommunityScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
+	{ path: ':catalogSlug/catalog-activity', component: CatalogActivityScreenComponent, canActivate: [ MsalGuard, GroupsGuard ], resolve: { catalogs: CatalogResolver }, data: { requiredOwners: true } },
 	{ path: ':catalogSlug/item/:id', component: ProductViewScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{ path: ':catalogSlug/item/:id/:action', component: ProductActionScreenComponent, canActivate: [ MsalGuard ], resolve: { catalogs: CatalogResolver } },
 	{path: '**', component: PageNotFoundScreenComponent}

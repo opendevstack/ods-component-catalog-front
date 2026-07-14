@@ -1,0 +1,20 @@
+<appshell-page-header
+    [breadcrumbLinks]="breadcrumbLinks"
+    title="Catalog Activity"
+></appshell-page-header>
+@if(!connectionErrorHtmlMessage && !connectionErrorIcon) {
+    <div class="community-page-content">
+        <markdown
+            [data]="pageContent"
+            [disableSanitizer]="true">
+        </markdown>
+    </div>
+}
+@if(connectionErrorHtmlMessage || connectionErrorIcon) {
+    <div class="no-results-ctn" role="status" aria-live="polite" tabindex="0">
+        @if(connectionErrorIcon) {
+            <appshell-icon [class]="'no-results-icon'" [icon]="connectionErrorIcon" />
+        }
+        <div [innerHTML]="connectionErrorHtmlMessage"></div>
+    </div>
+}

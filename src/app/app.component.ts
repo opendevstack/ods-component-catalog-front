@@ -17,6 +17,7 @@ import { PlatformSelectorWidgetDialogData } from './models/platform-selector-wid
 import { MatDialog } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
+import { CatalogOwnersGroupAccessStore } from './services/catalog-owners-group-access-store.service';
 
 
 @Component({
@@ -62,6 +63,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   loggedUser: AppUser|null = null;
 
+  userGroups: string[] = [];
+  catalogOwners: string[] = [];
+
   platformSelectorData = {} as PlatformSelectorWidgetDialogData;
 
   private _lastNotFoundState = false;
@@ -79,6 +83,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly natsService: NatsService,
     private readonly appConfigService :AppConfigService,
     private readonly projectService: ProjectService,
+    private readonly catalogOwnersGroupAccessStore: CatalogOwnersGroupAccessStore,
     public dialog: MatDialog
   ) {
     this.natsUrl = this.appConfigService.getConfig()?.natsUrl;
@@ -171,6 +176,18 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
+    this.azureService.userGroups$
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(groups => {
+        this.userGroups = groups;
+      });
+
+    this.catalogOwnersGroupAccessStore.currentOwners$
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(owners => {
+        this.catalogOwners = owners;
+      });
+
     const chatbotConfig = this.appConfigService.getConfig()?.chatbotConfig;
     (window as Window & { ONB_CHAT_CONFIG?: object }).ONB_CHAT_CONFIG = chatbotConfig.widgetConfig;
     
@@ -246,12 +263,23 @@ export class AppComponent implements OnInit, OnDestroy {
         ]
       });
     }
+
+    const catalogLinks = [
+      { label: 'Add Components', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`, icon: 'cart' },
+      { label: 'Community', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/community`, icon: 'people' },
+    ];
+
+    if (this.canAccessCurrentCatalog() || true) {
+      catalogLinks.push({
+        label: 'Catalog Activity',
+        anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/catalog-activity`,
+        icon: 'bar_chart_up'
+      });
+    }
+
     this.sidenavSections.push({
       label: catalog.slug!.toUpperCase(),
-      links: [
-        {label: 'Add Components', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`, icon: 'cart'},
-        {label: 'Community', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/community`, icon: 'people'}
-      ]
+      links: catalogLinks
     });
 
     this.sidenavLinks.links = [];
@@ -413,6 +441,14 @@ export class AppComponent implements OnInit, OnDestroy {
         console.log('Invalid message format:', message);
       }
     });
+  }
+
+  private canAccessCurrentCatalog(): boolean {
+    if (this.userGroups.length === 0 || this.catalogOwners.length === 0) {
+      return false;
+    }
+
+    return this.userGroups.some(group => this.catalogOwners.includes(group));
   }
 
   showPlatformSelector() {

@@ -1,10 +1,11 @@
 import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
 import { EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
-import { BehaviorSubject, filter, from, Observable, Subject, takeUntil } from "rxjs";
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, takeUntil } from "rxjs";
 import { Router } from "@angular/router";
 import { AppUser } from "../models/app-user";
 import { AppConfigService } from "./app-config.service";
+import { AzureGroupsService } from "../openapi/projects-info-service";
 
 @Injectable({
     providedIn: 'root'
@@ -20,13 +21,16 @@ export class AzureService implements OnDestroy {
 
     isFirstTime = true;
     loggedUser$ = new BehaviorSubject<AppUser | null >(null);
+    
+    public userGroups$ = new BehaviorSubject<string[]>([]);
   
     constructor(
       @Inject(MSAL_GUARD_CONFIG) private readonly msalGuardConfig: MsalGuardConfiguration,
       private readonly msalService: MsalService,
       private readonly msalBroadcastService: MsalBroadcastService,
       private readonly router: Router,
-      private readonly appConfigService: AppConfigService
+      private readonly appConfigService: AppConfigService,
+      private readonly azureGroupsService: AzureGroupsService
     ) {}
 
     initialize() {
@@ -140,6 +144,8 @@ export class AzureService implements OnDestroy {
             })
             .finally(() => {
                 this.loggedUser$.next(loggedUser);
+                this.loadUserGroups()
+                    .subscribe(groups => this.userGroups$.next(groups));
             });
         }
     }
@@ -190,6 +196,16 @@ export class AzureService implements OnDestroy {
                 }
             });
         }
+    }
+
+    loadUserGroups(): Observable<string[]> {
+        return this.azureGroupsService.getAzureGroups().pipe(
+            map(groups => Array.isArray(groups) ? groups.filter(Boolean) : []),
+            catchError(error => {
+                console.error('Error loading Azure groups', error);
+                return of([]);
+            })
+        );
     }
 
     logout() {
