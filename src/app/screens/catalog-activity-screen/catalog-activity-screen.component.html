@@ -1,20 +1,142 @@
-<appshell-page-header
-    [breadcrumbLinks]="breadcrumbLinks"
-    title="Catalog Activity"
-></appshell-page-header>
-@if(!connectionErrorHtmlMessage && !connectionErrorIcon) {
-    <div class="community-page-content">
-        <markdown
-            [data]="pageContent"
-            [disableSanitizer]="true">
-        </markdown>
-    </div>
-}
-@if(connectionErrorHtmlMessage || connectionErrorIcon) {
-    <div class="no-results-ctn" role="status" aria-live="polite" tabindex="0">
-        @if(connectionErrorIcon) {
-            <appshell-icon [class]="'no-results-icon'" [icon]="connectionErrorIcon" />
-        }
-        <div [innerHTML]="connectionErrorHtmlMessage"></div>
-    </div>
-}
+<appshell-page-header [breadcrumbLinks]="breadcrumbLinks" title="Catalog Activity"></appshell-page-header>
+<section class="catalog-activity-intro">
+  <div class="catalog-activity-intro-copy">
+    <h2>Filter catalog activity</h2>
+    <p>Refine the activity list by project, status or date range. Sort by clicking the column headers.</p>
+  </div>
+</section>
+
+<div class="catalog-activity-page">
+  <div class="catalog-activity-page-inner">
+    <section class="catalog-activity-filters">
+      <div class="filter-row">
+        <div class="input-text">
+          <mat-label>Project</mat-label>
+          <mat-form-field appearance="outline" class="project-field">
+            <input matInput type="text" placeholder="Project" />
+          </mat-form-field>
+        </div>
+
+        <appshell-select [label]="statusFilter.label" [options]="statusFilter.options"
+          [placeholder]="statusFilter.placeholder" (selectValueChange)="onFilterChange(statusFilter.label, $event)">
+        </appshell-select>
+
+        <dropdown-single-select [label]="dateRangeFilter.label" [options]="dateRangeFilter.options"
+          [placeholder]="dateRangeFilter.placeholder"
+          (selectValueChange)="onFilterChange(dateRangeFilter.label, $event)">
+        </dropdown-single-select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="secondary" (click)="onResetFilters()">Reset</button>
+        <button mat-flat-button color="accent" class="primary action-dialog-btn" (click)="onSearch()">Apply filters</button>
+      </div>
+    </section>
+
+    <section class="catalog-activity-summary" *ngIf="!isLoading && activities.length > 0">
+      <span>{{ activities.length }} provision activity entries loaded</span>
+    </section>
+
+    <section *ngIf="connectionErrorHtmlMessage || connectionErrorIcon" class="no-results-ctn" role="status"
+      aria-live="polite" tabindex="0">
+      <appshell-icon *ngIf="connectionErrorIcon" class="no-results-icon" [icon]="connectionErrorIcon"></appshell-icon>
+      <div [innerHTML]="connectionErrorHtmlMessage"></div>
+    </section>
+
+    <section *ngIf="isLoading" class="loading-state">
+      <div class="loader"></div>
+      <p>Loading catalog activity...</p>
+    </section>
+
+    <section *ngIf="!isLoading && activities.length > 0" class="table-wrapper">
+      <table class="catalog-activity-table">
+        <thead>
+          <tr>
+            <th>Catalog item slug</th>
+            <th>Component id</th>
+            <th>
+              <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Project)">
+                <span>Project key</span>
+                <span class="sort-icon" aria-hidden="true">
+                  <div class="sort-icon-stack">
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Status)">
+                <span>Status</span>
+                <span class="sort-icon" aria-hidden="true">
+                  <div class="sort-icon-stack">
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="sortable-header" (click)="updateSort(SortParameter.CreationDate)">
+                <span>Created at</span>
+                <span class="sort-icon" aria-hidden="true">
+                  <div class="sort-icon-stack">
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                    <div class="svg-wrapper">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </span>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let activity of activities; trackBy: trackByActivity">
+            <td>{{ activity.catalogItemSlug || '—' }}</td>
+            <td>{{ activity.componentId || '—' }}</td>
+            <td>{{ activity.projectKey || '—' }}</td>
+            <td>{{ activity.status || '—' }}</td>
+            <td>{{ activity.createdAt ? (activity.createdAt | date:'MMM d, y HH:mm:ss') : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section *ngIf="!isLoading && activities.length === 0 && !connectionErrorHtmlMessage" class="no-results-ctn"
+      role="status" aria-live="polite" tabindex="0">
+      <appshell-icon class="no-results-icon" icon="magnifying_glass"></appshell-icon>
+      <div>No catalog activity was found for the current filter selection.</div>
+    </section>
+
+    <div #loadMoreAnchor class="load-more-anchor" *ngIf="hasMore"></div>
+  </div>
+</div>
