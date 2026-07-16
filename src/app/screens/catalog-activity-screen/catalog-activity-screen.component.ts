@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent, AppShellSelectComponent } from '@opendevstack/ngx-appshell';
 import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
 import { CatalogActivity, SortOrder, SortParameter } from '../../openapi/component-catalog';
-import { of, Subject, takeUntil } from 'rxjs';
+import { delay, of, Subject, takeUntil } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { MatInput, MatLabel, MatFormField } from "@angular/material/input";
@@ -43,6 +43,8 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     options: ['CREATING', 'CREATED', 'FAILED', 'DELETING', 'UNKNOWN'],
     placeholder: 'Select a status'
   } as AppShellFilter;
+
+  readonly skeletonLoadingRows = Array.from({ length: 10 }, (_, index) => index);
 
   readonly dateRangeFilterData = {
     label: 'Date range',
@@ -154,7 +156,10 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     }
 
     of(this.getMockPage(page, this.PAGE_SIZE))
-      .pipe(takeUntil(this._destroying$))
+      .pipe(
+        delay(2000),
+        takeUntil(this._destroying$)
+      )
       .subscribe({
         next: (result) => this.handleActivityResult(result, reset),
         error: () => this.setConnectionErrorState(),

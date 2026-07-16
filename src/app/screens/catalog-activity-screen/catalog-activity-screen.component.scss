@@ -242,21 +242,22 @@ button.primary:disabled {
   color: var(--appshell-color-secondary-light);
 }
 
-.loading-state {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem 1.5rem;
-  color: var(--appshell-color-secondary-main);
+.catalog-activity-table tbody tr.skeleton-row td {
+  padding: 1rem 1.2rem;
+  vertical-align: middle;
 }
 
-.loader {
-  width: 2rem;
-  height: 2rem;
-  border: 0.25rem solid rgba(0, 0, 0, 0.1);
-  border-top-color: var(--appshell-color-primary-main);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.catalog-activity-table .skeleton {
+  display: block;
+  height: 1rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.catalog-activity-table .skeleton-cell {
+  min-height: 1rem;
 }
 
 .load-more-anchor {
@@ -265,9 +266,12 @@ button.primary:disabled {
   height: 1px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
