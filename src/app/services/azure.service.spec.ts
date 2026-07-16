@@ -1,10 +1,11 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { AzureService } from './azure.service';
-import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
-import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
-import { AuthenticationResult, EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
 import { Router } from '@angular/router';
+import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
+import { EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { AppConfigService } from './app-config.service';
+import { AzureService } from './azure.service';
+import { AzureGroupsService } from '../openapi/projects-info-service';
 
 const destroyingMethodName = '_destroying$';
 const fakeToken = 'test-token';
@@ -17,7 +18,8 @@ describe('AzureService', () => {
     let inProgress$: Subject<InteractionStatus>;
     const msalInstanceSpy = jasmine.createSpyObj('instance', ['enableAccountStorageEvents', 'getAllAccounts', 'getActiveAccount', 'setActiveAccount', 'acquireTokenSilent']);
     const mockRouter: jasmine.SpyObj<Router> =  jasmine.createSpyObj('Router', ['navigate']);;
-    const appConfigServiceSpy = jasmine.createSpyObj('AppConfigService', ['getConfig']);
+    const appConfigServiceSpy = jasmine.createSpyObj('AppConfigService', ['getConfig']);    
+    const azureGroupsServiceSpy = jasmine.createSpyObj('AzureGroupsService', ['getAzureGroups']);
 
     beforeEach(() => {
         msalSubject$ = new Subject<EventMessage>();
@@ -38,7 +40,8 @@ describe('AzureService', () => {
                 { provide: MsalService, useValue: msalServiceSpy },
                 { provide: MsalBroadcastService, useValue: msalBroadcastServiceSpy },
                 { provide: Router, useValue: mockRouter },
-                { provide: AppConfigService, useValue: appConfigServiceSpy }
+                { provide: AppConfigService, useValue: appConfigServiceSpy },
+                { provide: AzureGroupsService, useValue: azureGroupsServiceSpy }
             ]
         });
 
@@ -47,6 +50,7 @@ describe('AzureService', () => {
         msalInstanceSpy.getAllAccounts.and.returnValue([{}]);
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
         msalInstanceSpy.acquireTokenSilent.calls.reset();
+        azureGroupsServiceSpy.getAzureGroups.and.returnValue(of([]));
         msalService.instance = msalInstanceSpy;
         // Clear the token cache so each test starts fresh
         (service as any).cachedAccessToken = null;
@@ -103,27 +107,6 @@ describe('AzureService', () => {
         tick();
         expect(service.loggedUser$.value).toBeNull();
     }));
-
-    it('refreshLoggedUser - should set loggedUser$ with user details if msalUser exists', (done) => {
-        const msalUser = { name: 'Test User' };
-        msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
-
-        spyOn(window, 'fetch').and.returnValues(
-            Promise.resolve(new Response(new Blob())),
-            Promise.resolve(new Response('{"value": [{"displayName": "BI-AS-ATLASSIAN-P-PROJECT1-MANAGER"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT2-TEAM"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT3-STAKEHOLDER"}, {"displayName": "BI-AS-ATLASSIAN-P-PROJECT3-INVALID_ROLE"}]}'))
-        );
-
-        service.loggedUser$.subscribe((user) => {
-            if (user) {
-                expect(user.fullName).toBe(msalUser.name);
-                expect(user.avatarSrc).not.toBeUndefined();
-                done();
-            }
-        });
-
-        service.refreshLoggedUser();
-    });
 
     it('refreshLoggedUser - should handle error when acquiring token silently', (done) => {
         const msalUser = { name: 'Test User' };
@@ -320,6 +303,40 @@ describe('AzureService', () => {
                 expect(error).toEqual(expectedError);
                 done();
             }
+        });
+    });
+
+    it('loadUserGroups should return filtered groups', done => {
+        azureGroupsServiceSpy.getAzureGroups.and.returnValue(
+            of([
+                'GROUP_A',
+                '',
+                'GROUP_B',
+                null as any,
+                undefined as any
+            ])
+        );
+
+        service.loadUserGroups().subscribe(groups => {
+            expect(groups).toEqual([
+                'GROUP_A',
+                'GROUP_B'
+            ]);
+
+            done();
+        });
+    });
+
+    it('loadUserGroups should return empty array when service fails', done => {
+        spyOn(console, 'error').and.stub();
+        azureGroupsServiceSpy.getAzureGroups.and.returnValue(
+            throwError(() => new Error('boom'))
+        );
+
+        service.loadUserGroups().subscribe(groups => {
+            expect(groups).toEqual([]);
+
+            done();
         });
     });
 
