@@ -1,19 +1,21 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent, AppShellSelectComponent } from '@opendevstack/ngx-appshell';
-import { DropdownSingleSelectComponent } from '../../components/input-dropdown-single-select/input-dropdown-single-select.component'
+import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
 import { CatalogActivity, SortOrder, SortParameter } from '../../openapi/component-catalog';
 import { of, Subject, takeUntil } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { MatInput, MatLabel, MatFormField } from "@angular/material/input";
 import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 
 type CatalogActivityStatusFilter = CatalogActivity.StatusEnum | '';
+type DateRangeFilterPossibleValues = '30' | '90' | '180' | '365' | '';
 
 @Component({
     selector: 'app-catalog-activity-screen',
-    imports: [CommonModule, AppShellPageHeaderComponent, AppShellIconComponent, AppShellSelectComponent, DropdownSingleSelectComponent, MatInput, MatLabel, MatFormField, MatButtonModule],
+    imports: [CommonModule, AppShellPageHeaderComponent, AppShellIconComponent, DropdownSelectComponent, MatInput, MatLabel, MatFormField, MatButtonModule, FormsModule],
     templateUrl: './catalog-activity-screen.component.html',
     styleUrl: './catalog-activity-screen.component.scss',
     encapsulation: ViewEncapsulation.None
@@ -36,25 +38,25 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
   connectionErrorIcon?: string;
   catalogId?: string;
 
-  readonly SortParameter = SortParameter;
-
-  sortParameter: SortParameter = SortParameter.CreationDate;
-  sortOrder: SortOrder = SortOrder.Desc;
-  filterProject = '';
-  filterStatus: CatalogActivityStatusFilter = '';
-  dateRange: '30' | '90' | '180' | '365' | 'none' = '30';
-
-  statusFilter = {
+  readonly statusFilterData = {
     label: 'Status',
     options: ['CREATING', 'CREATED', 'FAILED', 'DELETING', 'UNKNOWN'],
     placeholder: 'Select a status'
   } as AppShellFilter;
 
-  dateRangeFilter = {
+  readonly dateRangeFilterData = {
     label: 'Date range',
-    options: ['No filter', 'Last 30 days', 'Last 90 days', 'Last 180 days', 'Last 365 days'],
+    options: ['Last 30 days', 'Last 90 days', 'Last 180 days', 'Last 365 days'],
     placeholder: 'Select a date range'
-  };
+  } as AppShellFilter;
+
+  readonly SortParameter = SortParameter;
+
+  sortParameter: SortParameter = SortParameter.CreationDate;
+  sortOrder: SortOrder = SortOrder.Desc;
+  projectFilterValue = '';
+  statusFilterValues: CatalogActivityStatusFilter[] = [];
+  dateRangeFilterValue: DateRangeFilterPossibleValues = '';
 
   constructor(
       private readonly catalogService: CatalogService,
@@ -83,19 +85,14 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
         ];
 
         this.unsetConnectionErrorState();
-        this.resetFilters();
+        this.onResetFilters();
         this.loadActivities(true);
       });
   }
 
-  private resetFilters(): void {
-    this.filterProject = '';
-    this.filterStatus = '';
-    this.dateRange = '30';
-  }
-
-  onFilterChange(label: string, values: string | string[]) {
-    var a = [];
+  private extractDateRangeFromSelectedFilter(value: string): string | null {
+    const match = value.match(/^Last (\d+) days$/);
+    return match ? Number(match[1]).toString() : 'null';
   }
 
   ngAfterViewInit() {
@@ -107,10 +104,9 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
   }
 
   onResetFilters(): void {
-    this.filterProject = '';
-    this.filterStatus = '';
-    this.dateRange = '30';
-    this.loadActivities(true);
+    this.projectFilterValue = '';
+    this.statusFilterValues = [];
+    this.dateRangeFilterValue = '';
   }
 
   updateSort(parameter: SortParameter): void {
@@ -187,10 +183,10 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
 
   private getMockPage(page: number, size: number): { data: CatalogActivity[]; pagination: { page: number; size: number; totalPages: number; totalElements: number; next: string | null } } {
     const filtered = this.mockActivities
-      .filter(activity => !this.filterProject || activity.projectKey?.toLowerCase().includes(this.filterProject.toLowerCase()))
-      .filter(activity => !this.filterStatus || activity.status === this.filterStatus)
+      .filter(activity => !this.projectFilterValue || activity.projectKey?.toLowerCase().includes(this.projectFilterValue.toLowerCase()))
+      .filter(activity => !this.statusFilterValues || this.statusFilterValues.length === 0 || this.statusFilterValues.includes(activity.status as CatalogActivityStatusFilter))
       .filter(activity => {
-        const rangeStart = this.getDateRangeStart(this.dateRange);
+        const rangeStart = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue) as DateRangeFilterPossibleValues);
         return rangeStart === null || (activity.createdAt ?? 0) >= rangeStart;
       });
 
@@ -229,7 +225,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     for (let page = 0; page < this.mockPageCount; page++) {
       for (let index = 0; index < this.PAGE_SIZE; index++) {
         const itemIndex = page * this.PAGE_SIZE + index + 1;
-        const createdAt = baseDate - ((page * this.PAGE_SIZE + index) * 60 * 60 * 1000);
+        const createdAt = baseDate - ((page * this.PAGE_SIZE + index) * 60 * 60 * 1000) - (Math.random() < 0.5 ? 2*365 * 24 * 60 * 60 * 1000 : 0);
         activities.push({
           catalogItemSlug: `component-${itemIndex}`,
           componentId: `comp-${itemIndex}`,
@@ -243,8 +239,8 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     return activities;
   }
 
-  private getDateRangeStart(range: '30' | '90' | '180' | '365' | 'none'): number | null {
-    if (range === 'none') {
+  private getDateRangeFilterValueStart(range: '30' | '90' | '180' | '365' | ''): number | null {
+    if (range === '') {
       return null;
     }
     const days = Number(range);

@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DropdownSingleSelectComponent } from './input-dropdown-single-select.component';
+import { DropdownSelectComponent } from './input-dropdown-select.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 
 describe('DropdownSingleSelectComponent', () => {
-  let component: DropdownSingleSelectComponent;
-  let fixture: ComponentFixture<DropdownSingleSelectComponent>;
+  let component: DropdownSelectComponent;
+  let fixture: ComponentFixture<DropdownSelectComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DropdownSingleSelectComponent, BrowserAnimationsModule]
+      imports: [DropdownSelectComponent, BrowserAnimationsModule]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(DropdownSingleSelectComponent);
+    fixture = TestBed.createComponent(DropdownSelectComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('label', 'Text');
     fixture.componentRef.setInput('options', ['Option 1', 'Option 2']);

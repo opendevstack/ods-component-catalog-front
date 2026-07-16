@@ -10,25 +10,26 @@
   <div class="catalog-activity-page-inner">
     <section class="catalog-activity-filters">
       <div class="filter-row">
+          
         <div class="input-text">
           <mat-label>Project</mat-label>
           <mat-form-field appearance="outline" class="project-field">
-            <input matInput type="text" placeholder="Project" />
+            <input matInput type="text" [(ngModel)]="projectFilterValue" placeholder="Project"/>
           </mat-form-field>
         </div>
 
-        <appshell-select [label]="statusFilter.label" [options]="statusFilter.options"
-          [placeholder]="statusFilter.placeholder" (selectValueChange)="onFilterChange(statusFilter.label, $event)">
-        </appshell-select>
+        <dropdown-select [multipleSelection]="true" [(value)]="statusFilterValues" [label]="statusFilterData.label" 
+          [options]="statusFilterData.options" [placeholder]="statusFilterData.placeholder">
+        </dropdown-select>
 
-        <dropdown-single-select [label]="dateRangeFilter.label" [options]="dateRangeFilter.options"
-          [placeholder]="dateRangeFilter.placeholder"
-          (selectValueChange)="onFilterChange(dateRangeFilter.label, $event)">
-        </dropdown-single-select>
+        <dropdown-select [multipleSelection]="false" [(value)]="dateRangeFilterValue" [label]="dateRangeFilterData.label" 
+          [options]="dateRangeFilterData.options" [placeholder]="dateRangeFilterData.placeholder">
+        </dropdown-select>
+      
       </div>
 
       <div class="filter-actions">
-        <button class="secondary" (click)="onResetFilters()">Reset</button>
+        <button mat-flat-button color="secondary" class="secondary" (click)="onResetFilters()">Reset filters</button>
         <button mat-flat-button color="accent" class="primary action-dialog-btn" (click)="onSearch()">Apply filters</button>
       </div>
     </section>
@@ -52,8 +53,8 @@
       <table class="catalog-activity-table">
         <thead>
           <tr>
-            <th>Catalog item slug</th>
-            <th>Component id</th>
+            <th>Catalog item</th>
+            <th>Component ID</th>
             <th>
               <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Project)">
                 <span>Project key</span>
@@ -98,7 +99,7 @@
             </th>
             <th>
               <button type="button" class="sortable-header" (click)="updateSort(SortParameter.CreationDate)">
-                <span>Created at</span>
+                <span>Provision date</span>
                 <span class="sort-icon" aria-hidden="true">
                   <div class="sort-icon-stack">
                     <div class="svg-wrapper">
@@ -133,7 +134,7 @@
 
     <section *ngIf="!isLoading && activities.length === 0 && !connectionErrorHtmlMessage" class="no-results-ctn"
       role="status" aria-live="polite" tabindex="0">
-      <appshell-icon class="no-results-icon" icon="magnifying_glass"></appshell-icon>
+      <appshell-icon class="no-results-icon" icon="sad_face"></appshell-icon>
       <div>No catalog activity was found for the current filter selection.</div>
     </section>
 

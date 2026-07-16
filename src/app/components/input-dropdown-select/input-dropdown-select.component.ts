@@ -2,16 +2,18 @@ import { Component, input, output, ViewEncapsulation } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 
 @Component({
-    selector: 'dropdown-single-select',
+    selector: 'dropdown-select',
     imports: [MatSelectModule],
-    templateUrl: './input-dropdown-single-select.component.html',
-    styleUrl: './input-dropdown-single-select.component.scss',
+    templateUrl: './input-dropdown-select.component.html',
+    styleUrl: './input-dropdown-select.component.scss',
     encapsulation: ViewEncapsulation.None
 })
-export class DropdownSingleSelectComponent {
+export class DropdownSelectComponent {
   label = input.required<string>();
   options = input.required<string[]>();
   placeholder = input.required<string>();
+  multipleSelection = input.required<boolean>();
 
-  selectValueChange = output<string[]>();
+  value = input<string | string[]>();
+  valueChange = output<string | string[]>();
 }
