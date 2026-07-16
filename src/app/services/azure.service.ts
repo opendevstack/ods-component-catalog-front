@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
 import { EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
-import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, takeUntil } from "rxjs";
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, takeUntil, tap } from "rxjs";
 import { Router } from "@angular/router";
 import { AppUser } from "../models/app-user";
 import { AppConfigService } from "./app-config.service";

@@ -90,6 +90,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.platformSelectorData.serviceUrl = this.appConfigService.getConfig()?.platformSelectorServiceUrl || '';
     this.catalogService.retrieveCatalogDescriptors().subscribe((catalogs) => {
       this.catalogService.setCatalogDescriptors(catalogs);
+      this.catalogService.refreshSelectedCatalog();
 
       this.catalogPicker = { ...this.catalogPicker, options: [] };
       catalogs.forEach((catalog) => {
@@ -180,12 +181,14 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._destroying$))
       .subscribe(groups => {
         this.userGroups = groups;
+        this.restoreSidenav();
       });
 
     this.catalogOwnersGroupAccessStore.currentOwners$
       .pipe(takeUntil(this._destroying$))
       .subscribe(owners => {
         this.catalogOwners = owners;
+        this.restoreSidenav();
       });
 
     const chatbotConfig = this.appConfigService.getConfig()?.chatbotConfig;
@@ -269,7 +272,7 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: 'Community', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/community`, icon: 'people' },
     ];
 
-    if (this.canAccessCurrentCatalog() || true) {
+    if (this.canAccessCurrentCatalog()) {
       catalogLinks.push({
         label: 'Catalog Activity',
         anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/catalog-activity`,

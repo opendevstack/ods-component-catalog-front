@@ -1036,6 +1036,13 @@ components:
         description:
           type: string
           example: 'A brief description for a catalog'
+        owners:
+          type: array
+          items:
+            type: string
+          example:
+            - 'GROUP A'
+            - 'GROUP B'
         communityPageId:
           type: string
           example: 'aSdFam...yCg=='

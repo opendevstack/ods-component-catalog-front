@@ -36,8 +36,8 @@ export class GroupsGuard implements CanActivate {
           requiredGroups.some(group => userGroups.includes(group));
 
         const hasAccess = hasOwnerAccess || hasRequiredGroupAccess;
-        return true;
-        //return hasAccess ? true : this.router.parseUrl('/page-not-found');
+        //return true;
+        return hasAccess ? true : this.router.parseUrl('/page-not-found');
       }),
       catchError(() => of(this.router.parseUrl('/page-not-found')))
     );

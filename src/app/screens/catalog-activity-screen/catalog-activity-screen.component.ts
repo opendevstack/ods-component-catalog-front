@@ -2,8 +2,8 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnI
 import { CommonModule } from '@angular/common';
 import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent, AppShellSelectComponent } from '@opendevstack/ngx-appshell';
 import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
-import { CatalogActivity, SortOrder, SortParameter } from '../../openapi/component-catalog';
-import { delay, of, Subject, takeUntil } from 'rxjs';
+import { CatalogActivity, PaginatedCatalogActivities, SortOrder, SortParameter } from '../../openapi/component-catalog';
+import { Subject, takeUntil } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { MatInput, MatLabel, MatFormField } from "@angular/material/input";
@@ -25,8 +25,6 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
 
   private readonly _destroying$ = new Subject<void>();
   private readonly PAGE_SIZE = 20;
-  private readonly mockPageCount = 5;
-  private readonly mockActivities = this.createMockActivities();
   private intersectionObserver?: IntersectionObserver;
 
   breadcrumbLinks: AppShellLink[] = [];
@@ -92,9 +90,9 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       });
   }
 
-  private extractDateRangeFromSelectedFilter(value: string): string | null {
+  private extractDateRangeFromSelectedFilter(value: string): DateRangeFilterPossibleValues {
     const match = value.match(/^Last (\d+) days$/);
-    return match ? Number(match[1]).toString() : 'null';
+    return match ? (Number(match[1]).toString() as DateRangeFilterPossibleValues) : '';
   }
 
   ngAfterViewInit() {
@@ -146,6 +144,9 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     }
 
     const page = reset ? 0 : Math.floor(this.activities.length / this.PAGE_SIZE);
+    const startDate = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue) as DateRangeFilterPossibleValues);
+    const endDate = Date.now();
+
     if (reset) {
       this.activities = [];
       this.hasMore = false;
@@ -155,11 +156,17 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       this.isLoadingMore = false;
     }
 
-    of(this.getMockPage(page, this.PAGE_SIZE))
-      .pipe(
-        delay(2000),
-        takeUntil(this._destroying$)
-      )
+    this.catalogService.getCatalogActivities(this.catalogId, {
+      sortParameter: this.sortParameter,
+      sortOrder: this.sortOrder,
+      project: this.projectFilterValue || undefined,
+      status: this.statusFilterValues.length === 1 && this.statusFilterValues[0] ? this.statusFilterValues[0] as CatalogActivity.StatusEnum : undefined,
+      startDate: startDate ?? undefined,
+      endDate,
+      page,
+      size: this.PAGE_SIZE
+    })
+      .pipe(takeUntil(this._destroying$))
       .subscribe({
         next: (result) => this.handleActivityResult(result, reset),
         error: () => this.setConnectionErrorState(),
@@ -173,7 +180,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       });
   }
 
-  private handleActivityResult(result: { data?: CatalogActivity[]; pagination?: { page?: number; totalPages?: number; next?: string | null } }, reset: boolean): void {
+  private handleActivityResult(result: PaginatedCatalogActivities, reset: boolean): void {
     const activities = result.data ?? [];
     this.activities = reset ? activities : [...this.activities, ...activities];
     const pagination = result.pagination;
@@ -184,64 +191,6 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     }
     this.cd.detectChanges();
     Promise.resolve().then(() => this.observeLoadMoreAnchor());
-  }
-
-  private getMockPage(page: number, size: number): { data: CatalogActivity[]; pagination: { page: number; size: number; totalPages: number; totalElements: number; next: string | null } } {
-    const filtered = this.mockActivities
-      .filter(activity => !this.projectFilterValue || activity.projectKey?.toLowerCase().includes(this.projectFilterValue.toLowerCase()))
-      .filter(activity => !this.statusFilterValues || this.statusFilterValues.length === 0 || this.statusFilterValues.includes(activity.status as CatalogActivityStatusFilter))
-      .filter(activity => {
-        const rangeStart = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue) as DateRangeFilterPossibleValues);
-        return rangeStart === null || (activity.createdAt ?? 0) >= rangeStart;
-      });
-
-    const sorted = [...filtered].sort((left, right) => {
-      const order = this.sortOrder === SortOrder.Desc ? -1 : 1;
-      if (this.sortParameter === SortParameter.Project) {
-        return order * ((left.projectKey || '').localeCompare(right.projectKey || ''));
-      }
-      if (this.sortParameter === SortParameter.Status) {
-        return order * ((left.status || '').localeCompare(right.status || ''));
-      }
-      return order * ((right.createdAt || 0) - (left.createdAt || 0));
-    });
-
-    const totalElements = sorted.length;
-    const totalPages = Math.min(this.mockPageCount, Math.ceil(totalElements / size));
-    const data = sorted.slice(page * size, page * size + size);
-    return {
-      data,
-      pagination: {
-        page,
-        size,
-        totalPages,
-        totalElements,
-        next: page + 1 < totalPages ? `page=${page + 1}` : null
-      }
-    };
-  }
-
-  private createMockActivities(): CatalogActivity[] {
-    const activities: CatalogActivity[] = [];
-    const statuses: CatalogActivity.StatusEnum[] = ['CREATING', 'CREATED', 'FAILED', 'DELETING', 'UNKNOWN'];
-    const projects = ['PROJECT-A', 'PROJECT-B', 'PROJECT-C'];
-    const baseDate = Date.now();
-
-    for (let page = 0; page < this.mockPageCount; page++) {
-      for (let index = 0; index < this.PAGE_SIZE; index++) {
-        const itemIndex = page * this.PAGE_SIZE + index + 1;
-        const createdAt = baseDate - ((page * this.PAGE_SIZE + index) * 60 * 60 * 1000) - (Math.random() < 0.5 ? 2*365 * 24 * 60 * 60 * 1000 : 0);
-        activities.push({
-          catalogItemSlug: `component-${itemIndex}`,
-          componentId: `comp-${itemIndex}`,
-          projectKey: projects[itemIndex % projects.length],
-          status: statuses[itemIndex % statuses.length],
-          createdAt
-        });
-      }
-    }
-
-    return activities;
   }
 
   private getDateRangeFilterValueStart(range: '30' | '90' | '180' | '365' | ''): number | null {

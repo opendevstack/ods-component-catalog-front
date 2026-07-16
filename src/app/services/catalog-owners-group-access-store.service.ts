@@ -11,7 +11,7 @@ export class CatalogOwnersGroupAccessStore {
   constructor(private catalogService: CatalogService) {
     this.catalogService.selectedCatalogSlug$
       .pipe(
-        distinctUntilChanged(),
+        //distinctUntilChanged(),
         switchMap(slug => {
           if (!slug) {
             return of<string[]>([]);

@@ -137,7 +137,7 @@
           }
           @if (!isLoading && activities.length > 0) {
             <tbody>
-              @for (activity of activities; track activity.componentId ?? activity.catalogItemSlug ?? $index) {
+              @for (activity of activities; track $index) {
                 <tr>
                   <td>{{ activity.catalogItemSlug || '—' }}</td>
                   <td>{{ activity.componentId || '—' }}</td>
