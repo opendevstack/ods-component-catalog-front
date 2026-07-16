@@ -429,6 +429,126 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
+  /catalog-activities/{id}:
+    get:
+      tags:
+        - CatalogActivity
+      summary: Returns the collection of CatalogActivities associated to the provided Catalog Id.
+      description: >
+        Returns the collection of CatalogActivities associated to the provided Catalog Id, unless:
+        <ul>
+        <li> The id is not associated to any Catalog. </li>
+        <li> Or the associated Catalog is invalid and can't be processed to create a response. </li>
+        </ul>
+      operationId: getCatalogActivitiesById
+      parameters:
+        - name: id
+          in: path
+          description: id for the Catalog.
+          required: true
+          schema:
+            type: string
+            example: 'aSdFam...yCg=='
+        - name: sortParameter
+          in: query
+          description: Parameter to sort the returned CatalogActivities.
+          required: false
+          schema:
+            $ref: '#/components/schemas/SortParameter'
+          example: project
+        - name: sortOrder
+          in: query
+          description: Parameter to order the sort of the elements of the returned CatalogActivities, either in ascending or descending order..
+          required: false
+          schema:
+            $ref: '#/components/schemas/SortOrder'
+          example: asc
+        - name: project
+          in: query
+          description: Project key for the component.
+          required: false
+          example: 'PROJ-1'
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Provisioning status for the component.
+          required: false
+          example: CREATING
+          schema:
+            type: string
+            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+        - name: startDate
+          in: query
+          description: Start date for the filter based on creationDate at project component.
+          required: false
+          example: 1625097600000
+          schema:
+            type: integer
+            format: int64
+            example: 1625097600000
+            description: Timestamp in milliseconds since Unix epoch
+        - name: endDate
+          in: query
+          description: End date for the filter based on creationDate at project component.
+          required: false
+          example: 1783689224
+          schema:
+            type: integer
+            format: int64
+            example: 1783689224
+            description: Timestamp in milliseconds since Unix epoch
+        - name: page
+          in: query
+          description: Page number (from 0 until limit)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: A list of valid CatalogActivities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCatalogActivities'
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "404":
+          description: No Catalog associated to the provided id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "422":
+          description: Invalid Catalog associated to the provided id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
   /{projectKey}/catalog-items:
     get:
       tags:
@@ -1293,6 +1413,58 @@ components:
           example:
             - 'project-key-1'
             - 'project-key-2'
+    PaginatedCatalogActivities:
+      type: object
+      example:
+        data:
+          - projectKey: SOMEPROJECT
+            componentId: any-component-id-from-backend
+            status: CREATING
+            catalogItemSlug: some_technology-name
+            createdAt: 1707043200000
+          - projectKey: ANOTHERPROJECT
+            componentId: another-component-id-from-backend
+            status: UNKNOWN
+            catalogItemSlug: another_technology-name
+            createdAt: 1707043200001
+        pagination:
+          page: 0
+          size: 20
+          totalElements: 117
+          totalPages: 6
+          next: https://api.example.com/resources?page=1&size=20
+          previous: null
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogActivity'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    CatalogActivity:
+      properties:
+        catalogItemSlug:
+          type: string
+          example: 'item-slug'
+        componentId:
+          type: string
+          example: 'component-id'
+        projectKey:
+          type: string
+          example: 'MYSAMPLEPROJECT'
+        status:
+          type: string
+          enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+        createdAt:
+          description: The timestamp of the provision action.
+          example: 1707043200000
+          type: number
+    SortParameter:
+      type: string
+      enum:
+        - project
+        - status
+        - creationDate
     SortOrder:
       type: string
       enum:
