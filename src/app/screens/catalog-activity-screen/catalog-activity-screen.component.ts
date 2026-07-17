@@ -25,6 +25,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
 
   private readonly _destroying$ = new Subject<void>();
   private readonly PAGE_SIZE = 20;
+  private activeRequestId = 0;
   private intersectionObserver?: IntersectionObserver;
 
   breadcrumbLinks: AppShellLink[] = [];
@@ -143,6 +144,8 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       return;
     }
 
+    const requestId = ++this.activeRequestId;
+
     const page = reset ? 0 : Math.floor(this.activities.length / this.PAGE_SIZE);
     const startDate = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue) as DateRangeFilterPossibleValues);
     const endDate = Date.now();
@@ -168,9 +171,22 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     })
       .pipe(takeUntil(this._destroying$))
       .subscribe({
-        next: (result) => this.handleActivityResult(result, reset),
-        error: () => this.setConnectionErrorState(),
+        next: (result) => {
+          if (requestId !== this.activeRequestId) {
+            return;
+          }
+          this.handleActivityResult(result, reset);
+        },
+        error: () => {
+          if (requestId !== this.activeRequestId) {
+            return;
+          }
+          this.setConnectionErrorState();
+        },
         complete: () => {
+          if (requestId !== this.activeRequestId) {
+            return;
+          }
           if (reset) {
             this.isLoading = false;
           } else {

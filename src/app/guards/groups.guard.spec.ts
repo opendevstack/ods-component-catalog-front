@@ -1,28 +1,35 @@
 import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { Router, UrlTree } from '@angular/router';
-import { of, throwError, firstValueFrom } from 'rxjs';
 
 import { GroupsGuard } from './groups.guard';
 import { AzureService } from '../services/azure.service';
-import { CatalogOwnersGroupAccessStore } from '../services/catalog-owners-group-access-store.service';
+import { CatalogService } from '../services/catalog.service';
 
 describe('GroupsGuard', () => {
   let guard: GroupsGuard;
 
   let azureServiceMock: any;
-  let catalogOwnersMock: any;
+  let catalogServiceMock: any;
   let routerMock: jasmine.SpyObj<Router>;
   let mockUrlTree: UrlTree;
+  let userGroups$: BehaviorSubject<string[]>;
 
   beforeEach(() => {
     mockUrlTree = {} as UrlTree;
+    userGroups$ = new BehaviorSubject<string[]>([]);
 
     azureServiceMock = {
-      userGroups$: of([])
+      userGroups$,
+      loadUserGroups: jasmine.createSpy('loadUserGroups').and.returnValue(of([]))
     };
 
-    catalogOwnersMock = {
-      currentOwners$: of([])
+    catalogServiceMock = {
+      getSlugUrl: jasmine.createSpy('getSlugUrl').and.callFake((slug: string) => slug),
+      getCatalogDescriptors: jasmine.createSpy('getCatalogDescriptors').and.returnValue([]),
+      retrieveCatalogDescriptors: jasmine.createSpy('retrieveCatalogDescriptors').and.returnValue(of([])),
+      setCatalogDescriptors: jasmine.createSpy('setCatalogDescriptors'),
+      getCatalog: jasmine.createSpy('getCatalog').and.returnValue(of({ owners: [] }))
     };
 
     routerMock = jasmine.createSpyObj('Router', ['parseUrl']);
@@ -32,7 +39,7 @@ describe('GroupsGuard', () => {
       providers: [
         GroupsGuard,
         { provide: AzureService, useValue: azureServiceMock },
-        { provide: CatalogOwnersGroupAccessStore, useValue: catalogOwnersMock },
+        { provide: CatalogService, useValue: catalogServiceMock },
         { provide: Router, useValue: routerMock }
       ]
     });
@@ -41,12 +48,17 @@ describe('GroupsGuard', () => {
   });
 
   it('should allow access when user is owner', async () => {
-    azureServiceMock.userGroups$ = of(['owner1']);
-    catalogOwnersMock.currentOwners$ = of(['owner1']);
+    azureServiceMock.loadUserGroups.and.returnValue(of(['owner1']));
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+    ]);
 
     const route: any = {
       data: {
         requiredOwners: true
+      },
+      paramMap: {
+        get: () => 'catalog-a'
       }
     };
 
@@ -55,14 +67,18 @@ describe('GroupsGuard', () => {
     );
 
     expect(result).toBeTrue();
+    expect(azureServiceMock.userGroups$.value).toEqual(['owner1']);
   });
 
   it('should allow access when user belongs to required group', async () => {
-    azureServiceMock.userGroups$ = of(['groupA']);
+    azureServiceMock.loadUserGroups.and.returnValue(of(['groupA']));
 
     const route: any = {
       data: {
         requiredGroups: ['groupA']
+      },
+      paramMap: {
+        get: () => null
       }
     };
 
@@ -74,13 +90,18 @@ describe('GroupsGuard', () => {
   });
 
   it('should redirect when user has no access', async () => {
-    azureServiceMock.userGroups$ = of(['groupA']);
-    catalogOwnersMock.currentOwners$ = of(['owner1']);
+    azureServiceMock.loadUserGroups.and.returnValue(of(['groupA']));
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+    ]);
 
     const route: any = {
       data: {
         requiredOwners: true,
         requiredGroups: ['groupB']
+      },
+      paramMap: {
+        get: () => 'catalog-a'
       }
     };
 
@@ -92,13 +113,22 @@ describe('GroupsGuard', () => {
     expect(result).toBe(mockUrlTree);
   });
 
-  it('should redirect on error', async () => {
-    azureServiceMock.userGroups$ = throwError(
+  it('should redirect on loadUserGroups error', async () => {
+    azureServiceMock.loadUserGroups.and.returnValue(throwError(
       () => new Error('error')
-    );
+    ));
+
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+    ]);
 
     const route: any = {
-      data: {}
+      data: {
+        requiredOwners: true
+      },
+      paramMap: {
+        get: () => 'catalog-a'
+      }
     };
 
     const result = await firstValueFrom(
@@ -107,5 +137,41 @@ describe('GroupsGuard', () => {
 
     expect(routerMock.parseUrl).toHaveBeenCalledWith('/page-not-found');
     expect(result).toBe(mockUrlTree);
+  });
+
+  it('should fetch catalog owners from catalog endpoint when descriptor has no owners', async () => {
+    azureServiceMock.loadUserGroups.and.returnValue(of(['owner2']));
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([
+      { id: 'cat-2', slug: 'catalog-b' }
+    ]);
+    catalogServiceMock.getCatalog.and.returnValue(of({ owners: ['owner2'] }));
+
+    const route: any = {
+      data: {
+        requiredOwners: true
+      },
+      paramMap: {
+        get: () => 'catalog-b'
+      }
+    };
+
+    const result = await firstValueFrom(guard.canActivate(route));
+
+    expect(result).toBeTrue();
+    expect(catalogServiceMock.getCatalog).toHaveBeenCalledWith('cat-2');
+  });
+
+  it('should allow access immediately when route has no permission requirements', async () => {
+    const route: any = {
+      data: {},
+      paramMap: {
+        get: () => null
+      }
+    };
+
+    const result = await firstValueFrom(guard.canActivate(route));
+
+    expect(result).toBeTrue();
+    expect(azureServiceMock.loadUserGroups).not.toHaveBeenCalled();
   });
 });

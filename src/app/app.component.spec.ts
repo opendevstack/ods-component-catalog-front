@@ -50,7 +50,7 @@ describe('AppComponent', () => {
     mockToastService = jasmine.createSpyObj('AppShellToastService', ['showToast'], { toasts$: of([]) });
     mockCatalogService = jasmine.createSpyObj(
       'CatalogService',
-      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor'],
+      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor', 'refreshSelectedCatalog'],
       { selectedCatalogSlug$: selectedCatalogSlugSubject.asObservable() }
     );
     routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl', 'getCurrentNavigation'], { events: routerEventsSubject.asObservable(), url: '/' });
@@ -83,6 +83,7 @@ describe('AppComponent', () => {
     mockCatalogService.getCatalog.and.returnValue(of({ slug: 'test-catalog', id: '1', links: [] } as Catalog));
     mockCatalogService.getSelectedCatalogSlug.and.returnValue(null);
     mockCatalogService.getSelectedCatalogDescriptor.and.returnValue({ slug: 'test-catalog', id: '1' });
+    mockCatalogService.refreshSelectedCatalog;
     mockAppConfigService.getConfig.and.returnValue({ natsUrl: 'nats://localhost:4222', chatbotConfig: { widgetConfig: { baseUrl: 'https://example.com', theme: 'light' }, scriptSrc: 'https://example.com/chat-widget.js' } });
     mockAzureService.getAccessToken.and.returnValue(Promise.resolve('new-token'));
     mockProjectService.getUserProjects.and.returnValue(of([]));
@@ -726,6 +727,7 @@ describe('AppComponent', () => {
     component.ngOnInit();
     tick();
 
+    setCatalogShellSpy.calls.reset();
     selectedCatalogSlugSubject.next('known');
     tick();
 

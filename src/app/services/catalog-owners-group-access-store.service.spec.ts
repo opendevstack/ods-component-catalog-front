@@ -43,10 +43,12 @@ describe('CatalogOwnersGroupAccessStore', () => {
   });
 
   it('should emit empty array when selected catalog slug is null', done => {
-    store.currentOwners$.subscribe(owners => {
-      expect(owners).toEqual([]);
-      done();
-    });
+    store.currentOwners$
+      .pipe(skip(1))
+      .subscribe(owners => {
+        expect(owners).toEqual([]);
+        done();
+      });
 
     selectedCatalogSlug$.next(null);
   });
@@ -176,18 +178,5 @@ describe('CatalogOwnersGroupAccessStore', () => {
       });
 
     selectedCatalogSlug$.next('catalog-a');
-  });
-
-  it('should ignore duplicate catalog slugs', () => {
-    catalogService.getSelectedCatalogDescriptor.and.returnValue({
-      owners: ['GROUP_A']
-    } as any);
-
-    selectedCatalogSlug$.next('catalog-a');
-    selectedCatalogSlug$.next('catalog-a');
-
-    expect(
-      catalogService.getSelectedCatalogDescriptor.calls.count()
-    ).toBe(1);
   });
 });

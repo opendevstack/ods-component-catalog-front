@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CatalogService } from './catalog.service';
-import { AppShellFilter } from '@opendevstack/ngx-appshell';
-import { BASE_PATH, Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
-import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { AppShellFilter } from '@opendevstack/ngx-appshell';
+import { of, throwError } from 'rxjs';
 import { AppProduct } from '../models/app-product';
+import { BASE_PATH, Catalog, CatalogActivityService, CatalogActivityServiceInterface, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
+import { CatalogService } from './catalog.service';
 
 const currentDate = new Date();
 
@@ -26,6 +26,7 @@ describe('CatalogService', () => {
   let filesServiceSpy: jasmine.SpyObj<FilesServiceInterface>;
   let catalogsServiceSpy: jasmine.SpyObj<CatalogsServiceInterface>;
   let catalogDescriptorsServiceSpy: jasmine.SpyObj<CatalogDescriptorsServiceInterface>;
+  let catalogActivityServiceSpy: jasmine.SpyObj<CatalogActivityServiceInterface>;
 
   beforeEach(() => {
     try {
@@ -497,6 +498,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
+      catalogActivityServiceSpy as unknown as CatalogActivityService,
       filesServiceSpy as unknown as FilesService
     );
 
@@ -514,6 +516,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
+      catalogActivityServiceSpy as unknown as CatalogActivityService,
       filesServiceSpy as unknown as FilesService
     );
 

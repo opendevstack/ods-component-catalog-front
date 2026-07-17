@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { CatalogActivityScreenComponent } from './catalog-activity-screen.component';
 import { CatalogService } from '../../services/catalog.service';
@@ -25,7 +25,8 @@ describe('CatalogActivityScreenComponent', () => {
       [
         'setSelectedCatalogSlug',
         'getCatalogDescriptors',
-        'getSlugUrl'
+        'getSlugUrl',
+        'getCatalogActivities'
       ]
     );
 
@@ -65,6 +66,15 @@ describe('CatalogActivityScreenComponent', () => {
 
     catalogServiceMock.getSlugUrl.and.callFake(
       (slug: string) => slug
+    );
+    catalogServiceMock.getCatalogActivities.and.returnValue(
+      of({
+        data: [],
+        pagination: {
+          page: 0,
+          totalPages: 1
+        }
+      } as any)
     );
 
     fixture = TestBed.createComponent(
@@ -384,5 +394,66 @@ describe('CatalogActivityScreenComponent', () => {
 
     expect(disconnectSpy).toHaveBeenCalled();
     expect(observeSpy).toHaveBeenCalled();
+  });
+
+  it('should load activities and update state for current request', () => {
+    component.catalogId = 'catalog-1';
+
+    catalogServiceMock.getCatalogActivities.and.returnValue(
+      of({
+        data: [
+          {
+            componentId: 'component-1'
+          }
+        ],
+        pagination: {
+          page: 0,
+          totalPages: 2
+        }
+      } as any)
+    );
+
+    (component as any).loadActivities(true);
+
+    expect(component.activities.length).toBe(1);
+    expect(component.hasMore).toBeTrue();
+    expect(component.isLoading).toBeFalse();
+  });
+
+  it('should ignore stale responses from previous requests', () => {
+    const staleRequest$ = new Subject<any>();
+
+    component.catalogId = 'catalog-1';
+    component.activities = [
+      {
+        componentId: 'current-activity'
+      } as any
+    ];
+    component.isLoadingMore = true;
+
+    catalogServiceMock.getCatalogActivities.and.returnValue(staleRequest$.asObservable());
+
+    (component as any).loadActivities(false);
+
+    component['activeRequestId'] = component['activeRequestId'] + 1;
+
+    staleRequest$.next({
+      data: [
+        {
+          componentId: 'stale-activity'
+        }
+      ],
+      pagination: {
+        page: 0,
+        totalPages: 3
+      }
+    });
+    staleRequest$.complete();
+
+    expect(component.activities).toEqual([
+      {
+        componentId: 'current-activity'
+      } as any
+    ]);
   });
 });

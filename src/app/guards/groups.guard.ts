@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, Router, UrlTree } from '@angular/router';
-import { Observable, combineLatest, of } from 'rxjs';
-import { catchError, map, take } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AzureService } from '../services/azure.service';
-import { CatalogOwnersGroupAccessStore } from '../services/catalog-owners-group-access-store.service';
+import { CatalogService } from '../services/catalog.service';
 
 @Injectable({ providedIn: 'root' })
 export class GroupsGuard implements CanActivate {
   constructor(
     private azureService: AzureService,
-    private catalogOwnersGroupAccessStore: CatalogOwnersGroupAccessStore,
+    private catalogService: CatalogService,
     private router: Router
   ) {}
 
@@ -19,10 +19,14 @@ export class GroupsGuard implements CanActivate {
       ? route.data['requiredGroups']
       : [];
 
-    const userGroups$ = this.azureService.userGroups$.pipe(take(1));
-    const catalogOwners$ = this.catalogOwnersGroupAccessStore.currentOwners$.pipe(take(1));
+    if (!requiredOwners && requiredGroups.length === 0) {
+      return of(true);
+    }
 
-    return combineLatest([userGroups$, catalogOwners$]).pipe(
+    return forkJoin([
+      this.resolveUserGroups(),
+      this.resolveCatalogOwnersFromRoute(route)
+    ]).pipe(
       map(([userGroups, owners]) => {
         const hasOwnerAccess =
           requiredOwners &&
@@ -40,6 +44,52 @@ export class GroupsGuard implements CanActivate {
         return hasAccess ? true : this.router.parseUrl('/page-not-found');
       }),
       catchError(() => of(this.router.parseUrl('/page-not-found')))
+    );
+  }
+
+  private resolveUserGroups(): Observable<string[]> {
+    return this.azureService.loadUserGroups().pipe(
+      map(groups => Array.isArray(groups) ? groups.filter(Boolean) : []),
+      tap(groups => this.azureService.userGroups$.next(groups)),
+      catchError(() => of([]))
+    );
+  }
+
+  private resolveCatalogOwnersFromRoute(route: ActivatedRouteSnapshot): Observable<string[]> {
+    const catalogSlugParam = route.paramMap.get('catalogSlug');
+    if (!catalogSlugParam) {
+      return of([]);
+    }
+
+    const normalizedCatalogSlug = this.catalogService.getSlugUrl(catalogSlugParam);
+    const cachedDescriptors = this.catalogService.getCatalogDescriptors();
+
+    const descriptors$ = cachedDescriptors.length > 0
+      ? of(cachedDescriptors)
+      : this.catalogService.retrieveCatalogDescriptors().pipe(
+          tap(descriptors => this.catalogService.setCatalogDescriptors(descriptors)),
+          catchError(() => of([]))
+        );
+
+    return descriptors$.pipe(
+      map(descriptors => descriptors.find(descriptor =>
+        descriptor.slug && this.catalogService.getSlugUrl(descriptor.slug) === normalizedCatalogSlug
+      )),
+      switchMap(descriptor => {
+        if (!descriptor?.id) {
+          return of([]);
+        }
+
+        const descriptorOwners = (descriptor as any).owners;
+        if (Array.isArray(descriptorOwners)) {
+          return of(descriptorOwners.filter(Boolean));
+        }
+
+        return this.catalogService.getCatalog(descriptor.id).pipe(
+          map(catalog => Array.isArray((catalog as any).owners) ? (catalog as any).owners.filter(Boolean) : []),
+          catchError(() => of([]))
+        );
+      })
     );
   }
 }
