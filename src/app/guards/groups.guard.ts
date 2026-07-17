@@ -6,6 +6,12 @@ import { AzureService } from '../services/azure.service';
 import { CatalogService } from '../services/catalog.service';
 import { AccessRuleData, hasAccessForRule } from './catalog-activity-access-rule';
 
+type CatalogDescriptorWithOwners = {
+  id?: string;
+  slug?: string;
+  owners?: string[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class GroupsGuard implements CanActivate {
   constructor(
@@ -69,13 +75,13 @@ export class GroupsGuard implements CanActivate {
           return of([]);
         }
 
-        const descriptorOwners = (descriptor as any).owners;
+        const descriptorOwners = (descriptor as CatalogDescriptorWithOwners).owners;
         if (Array.isArray(descriptorOwners)) {
           return of(descriptorOwners.filter(Boolean));
         }
 
         return this.catalogService.getCatalog(descriptor.id).pipe(
-          map(catalog => Array.isArray((catalog as any).owners) ? (catalog as any).owners.filter(Boolean) : []),
+          map(catalog => Array.isArray(catalog.owners) ? catalog.owners.filter(Boolean) : []),
           catchError(() => of([]))
         );
       })

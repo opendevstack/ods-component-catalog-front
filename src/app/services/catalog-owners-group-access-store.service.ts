@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { CatalogService } from './catalog.service';
+
+type CatalogDescriptorWithOwners = {
+  id?: string;
+  slug?: string;
+  owners?: string[];
+};
 
 @Injectable({ providedIn: 'root' })
 export class CatalogOwnersGroupAccessStore {
@@ -23,8 +29,9 @@ export class CatalogOwnersGroupAccessStore {
 
   private refreshOwnersForSelectedCatalog(slug: string): Observable<string[]> {
     const descriptor = this.catalogService.getSelectedCatalogDescriptor();
-    if (descriptor && Array.isArray((descriptor as any).owners)) {
-      return of((descriptor as any).owners);
+    const descriptorOwners = (descriptor as CatalogDescriptorWithOwners | undefined)?.owners;
+    if (Array.isArray(descriptorOwners)) {
+      return of(descriptorOwners);
     }
 
     const descriptorFromList = this.catalogService.getCatalogDescriptors()
@@ -35,7 +42,7 @@ export class CatalogOwnersGroupAccessStore {
     }
 
     return this.catalogService.getCatalog(descriptorFromList.id).pipe(
-      map(catalog => Array.isArray((catalog as any).owners) ? (catalog as any).owners : []),
+      map(catalog => Array.isArray(catalog.owners) ? catalog.owners : []),
       catchError(() => of([]))
     );
   }

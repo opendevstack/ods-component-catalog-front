@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent, AppShellSelectComponent } from '@opendevstack/ngx-appshell';
+import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent } from '@opendevstack/ngx-appshell';
 import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
 import { CatalogActivity, PaginatedCatalogActivities, SortOrder, SortParameter } from '../../openapi/component-catalog';
 import { Subject, takeUntil } from 'rxjs';
