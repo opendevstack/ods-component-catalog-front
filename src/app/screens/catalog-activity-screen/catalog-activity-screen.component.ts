@@ -11,7 +11,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 
 type CatalogActivityStatusFilter = CatalogActivity.StatusEnum | '';
-type DateRangeFilterPossibleValues = '30' | '90' | '180' | '365' | '';
+type DateRangeFilterValue = 'Last 30 days' | 'Last 90 days' | 'Last 180 days' | 'Last 365 days' | '';
+type DateRangeFilterDays = '30' | '90' | '180' | '365' | '';
 
 @Component({
     selector: 'app-catalog-activity-screen',
@@ -56,8 +57,8 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
   sortParameter: SortParameter = SortParameter.CreationDate;
   sortOrder: SortOrder = SortOrder.Desc;
   projectFilterValue = '';
-  statusFilterValues: CatalogActivityStatusFilter[] = [];
-  dateRangeFilterValue: DateRangeFilterPossibleValues = '';
+  statusFilterValue: CatalogActivityStatusFilter = '';
+  dateRangeFilterValue: DateRangeFilterValue = 'Last 30 days';
 
   constructor(
       private readonly catalogService: CatalogService,
@@ -86,14 +87,13 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
         ];
 
         this.unsetConnectionErrorState();
-        this.onResetFilters();
         this.loadActivities(true);
       });
   }
 
-  private extractDateRangeFromSelectedFilter(value: string): DateRangeFilterPossibleValues {
+  private extractDateRangeFromSelectedFilter(value: DateRangeFilterValue): DateRangeFilterDays {
     const match = value.match(/^Last (\d+) days$/);
-    return match ? (Number(match[1]).toString() as DateRangeFilterPossibleValues) : '';
+    return match ? (Number(match[1]).toString() as DateRangeFilterDays) : '';
   }
 
   ngAfterViewInit() {
@@ -106,7 +106,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
 
   onResetFilters(): void {
     this.projectFilterValue = '';
-    this.statusFilterValues = [];
+    this.statusFilterValue = '';
     this.dateRangeFilterValue = '';
   }
 
@@ -147,7 +147,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     const requestId = ++this.activeRequestId;
 
     const page = reset ? 0 : Math.floor(this.activities.length / this.PAGE_SIZE);
-    const startDate = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue) as DateRangeFilterPossibleValues);
+    const startDate = this.getDateRangeFilterValueStart(this.extractDateRangeFromSelectedFilter(this.dateRangeFilterValue));
     const endDate = Date.now();
 
     if (reset) {
@@ -163,7 +163,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       sortParameter: this.sortParameter,
       sortOrder: this.sortOrder,
       project: this.projectFilterValue || undefined,
-      status: this.statusFilterValues.length === 1 && this.statusFilterValues[0] ? this.statusFilterValues[0] as CatalogActivity.StatusEnum : undefined,
+      status: this.statusFilterValue || undefined,
       startDate: startDate ?? undefined,
       endDate,
       page,
@@ -209,7 +209,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     Promise.resolve().then(() => this.observeLoadMoreAnchor());
   }
 
-  private getDateRangeFilterValueStart(range: '30' | '90' | '180' | '365' | ''): number | null {
+  private getDateRangeFilterValueStart(range: DateRangeFilterDays): number | null {
     if (range === '') {
       return null;
     }

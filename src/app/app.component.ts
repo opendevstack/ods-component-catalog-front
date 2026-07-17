@@ -18,6 +18,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
 import { CatalogOwnersGroupAccessStore } from './services/catalog-owners-group-access-store.service';
+import { CATALOG_ACTIVITY_ACCESS_RULE, hasAccessForRule } from './guards/catalog-activity-access-rule';
 
 
 @Component({
@@ -447,11 +448,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private canAccessCurrentCatalog(): boolean {
-    if (this.userGroups.length === 0 || this.catalogOwners.length === 0) {
-      return false;
-    }
-
-    return this.userGroups.some(group => this.catalogOwners.includes(group));
+    return hasAccessForRule(CATALOG_ACTIVITY_ACCESS_RULE, this.userGroups, this.catalogOwners);
   }
 
   showPlatformSelector() {

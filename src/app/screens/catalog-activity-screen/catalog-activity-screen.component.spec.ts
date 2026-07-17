@@ -133,14 +133,18 @@ describe('CatalogActivityScreenComponent', () => {
 
   it('should reset filters', () => {
     component.projectFilterValue = 'PROJECT';
-    component.statusFilterValues = ['FAILED'];
-    component.dateRangeFilterValue = '30';
+    component.statusFilterValue = 'FAILED';
+    component.dateRangeFilterValue = 'Last 365 days';
 
     component.onResetFilters();
 
     expect(component.projectFilterValue).toBe('');
-    expect(component.statusFilterValues).toEqual([]);
+    expect(component.statusFilterValue).toBe('');
     expect(component.dateRangeFilterValue).toBe('');
+  });
+
+  it('should initialize date range filter to last 30 days', () => {
+    expect(component.dateRangeFilterValue).toBe('Last 30 days');
   });
 
   it('should perform search', () => {
@@ -415,6 +419,10 @@ describe('CatalogActivityScreenComponent', () => {
 
     (component as any).loadActivities(true);
 
+    expect(catalogServiceMock.getCatalogActivities).toHaveBeenCalledWith('catalog-1', jasmine.objectContaining({
+      status: undefined,
+      startDate: jasmine.any(Number)
+    }));
     expect(component.activities.length).toBe(1);
     expect(component.hasMore).toBeTrue();
     expect(component.isLoading).toBeFalse();

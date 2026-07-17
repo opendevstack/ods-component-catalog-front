@@ -4,6 +4,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AzureService } from '../services/azure.service';
 import { CatalogService } from '../services/catalog.service';
+import { AccessRuleData, hasAccessForRule } from './catalog-activity-access-rule';
 
 @Injectable({ providedIn: 'root' })
 export class GroupsGuard implements CanActivate {
@@ -14,12 +15,12 @@ export class GroupsGuard implements CanActivate {
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> {
-    const requiredOwners = route.data?.['requiredOwners'] === true;
-    const requiredGroups: string[] = Array.isArray(route.data?.['requiredGroups'])
-      ? route.data['requiredGroups']
-      : [];
+    const accessRule: AccessRuleData = {
+      requiredOwners: route.data?.['requiredOwners'] === true,
+      requiredGroups: Array.isArray(route.data?.['requiredGroups']) ? route.data['requiredGroups'] : []
+    };
 
-    if (!requiredOwners && requiredGroups.length === 0) {
+    if (!accessRule.requiredOwners && (accessRule.requiredGroups?.length ?? 0) === 0) {
       return of(true);
     }
 
@@ -28,19 +29,7 @@ export class GroupsGuard implements CanActivate {
       this.resolveCatalogOwnersFromRoute(route)
     ]).pipe(
       map(([userGroups, owners]) => {
-        const hasOwnerAccess =
-          requiredOwners &&
-          Array.isArray(userGroups) &&
-          Array.isArray(owners) &&
-          owners.some(owner => userGroups.includes(owner));
-
-        const hasRequiredGroupAccess =
-          requiredGroups.length > 0 &&
-          Array.isArray(userGroups) &&
-          requiredGroups.some(group => userGroups.includes(group));
-
-        const hasAccess = hasOwnerAccess || hasRequiredGroupAccess;
-        //return true;
+        const hasAccess = hasAccessForRule(accessRule, userGroups, owners);
         return hasAccess ? true : this.router.parseUrl('/page-not-found');
       }),
       catchError(() => of(this.router.parseUrl('/page-not-found')))
