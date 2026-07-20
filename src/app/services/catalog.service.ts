@@ -169,6 +169,7 @@ export class CatalogService {
       tags: this.mapTags(item.tags),
       authors: item.authors,
       date: item.authors.length > 0 ? new Date(item.date) : undefined,
+      componentCount: item.componentCount ?? undefined
     };
   }
 
@@ -213,8 +214,7 @@ export class CatalogService {
             errorMessage: validation.errorMessage,
           })) || []
         } as ProductActionParameter)) ?? []
-      } as ProductAction)),
-      componentCount: item.componentCount || undefined
+      } as ProductAction))
     } as AppProduct;
   }
 }
