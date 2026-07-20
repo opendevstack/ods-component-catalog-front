@@ -19,6 +19,9 @@ const fakeProductsFromItems: AppProduct[] = [
   { id: '2', title: 'Product 2', shortDescription: 'Short description 2', description: 'Description 2', image: undefined, tags: [{label: 'cat1', options: []}, {label: '', options: ['tag-without-label']}], authors: ['author2'], date: currentDate, actions: [{label: 'action', id: 'name', triggerMessage: 'fake', url: 'url', requestable: false, restrictionMessage: '', parameters: [{name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{regex: '*', errorMessage: 'Error'}]}, {name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{location: 'location 1', value: 'test 2'}, {location: 'location 2', value: 'test 22'}]}]}, {label: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2', requestable: false, restrictionMessage: '', parameters: []}] }
 ];
 
+const fakeServiceItemsOwnerMode: CatalogItem[] = fakeServiceItems.map(item => { return {...item, componentCount: 0}; } );
+const fakeProductsFromItemsOwnerMode: AppProduct[] = fakeProductsFromItems.map(product => { return {...product, componentCount: 0}; });
+
 describe('CatalogService', () => {
   let service: CatalogService;
   let catalogItemsServiceSpy: jasmine.SpyObj<CatalogItemsServiceInterface>;
@@ -85,6 +88,26 @@ describe('CatalogService', () => {
         expect(product.shortDescription).toEqual(expectedProduct.shortDescription);
         expect(product.tags).toEqual(expectedProduct.tags);
         expect(product.title).toEqual(expectedProduct.title);
+      }
+      done();
+    });
+  });
+
+  it('getProductsList (with catalog ownership) should return the list of products with the componentCount property included', (done) => {
+    const serviceItems: CatalogItem[] = fakeServiceItemsOwnerMode;
+    const expectedProducts: AppProduct[] = fakeProductsFromItemsOwnerMode;
+    const catalogDescriptor = { id: '1', slug: 'catalog1' };
+
+    catalogItemsServiceSpy.getCatalogItems.and.returnValue(of(serviceItems));
+    catalogItemsServiceSpy.getCatalogItemsForProjectKey.and.returnValue(of(serviceItems));
+    filesServiceSpy.getFileById.and.returnValues(of('img'));
+
+    service.getProductsList(catalogDescriptor).subscribe(products => {
+      for(let i=0; i<products.length; i++) {
+        const product = products[i];
+        const expectedProduct = expectedProducts[i];
+        expect(product.componentCount).toBeDefined();
+        expect(product.componentCount).toEqual(expectedProduct.componentCount);
       }
       done();
     });
