@@ -487,6 +487,57 @@ describe('CatalogService', () => {
     });
   });
 
+  describe('refreshSelectedCatalog', () => {
+    it('should re-emit the currently selected slug', () => {
+      spyOn(localStorage, 'setItem').and.stub();
+      service.setSelectedCatalogSlug('Catalog A');
+
+      const emissions: Array<string | null> = [];
+      const sub = service.selectedCatalogSlug$.subscribe(value => emissions.push(value));
+      emissions.length = 0;
+
+      service.refreshSelectedCatalog();
+
+      expect(emissions).toEqual(['catalog-a']);
+      expect(service.getSelectedCatalogSlug()).toBe('catalog-a');
+      expect(service.selectedCatalogSlug).toBe('catalog-a');
+
+      sub.unsubscribe();
+    });
+
+    it('should re-emit null when there is no selected catalog', () => {
+      spyOn(localStorage, 'removeItem').and.stub();
+      service.setSelectedCatalogSlug(null);
+
+      const emissions: Array<string | null> = [];
+      const sub = service.selectedCatalogSlug$.subscribe(value => emissions.push(value));
+      emissions.length = 0;
+
+      service.refreshSelectedCatalog();
+
+      expect(emissions).toEqual([null]);
+      expect(service.getSelectedCatalogSlug()).toBeNull();
+      expect(service.selectedCatalogSlug).toBeNull();
+
+      sub.unsubscribe();
+    });
+
+    it('should not write to localStorage when refreshing current selection', () => {
+      const setItemSpy = spyOn(localStorage, 'setItem').and.stub();
+      const removeItemSpy = spyOn(localStorage, 'removeItem').and.stub();
+
+      service.setSelectedCatalogSlug('Catalog B');
+      setItemSpy.calls.reset();
+      removeItemSpy.calls.reset();
+
+      service.refreshSelectedCatalog();
+
+      expect(setItemSpy).not.toHaveBeenCalled();
+      expect(removeItemSpy).not.toHaveBeenCalled();
+      expect(service.getSelectedCatalogSlug()).toBe('catalog-b');
+    });
+  });
+
   it('should return null and warn when localStorage access fails during initialization', () => {
     const warnSpy = spyOn(console, 'warn');
     const getItemSpy = spyOn(localStorage, 'getItem').and.callFake(() => {

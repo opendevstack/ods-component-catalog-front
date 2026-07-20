@@ -11,10 +11,12 @@ type CatalogDescriptorWithOwners = {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogOwnersGroupAccessStore {
-  private currentOwnersSubject = new BehaviorSubject<string[]>([]);
+  private readonly currentOwnersSubject = new BehaviorSubject<string[]>([]);
   public currentOwners$ = this.currentOwnersSubject.asObservable();
 
-  constructor(private catalogService: CatalogService) {
+  constructor(
+    private readonly catalogService: CatalogService
+  ) {
     this.catalogService.selectedCatalogSlug$
       .pipe(
         switchMap(slug => {

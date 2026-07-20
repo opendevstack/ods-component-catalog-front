@@ -423,7 +423,7 @@ describe('CatalogActivityScreenComponent', () => {
       status: undefined,
       startDate: jasmine.any(Number)
     }));
-    expect(component.activities.length).toBe(1);
+    expect(component.activities).toHaveSize(1);
     expect(component.hasMore).toBeTrue();
     expect(component.isLoading).toBeFalse();
   });

@@ -15,9 +15,9 @@ type CatalogDescriptorWithOwners = {
 @Injectable({ providedIn: 'root' })
 export class GroupsGuard implements CanActivate {
   constructor(
-    private azureService: AzureService,
-    private catalogService: CatalogService,
-    private router: Router
+    private readonly azureService: AzureService,
+    private readonly catalogService: CatalogService,
+    private readonly router: Router
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> {
