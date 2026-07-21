@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
 import { of, Subject } from 'rxjs';
@@ -382,7 +382,7 @@ describe('CatalogActivityScreenComponent', () => {
     expect(loadMoreSpy).not.toHaveBeenCalled();
   });
 
-  it('should load activities and update state for current request', () => {
+  it('should keep loading state until delay elapses', fakeAsync(() => {
     component.catalogId = 'catalog-1';
 
     catalogServiceMock.getCatalogActivities.and.returnValue(
@@ -401,6 +401,42 @@ describe('CatalogActivityScreenComponent', () => {
 
     (component as any).loadActivities(true);
 
+    expect(component.isLoading).toBeTrue();
+    expect(component.activities).toEqual([]);
+
+    tick(299);
+
+    expect(component.isLoading).toBeTrue();
+    expect(component.activities).toEqual([]);
+
+    tick(1);
+
+    expect(component.activities).toHaveSize(1);
+    expect(component.hasMore).toBeTrue();
+    expect(component.isLoading).toBeFalse();
+  }));
+
+  it('should load activities and update state for current request', fakeAsync(() => {
+    component.catalogId = 'catalog-1';
+
+    catalogServiceMock.getCatalogActivities.and.returnValue(
+      of({
+        data: [
+          {
+            componentId: 'component-1'
+          }
+        ],
+        pagination: {
+          page: 0,
+          totalPages: 2
+        }
+      } as any)
+    );
+
+    (component as any).loadActivities(true);
+
+    tick(300);
+
     expect(catalogServiceMock.getCatalogActivities).toHaveBeenCalledWith('catalog-1', jasmine.objectContaining({
       status: undefined,
       startDate: jasmine.any(Number)
@@ -408,9 +444,9 @@ describe('CatalogActivityScreenComponent', () => {
     expect(component.activities).toHaveSize(1);
     expect(component.hasMore).toBeTrue();
     expect(component.isLoading).toBeFalse();
-  });
+  }));
 
-  it('should ignore stale responses from previous requests', () => {
+  it('should ignore stale responses from previous requests', fakeAsync(() => {
     const staleRequest$ = new Subject<any>();
 
     component.catalogId = 'catalog-1';
@@ -438,6 +474,8 @@ describe('CatalogActivityScreenComponent', () => {
         totalPages: 3
       }
     });
+
+    tick(300);
     staleRequest$.complete();
 
     expect(component.activities).toEqual([
@@ -445,5 +483,5 @@ describe('CatalogActivityScreenComponent', () => {
         componentId: 'current-activity'
       } as any
     ]);
-  });
+  }));
 });

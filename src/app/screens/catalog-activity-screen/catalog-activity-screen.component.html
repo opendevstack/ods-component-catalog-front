@@ -1,38 +1,33 @@
 <appshell-page-header [breadcrumbLinks]="breadcrumbLinks" title="Catalog Activity"></appshell-page-header>
-<section class="catalog-activity-intro">
-  <div class="catalog-activity-intro-copy">
-    <h2>Filter catalog activity</h2>
-    <p>Refine the activity list by project, status or date range. Sort by clicking the column headers.</p>
+
+
+<section class="catalog-activity-filters">
+  <div class="filter-row">
+      
+    <div class="input-text">
+      <mat-label>Project</mat-label>
+      <mat-form-field appearance="outline" class="project-field">
+        <input matInput type="text" [(ngModel)]="projectFilterValue" placeholder="Project"/>
+      </mat-form-field>
+    </div>
+
+    <dropdown-select [multipleSelection]="false" [(value)]="statusFilterValue" [label]="statusFilterData.label" 
+      [options]="statusFilterData.options" [placeholder]="statusFilterData.placeholder">
+    </dropdown-select>
+
+    <dropdown-select [multipleSelection]="false" [(value)]="dateRangeFilterValue" [label]="dateRangeFilterData.label" 
+      [options]="dateRangeFilterData.options" [placeholder]="dateRangeFilterData.placeholder">
+    </dropdown-select>
+  
+  </div>
+
+  <div class="filter-actions">
+    <button mat-flat-button color="secondary" class="secondary" (click)="onResetFilters()">Reset filters</button>
+    <button mat-flat-button color="accent" class="primary action-dialog-btn" (click)="onSearch()">Apply filters</button>
   </div>
 </section>
-
 <div class="catalog-activity-page">
   <div class="catalog-activity-page-inner">
-    <section class="catalog-activity-filters">
-      <div class="filter-row">
-          
-        <div class="input-text">
-          <mat-label>Project</mat-label>
-          <mat-form-field appearance="outline" class="project-field">
-            <input matInput type="text" [(ngModel)]="projectFilterValue" placeholder="Project"/>
-          </mat-form-field>
-        </div>
-
-        <dropdown-select [multipleSelection]="false" [(value)]="statusFilterValue" [label]="statusFilterData.label" 
-          [options]="statusFilterData.options" [placeholder]="statusFilterData.placeholder">
-        </dropdown-select>
-
-        <dropdown-select [multipleSelection]="false" [(value)]="dateRangeFilterValue" [label]="dateRangeFilterData.label" 
-          [options]="dateRangeFilterData.options" [placeholder]="dateRangeFilterData.placeholder">
-        </dropdown-select>
-      
-      </div>
-
-      <div class="filter-actions">
-        <button mat-flat-button color="secondary" class="secondary" (click)="onResetFilters()">Reset filters</button>
-        <button mat-flat-button color="accent" class="primary action-dialog-btn" (click)="onSearch()">Apply filters</button>
-      </div>
-    </section>
 
     @if (isLoading || activities.length > 0) {
       <section class="catalog-activity-summary">

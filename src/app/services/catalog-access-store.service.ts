@@ -29,6 +29,10 @@ export class CatalogAccessStore {
       .subscribe(this.currentOwnersSubject);
   }
 
+  getCurrentOwners(): string[] {
+    return this.currentOwnersSubject.getValue();
+  }
+
   private refreshOwnersForSelectedCatalog(slug: string): Observable<string[]> {
     const descriptor = this.catalogService.getSelectedCatalogDescriptor();
     const descriptorOwners = (descriptor as CatalogDescriptorWithOwners | undefined)?.owners;
