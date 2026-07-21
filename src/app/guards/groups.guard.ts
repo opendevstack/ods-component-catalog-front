@@ -3,6 +3,7 @@ import { CanActivate, ActivatedRouteSnapshot, Router, UrlTree } from '@angular/r
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AzureService } from '../services/azure.service';
+import { CatalogAccessStore } from '../services/catalog-access-store.service';
 import { CatalogService } from '../services/catalog.service';
 import { AccessRuleData, hasAccessForRule } from './catalog-activity-access-rule';
 
@@ -16,6 +17,7 @@ type CatalogDescriptorWithOwners = {
 export class GroupsGuard implements CanActivate {
   constructor(
     private readonly azureService: AzureService,
+    private readonly catalogAccessStore: CatalogAccessStore,
     private readonly catalogService: CatalogService,
     private readonly router: Router
   ) {}
@@ -43,6 +45,11 @@ export class GroupsGuard implements CanActivate {
   }
 
   private resolveUserGroups(): Observable<string[]> {
+    const cachedGroups = this.azureService.userGroups$.getValue();
+    if (cachedGroups.length > 0) {
+      return of(cachedGroups);
+    }
+
     return this.azureService.loadUserGroups().pipe(
       map(groups => Array.isArray(groups) ? groups.filter(Boolean) : []),
       tap(groups => this.azureService.userGroups$.next(groups)),
@@ -57,6 +64,14 @@ export class GroupsGuard implements CanActivate {
     }
 
     const normalizedCatalogSlug = this.catalogService.getSlugUrl(catalogSlugParam);
+
+    if (this.catalogService.selectedCatalogSlug === normalizedCatalogSlug) {
+      const cachedOwners = this.catalogAccessStore.getCurrentOwners();
+      if (cachedOwners.length > 0) {
+        return of(cachedOwners);
+      }
+    }
+
     const cachedDescriptors = this.catalogService.getCatalogDescriptors();
 
     const descriptors$ = cachedDescriptors.length > 0
