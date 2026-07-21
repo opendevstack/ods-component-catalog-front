@@ -10,7 +10,7 @@ type CatalogDescriptorWithOwners = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class CatalogOwnersGroupAccessStore {
+export class CatalogAccessStore {
   private readonly currentOwnersSubject = new BehaviorSubject<string[]>([]);
   public currentOwners$ = this.currentOwnersSubject.asObservable();
 

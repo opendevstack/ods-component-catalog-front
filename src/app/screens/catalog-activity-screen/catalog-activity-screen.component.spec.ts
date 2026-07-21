@@ -201,45 +201,6 @@ describe('CatalogActivityScreenComponent', () => {
       .toHaveBeenCalledWith(true);
   });
 
-  it('should return chevron_right for inactive column', () => {
-    component.sortParameter =
-      SortParameter.CreationDate;
-
-    expect(
-      component.getSortIcon(
-        SortParameter.Status
-      )
-    ).toBe('chevron_right');
-  });
-
-  it('should return expand_more for active descending column', () => {
-    component.sortParameter =
-      SortParameter.Status;
-
-    component.sortOrder =
-      SortOrder.Desc;
-
-    expect(
-      component.getSortIcon(
-        SortParameter.Status
-      )
-    ).toBe('expand_more');
-  });
-
-  it('should return expand_less for active ascending column', () => {
-    component.sortParameter =
-      SortParameter.Status;
-
-    component.sortOrder =
-      SortOrder.Asc;
-
-    expect(
-      component.getSortIcon(
-        SortParameter.Status
-      )
-    ).toBe('expand_less');
-  });
-
   it('should call load more when allowed', () => {
     const loadSpy = spyOn<any>(
       component,

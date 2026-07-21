@@ -15,7 +15,7 @@ import { ProjectService } from './services/project.service';
 import { AppProject } from './models/project';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
-import { CatalogOwnersGroupAccessStore } from './services/catalog-owners-group-access-store.service';
+import { CatalogAccessStore } from './services/catalog-access-store.service';
 
 describe('AppComponent', () => {
   let component: AppComponent;
@@ -29,7 +29,7 @@ describe('AppComponent', () => {
   let mockToastService: jasmine.SpyObj<AppShellToastService>;
   let mockAppConfigService: jasmine.SpyObj<AppConfigService>;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
-  let catalogOwnersGroupAccessStore: jasmine.SpyObj<CatalogOwnersGroupAccessStore>;
+  let catalogOwnersGroupAccessStore: jasmine.SpyObj<CatalogAccessStore>;
   let mockMatDialog: jasmine.SpyObj<MatDialog>;
   const dialogSubject = new Subject<any>();
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<PlatformSelectorWidgetDialogComponent>>;
@@ -71,7 +71,7 @@ describe('AppComponent', () => {
         { provide: AppShellToastService, useValue: mockToastService },
         { provide: AppConfigService, useValue: mockAppConfigService },
         { provide: ProjectService, useValue: mockProjectService },
-        { provide: CatalogOwnersGroupAccessStore, useValue: catalogOwnersGroupAccessStore },
+        { provide: CatalogAccessStore, useValue: catalogOwnersGroupAccessStore },
         { provide: MatDialog, useValue: mockMatDialog },
         provideHttpClient()
       ]

@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, skip, throwError } from 'rxjs';
 
-import { CatalogOwnersGroupAccessStore } from './catalog-owners-group-access-store.service';
+import { CatalogAccessStore } from './catalog-access-store.service';
 import { CatalogService } from './catalog.service';
 
-describe('CatalogOwnersGroupAccessStore', () => {
-  let store: CatalogOwnersGroupAccessStore;
+describe('CatalogAccessStore', () => {
+  let store: CatalogAccessStore;
   let catalogService: jasmine.SpyObj<CatalogService>;
   let selectedCatalogSlug$: BehaviorSubject<string | null>;
 
@@ -27,7 +27,7 @@ describe('CatalogOwnersGroupAccessStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        CatalogOwnersGroupAccessStore,
+        CatalogAccessStore,
         {
           provide: CatalogService,
           useValue: catalogService
@@ -35,7 +35,7 @@ describe('CatalogOwnersGroupAccessStore', () => {
       ]
     });
 
-    store = TestBed.inject(CatalogOwnersGroupAccessStore);
+    store = TestBed.inject(CatalogAccessStore);
   });
 
   it('should be created', () => {

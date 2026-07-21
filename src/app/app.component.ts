@@ -17,7 +17,7 @@ import { PlatformSelectorWidgetDialogData } from './models/platform-selector-wid
 import { MatDialog } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
-import { CatalogOwnersGroupAccessStore } from './services/catalog-owners-group-access-store.service';
+import { CatalogAccessStore } from './services/catalog-access-store.service';
 import { CATALOG_ACTIVITY_ACCESS_RULE, hasAccessForRule } from './guards/catalog-activity-access-rule';
 
 
@@ -84,7 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly natsService: NatsService,
     private readonly appConfigService :AppConfigService,
     private readonly projectService: ProjectService,
-    private readonly catalogOwnersGroupAccessStore: CatalogOwnersGroupAccessStore,
+    private readonly catalogOwnersGroupAccessStore: CatalogAccessStore,
     public dialog: MatDialog
   ) {
     this.natsUrl = this.appConfigService.getConfig()?.natsUrl;
