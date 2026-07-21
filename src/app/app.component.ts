@@ -84,7 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly natsService: NatsService,
     private readonly appConfigService :AppConfigService,
     private readonly projectService: ProjectService,
-    private readonly catalogOwnersGroupAccessStore: CatalogAccessStore,
+    private readonly catalogAccessStore: CatalogAccessStore,
     public dialog: MatDialog
   ) {
     this.natsUrl = this.appConfigService.getConfig()?.natsUrl;
@@ -185,7 +185,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.restoreSidenav();
       });
 
-    this.catalogOwnersGroupAccessStore.currentOwners$
+    this.catalogAccessStore.currentOwners$
       .pipe(takeUntil(this._destroying$))
       .subscribe(owners => {
         this.catalogOwners = owners;

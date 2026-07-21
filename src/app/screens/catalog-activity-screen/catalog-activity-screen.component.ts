@@ -247,7 +247,13 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       return;
     }
 
-    const anchorRect = this.loadMoreAnchor.nativeElement.getBoundingClientRect();
+    const anchorElement = this.loadMoreAnchor.nativeElement;
+    const anchorRect = anchorElement.getBoundingClientRect();
+
+    if (!anchorElement.isConnected || (anchorRect.top === 0 && anchorRect.bottom === 0)) {
+      return;
+    }
+
     const viewportBottom = window.innerHeight + 120;
     if (anchorRect.top <= viewportBottom) {
       this.onLoadMore();

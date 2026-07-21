@@ -361,6 +361,27 @@ describe('CatalogActivityScreenComponent', () => {
     expect(observeSpy).toHaveBeenCalled();
   });
 
+  it('should not auto-load when anchor is detached or has no layout box', () => {
+    const loadMoreSpy = spyOn(component, 'onLoadMore');
+    const anchor = document.createElement('div');
+
+    component.hasMore = true;
+    component.isLoading = false;
+    component.isLoadingMore = false;
+    component.loadMoreAnchor = {
+      nativeElement: anchor
+    } as any;
+
+    spyOn(anchor, 'getBoundingClientRect').and.returnValue({
+      top: 0,
+      bottom: 0
+    } as DOMRect);
+
+    (component as any).tryLoadMoreIfAnchorAlreadyVisible();
+
+    expect(loadMoreSpy).not.toHaveBeenCalled();
+  });
+
   it('should load activities and update state for current request', () => {
     component.catalogId = 'catalog-1';
 
