@@ -4,12 +4,14 @@ import { Router, UrlTree } from '@angular/router';
 
 import { GroupsGuard } from './groups.guard';
 import { AzureService } from '../services/azure.service';
+import { CatalogAccessStore } from '../services/catalog-access-store.service';
 import { CatalogService } from '../services/catalog.service';
 
 describe('GroupsGuard', () => {
   let guard: GroupsGuard;
 
   let azureServiceMock: any;
+  let catalogAccessStoreMock: jasmine.SpyObj<CatalogAccessStore>;
   let catalogServiceMock: any;
   let routerMock: jasmine.SpyObj<Router>;
   let mockUrlTree: UrlTree;
@@ -24,8 +26,15 @@ describe('GroupsGuard', () => {
       loadUserGroups: jasmine.createSpy('loadUserGroups').and.returnValue(of([]))
     };
 
+    catalogAccessStoreMock = jasmine.createSpyObj(
+      'CatalogAccessStore',
+      ['getCurrentOwners']
+    );
+    catalogAccessStoreMock.getCurrentOwners.and.returnValue([]);
+
     catalogServiceMock = {
       getSlugUrl: jasmine.createSpy('getSlugUrl').and.callFake((slug: string) => slug),
+      selectedCatalogSlug: null,
       getCatalogDescriptors: jasmine.createSpy('getCatalogDescriptors').and.returnValue([]),
       retrieveCatalogDescriptors: jasmine.createSpy('retrieveCatalogDescriptors').and.returnValue(of([])),
       setCatalogDescriptors: jasmine.createSpy('setCatalogDescriptors'),
@@ -39,6 +48,7 @@ describe('GroupsGuard', () => {
       providers: [
         GroupsGuard,
         { provide: AzureService, useValue: azureServiceMock },
+        { provide: CatalogAccessStore, useValue: catalogAccessStoreMock },
         { provide: CatalogService, useValue: catalogServiceMock },
         { provide: Router, useValue: routerMock }
       ]
@@ -68,6 +78,27 @@ describe('GroupsGuard', () => {
 
     expect(result).toBeTrue();
     expect(azureServiceMock.userGroups$.value).toEqual(['owner1']);
+  });
+
+  it('should use cached groups when already loaded', async () => {
+    userGroups$.next(['owner1']);
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+    ]);
+
+    const route: any = {
+      data: {
+        requiredOwners: true
+      },
+      paramMap: {
+        get: () => 'catalog-a'
+      }
+    };
+
+    const result = await firstValueFrom(guard.canActivate(route));
+
+    expect(result).toBeTrue();
+    expect(azureServiceMock.loadUserGroups).not.toHaveBeenCalled();
   });
 
   it('should allow access when user belongs to required group', async () => {
@@ -159,6 +190,27 @@ describe('GroupsGuard', () => {
 
     expect(result).toBeTrue();
     expect(catalogServiceMock.getCatalog).toHaveBeenCalledWith('cat-2');
+  });
+
+  it('should use cached owners for the selected catalog', async () => {
+    azureServiceMock.loadUserGroups.and.returnValue(of(['owner2']));
+    catalogServiceMock.selectedCatalogSlug = 'catalog-b';
+    catalogAccessStoreMock.getCurrentOwners.and.returnValue(['owner2']);
+
+    const route: any = {
+      data: {
+        requiredOwners: true
+      },
+      paramMap: {
+        get: () => 'catalog-b'
+      }
+    };
+
+    const result = await firstValueFrom(guard.canActivate(route));
+
+    expect(result).toBeTrue();
+    expect(catalogAccessStoreMock.getCurrentOwners).toHaveBeenCalled();
+    expect(catalogServiceMock.getCatalog).not.toHaveBeenCalled();
   });
 
   it('should allow access immediately when route has no permission requirements', async () => {

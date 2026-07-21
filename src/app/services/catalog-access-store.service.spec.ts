@@ -42,6 +42,23 @@ describe('CatalogAccessStore', () => {
     expect(store).toBeTruthy();
   });
 
+  it('should expose current owners synchronously', done => {
+    catalogService.getSelectedCatalogDescriptor.and.returnValue({
+      id: '1',
+      slug: 'catalog-a',
+      owners: ['GROUP_A']
+    } as any);
+
+    store.currentOwners$.subscribe(owners => {
+      if (owners.length > 0) {
+        expect(store.getCurrentOwners()).toEqual(['GROUP_A']);
+        done();
+      }
+    });
+
+    selectedCatalogSlug$.next('catalog-a');
+  });
+
   it('should emit empty array when selected catalog slug is null', done => {
     store.currentOwners$
       .pipe(skip(1))
