@@ -53,6 +53,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
   } as AppShellFilter;
 
   readonly SortParameter = SortParameter;
+  readonly SortOrder = SortOrder;
 
   sortParameter: SortParameter = SortParameter.CreationDate;
   sortOrder: SortOrder = SortOrder.Desc;
@@ -118,13 +119,6 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       this.sortOrder = SortOrder.Desc;
     }
     this.loadActivities(true);
-  }
-
-  getSortIcon(parameter: SortParameter): string {
-    if (this.sortParameter !== parameter) {
-      return 'chevron_right';
-    }
-    return this.sortOrder === SortOrder.Desc ? 'expand_more' : 'expand_less';
   }
 
   onLoadMore(): void {
@@ -245,6 +239,19 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     }, { rootMargin: '120px 0px 120px 0px', threshold: 0.1 });
 
     this.intersectionObserver.observe(this.loadMoreAnchor.nativeElement);
+    this.tryLoadMoreIfAnchorAlreadyVisible();
+  }
+
+  private tryLoadMoreIfAnchorAlreadyVisible(): void {
+    if (!this.loadMoreAnchor?.nativeElement || !this.hasMore || this.isLoading || this.isLoadingMore) {
+      return;
+    }
+
+    const anchorRect = this.loadMoreAnchor.nativeElement.getBoundingClientRect();
+    const viewportBottom = window.innerHeight + 120;
+    if (anchorRect.top <= viewportBottom) {
+      this.onLoadMore();
+    }
   }
 
   ngOnDestroy(): void {

@@ -99,6 +99,23 @@ button.primary:disabled {
   margin-bottom: 1rem;
   font-size: 0.95rem;
   color: var(--appshell-color-secondary-main);
+
+  .summary-count {
+    display: inline-block;
+    min-width: 2.5rem;
+    text-align: right;
+  }
+
+  .summary-count.loading-placeholder {
+    min-width: 2.25rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    color: transparent;
+    vertical-align: middle;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
 }
 
 .table-wrapper {
@@ -188,23 +205,21 @@ button.primary:disabled {
   align-items: center;
   justify-content: center;
   width: 20px;
-  gap: 2px;
+  opacity: 0.55;
+  transform: rotate(-90deg);
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 
-.sort-icon-stack {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.sort-icon.is-active {
+  opacity: 1;
 }
 
-.sort-icon .svg-wrapper {
-  position: relative;
-  display: inline-flex;
+.sort-icon.is-desc {
+  transform: rotate(0deg);
 }
 
-.sort-icon svg {
-  display: block;
+.sort-icon.is-asc {
+  transform: rotate(180deg);
 }
 
 .catalog-activity-table tbody tr:nth-child(odd) {
@@ -224,7 +239,7 @@ button.primary:disabled {
 }
 
 .no-results-ctn {
-  width: auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -240,6 +255,17 @@ button.primary:disabled {
   width: 5rem;
   height: 5rem;
   color: var(--appshell-color-secondary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  appshell-icon,
+  mat-icon {
+    width: 5rem;
+    height: 5rem;
+    font-size: 5rem;
+    line-height: 1;
+  }
 }
 
 .catalog-activity-table tbody tr.skeleton-row td {

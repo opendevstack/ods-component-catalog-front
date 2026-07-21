@@ -34,9 +34,13 @@
       </div>
     </section>
 
-    @if (!isLoading && activities.length > 0) {
+    @if (isLoading || activities.length > 0) {
       <section class="catalog-activity-summary">
-        <span>{{ activities.length }} provision activity entries loaded</span>
+        <span
+          class="summary-count"
+          [class.loading-placeholder]="isLoading"
+        >{{ isLoading ? '' : activities.length }}</span>
+        <span> provision activity entries loaded</span>
       </section>
     }
 
@@ -60,64 +64,40 @@
               <th>
                 <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Project)">
                   <span>Project key</span>
-                  <span class="sort-icon" aria-hidden="true">
-                    <div class="sort-icon-stack">
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
-                        </svg>
-                      </div>
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.Project"
+                    [class.is-desc]="sortParameter === SortParameter.Project && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.Project && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
                 </button>
               </th>
               <th>
                 <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Status)">
                   <span>Status</span>
-                  <span class="sort-icon" aria-hidden="true">
-                    <div class="sort-icon-stack">
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
-                        </svg>
-                      </div>
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.Status"
+                    [class.is-desc]="sortParameter === SortParameter.Status && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.Status && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
                 </button>
               </th>
               <th>
                 <button type="button" class="sortable-header" (click)="updateSort(SortParameter.CreationDate)">
                   <span>Provision date</span>
-                  <span class="sort-icon" aria-hidden="true">
-                    <div class="sort-icon-stack">
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M2.38 8.5L6 3.7L9.625 8.5L10 8.175L6.45 3.5H5.55L2 8.175L2.38 8.5Z" fill="#191919"></path>
-                          </svg>
-                      </div>
-                      <div class="svg-wrapper">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M9.62 3.5L6 8.3L2.375 3.5L2 3.825L5.55 8.5H6.45L10 3.825L9.62 3.5Z" fill="#191919"></path>
-                          </svg>
-                      </div>
-                    </div>
-                  </span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.CreationDate"
+                    [class.is-desc]="sortParameter === SortParameter.CreationDate && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.CreationDate && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
                 </button>
               </th>
             </tr>
@@ -166,7 +146,9 @@
     @if (!isLoading && activities.length === 0 && !connectionErrorHtmlMessage) {
       <section class="no-results-ctn"
         role="status" aria-live="polite" tabindex="0">
-        <appshell-icon class="no-results-icon" icon="sad_face"></appshell-icon>
+        <div class="no-results-icon" aria-hidden="true">
+          <appshell-icon icon="smiley_sad"></appshell-icon>
+        </div>
         <div>No catalog activity was found for the current filter selection.</div>
       </section>
     }
