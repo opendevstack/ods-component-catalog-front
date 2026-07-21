@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CatalogService } from './catalog.service';
-import { AppShellFilter } from '@opendevstack/ngx-appshell';
-import { BASE_PATH, Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
-import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { AppShellFilter } from '@opendevstack/ngx-appshell';
+import { of, throwError } from 'rxjs';
 import { AppProduct } from '../models/app-product';
+import { BASE_PATH, Catalog, CatalogActivityService, CatalogActivityServiceInterface, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
+import { CatalogService } from './catalog.service';
 
 const currentDate = new Date();
 
@@ -29,6 +29,7 @@ describe('CatalogService', () => {
   let filesServiceSpy: jasmine.SpyObj<FilesServiceInterface>;
   let catalogsServiceSpy: jasmine.SpyObj<CatalogsServiceInterface>;
   let catalogDescriptorsServiceSpy: jasmine.SpyObj<CatalogDescriptorsServiceInterface>;
+  let catalogActivityServiceSpy: jasmine.SpyObj<CatalogActivityServiceInterface>;
 
   beforeEach(() => {
     try {
@@ -509,6 +510,57 @@ describe('CatalogService', () => {
     });
   });
 
+  describe('refreshSelectedCatalog', () => {
+    it('should re-emit the currently selected slug', () => {
+      spyOn(localStorage, 'setItem').and.stub();
+      service.setSelectedCatalogSlug('Catalog A');
+
+      const emissions: Array<string | null> = [];
+      const sub = service.selectedCatalogSlug$.subscribe(value => emissions.push(value));
+      emissions.length = 0;
+
+      service.refreshSelectedCatalog();
+
+      expect(emissions).toEqual(['catalog-a']);
+      expect(service.getSelectedCatalogSlug()).toBe('catalog-a');
+      expect(service.selectedCatalogSlug).toBe('catalog-a');
+
+      sub.unsubscribe();
+    });
+
+    it('should re-emit null when there is no selected catalog', () => {
+      spyOn(localStorage, 'removeItem').and.stub();
+      service.setSelectedCatalogSlug(null);
+
+      const emissions: Array<string | null> = [];
+      const sub = service.selectedCatalogSlug$.subscribe(value => emissions.push(value));
+      emissions.length = 0;
+
+      service.refreshSelectedCatalog();
+
+      expect(emissions).toEqual([null]);
+      expect(service.getSelectedCatalogSlug()).toBeNull();
+      expect(service.selectedCatalogSlug).toBeNull();
+
+      sub.unsubscribe();
+    });
+
+    it('should not write to localStorage when refreshing current selection', () => {
+      const setItemSpy = spyOn(localStorage, 'setItem').and.stub();
+      const removeItemSpy = spyOn(localStorage, 'removeItem').and.stub();
+
+      service.setSelectedCatalogSlug('Catalog B');
+      setItemSpy.calls.reset();
+      removeItemSpy.calls.reset();
+
+      service.refreshSelectedCatalog();
+
+      expect(setItemSpy).not.toHaveBeenCalled();
+      expect(removeItemSpy).not.toHaveBeenCalled();
+      expect(service.getSelectedCatalogSlug()).toBe('catalog-b');
+    });
+  });
+
   it('should return null and warn when localStorage access fails during initialization', () => {
     const warnSpy = spyOn(console, 'warn');
     const getItemSpy = spyOn(localStorage, 'getItem').and.callFake(() => {
@@ -520,6 +572,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
+      catalogActivityServiceSpy as unknown as CatalogActivityService,
       filesServiceSpy as unknown as FilesService
     );
 
@@ -537,6 +590,7 @@ describe('CatalogService', () => {
       catalogsServiceSpy as unknown as CatalogsService,
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
+      catalogActivityServiceSpy as unknown as CatalogActivityService,
       filesServiceSpy as unknown as FilesService
     );
 

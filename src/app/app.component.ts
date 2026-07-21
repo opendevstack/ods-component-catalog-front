@@ -17,6 +17,8 @@ import { PlatformSelectorWidgetDialogData } from './models/platform-selector-wid
 import { MatDialog } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
+import { CatalogAccessStore } from './services/catalog-access-store.service';
+import { CATALOG_ACTIVITY_ACCESS_RULE, hasAccessForRule } from './guards/catalog-activity-access-rule';
 
 
 @Component({
@@ -62,6 +64,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   loggedUser: AppUser|null = null;
 
+  userGroups: string[] = [];
+  catalogOwners: string[] = [];
+
   platformSelectorData = {} as PlatformSelectorWidgetDialogData;
 
   private _lastNotFoundState = false;
@@ -79,12 +84,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly natsService: NatsService,
     private readonly appConfigService :AppConfigService,
     private readonly projectService: ProjectService,
+    private readonly catalogAccessStore: CatalogAccessStore,
     public dialog: MatDialog
   ) {
     this.natsUrl = this.appConfigService.getConfig()?.natsUrl;
     this.platformSelectorData.serviceUrl = this.appConfigService.getConfig()?.platformSelectorServiceUrl || '';
     this.catalogService.retrieveCatalogDescriptors().subscribe((catalogs) => {
       this.catalogService.setCatalogDescriptors(catalogs);
+      this.catalogService.refreshSelectedCatalog();
 
       this.catalogPicker = { ...this.catalogPicker, options: [] };
       catalogs.forEach((catalog) => {
@@ -171,6 +178,20 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
+    this.azureService.userGroups$
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(groups => {
+        this.userGroups = groups;
+        this.restoreSidenav();
+      });
+
+    this.catalogAccessStore.currentOwners$
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(owners => {
+        this.catalogOwners = owners;
+        this.restoreSidenav();
+      });
+
     const chatbotConfig = this.appConfigService.getConfig()?.chatbotConfig;
     (window as Window & { ONB_CHAT_CONFIG?: object }).ONB_CHAT_CONFIG = chatbotConfig.widgetConfig;
     
@@ -246,12 +267,23 @@ export class AppComponent implements OnInit, OnDestroy {
         ]
       });
     }
+
+    const catalogLinks = [
+      { label: 'Add Components', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`, icon: 'cart' },
+      { label: 'Community', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/community`, icon: 'people' },
+    ];
+
+    if (this.canAccessCurrentCatalog()) {
+      catalogLinks.push({
+        label: 'Catalog Activity',
+        anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/catalog-activity`,
+        icon: 'bar_chart_up'
+      });
+    }
+
     this.sidenavSections.push({
       label: catalog.slug!.toUpperCase(),
-      links: [
-        {label: 'Add Components', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}`, icon: 'cart'},
-        {label: 'Community', anchor: `/${this.catalogService.getSlugUrl(catalog.slug!)}/community`, icon: 'people'}
-      ]
+      links: catalogLinks
     });
 
     this.sidenavLinks.links = [];
@@ -413,6 +445,10 @@ export class AppComponent implements OnInit, OnDestroy {
         console.log('Invalid message format:', message);
       }
     });
+  }
+
+  private canAccessCurrentCatalog(): boolean {
+    return hasAccessForRule(CATALOG_ACTIVITY_ACCESS_RULE, this.userGroups, this.catalogOwners);
   }
 
   showPlatformSelector() {

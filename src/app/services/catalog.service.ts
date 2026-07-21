@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AppShellFilter } from '@opendevstack/ngx-appshell';
 import { BehaviorSubject, firstValueFrom, map, Observable, switchMap } from 'rxjs';
-import { Catalog, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService } from '../openapi/component-catalog';
+import { Catalog, CatalogActivity, CatalogActivityService, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService, PaginatedCatalogActivities, SortOrder, SortParameter } from '../openapi/component-catalog';
 import { AppProduct } from '../models/app-product';
 import { ProductActionParameter } from '../models/product-action-parameter';
 import { ProductAction } from '../models/product-action';
@@ -26,6 +26,7 @@ export class CatalogService {
     private readonly catalogsService: CatalogsService,
     private readonly catalogItemsService: CatalogItemsService,
     private readonly catalogFiltersService: CatalogFiltersService,
+    private readonly catalogActivityService: CatalogActivityService,
     private readonly filesService: FilesService
   ) {}
 
@@ -93,6 +94,38 @@ export class CatalogService {
 
   getCatalog(catalogId: string): Observable<Catalog> {
     return this.catalogsService.getCatalog(catalogId);
+  }
+
+  refreshSelectedCatalog(): void {
+    this.selectedCatalogSlugSubject.next(
+      this.selectedCatalogSlugSubject.value
+    );
+  }
+
+  getCatalogActivities(
+    catalogId: string,
+    options?: {
+      sortParameter?: SortParameter;
+      sortOrder?: SortOrder;
+      project?: string;
+      status?: CatalogActivity.StatusEnum;
+      startDate?: number;
+      endDate?: number;
+      page?: number;
+      size?: number;
+    }
+  ): Observable<PaginatedCatalogActivities> {
+    return this.catalogActivityService.getCatalogActivitiesById(
+      catalogId,
+      options?.sortParameter,
+      options?.sortOrder,
+      options?.project,
+      options?.status,
+      options?.startDate,
+      options?.endDate,
+      options?.page,
+      options?.size
+    );
   }
 
   getProductsList(catalogDescriptor: CatalogDescriptor): Observable<AppProduct[]> {

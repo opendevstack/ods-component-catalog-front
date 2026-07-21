@@ -1,0 +1,160 @@
+<appshell-page-header [breadcrumbLinks]="breadcrumbLinks" title="Catalog Activity"></appshell-page-header>
+<section class="catalog-activity-intro">
+  <div class="catalog-activity-intro-copy">
+    <h2>Filter catalog activity</h2>
+    <p>Refine the activity list by project, status or date range. Sort by clicking the column headers.</p>
+  </div>
+</section>
+
+<div class="catalog-activity-page">
+  <div class="catalog-activity-page-inner">
+    <section class="catalog-activity-filters">
+      <div class="filter-row">
+          
+        <div class="input-text">
+          <mat-label>Project</mat-label>
+          <mat-form-field appearance="outline" class="project-field">
+            <input matInput type="text" [(ngModel)]="projectFilterValue" placeholder="Project"/>
+          </mat-form-field>
+        </div>
+
+        <dropdown-select [multipleSelection]="false" [(value)]="statusFilterValue" [label]="statusFilterData.label" 
+          [options]="statusFilterData.options" [placeholder]="statusFilterData.placeholder">
+        </dropdown-select>
+
+        <dropdown-select [multipleSelection]="false" [(value)]="dateRangeFilterValue" [label]="dateRangeFilterData.label" 
+          [options]="dateRangeFilterData.options" [placeholder]="dateRangeFilterData.placeholder">
+        </dropdown-select>
+      
+      </div>
+
+      <div class="filter-actions">
+        <button mat-flat-button color="secondary" class="secondary" (click)="onResetFilters()">Reset filters</button>
+        <button mat-flat-button color="accent" class="primary action-dialog-btn" (click)="onSearch()">Apply filters</button>
+      </div>
+    </section>
+
+    @if (isLoading || activities.length > 0) {
+      <section class="catalog-activity-summary">
+        <span
+          class="summary-count"
+          [class.loading-placeholder]="isLoading"
+        >{{ isLoading ? '' : activities.length }}</span>
+        <span> provision activity entries loaded</span>
+      </section>
+    }
+
+    @if (connectionErrorHtmlMessage || connectionErrorIcon) {
+      <section class="no-results-ctn" role="status"
+        aria-live="polite" tabindex="0">
+        @if (connectionErrorIcon) {
+          <appshell-icon class="no-results-icon" [icon]="connectionErrorIcon"></appshell-icon>
+        }
+        <div [innerHTML]="connectionErrorHtmlMessage"></div>
+      </section>
+    }
+
+    @if (isLoading || activities.length > 0) {
+      <section class="table-wrapper">
+        <table class="catalog-activity-table">
+          <thead>
+            <tr>
+              <th>Catalog item</th>
+              <th>Component ID</th>
+              <th>
+                <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Project)">
+                  <span>Project key</span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.Project"
+                    [class.is-desc]="sortParameter === SortParameter.Project && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.Project && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sortable-header" (click)="updateSort(SortParameter.Status)">
+                  <span>Status</span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.Status"
+                    [class.is-desc]="sortParameter === SortParameter.Status && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.Status && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sortable-header" (click)="updateSort(SortParameter.CreationDate)">
+                  <span>Provision date</span>
+                  <appshell-icon
+                    class="sort-icon"
+                    icon="expand_more"
+                    [class.is-active]="sortParameter === SortParameter.CreationDate"
+                    [class.is-desc]="sortParameter === SortParameter.CreationDate && sortOrder === SortOrder.Desc"
+                    [class.is-asc]="sortParameter === SortParameter.CreationDate && sortOrder === SortOrder.Asc"
+                    aria-hidden="true"
+                  ></appshell-icon>
+                </button>
+              </th>
+            </tr>
+          </thead>
+          @if (isLoading) {
+            <tbody>
+              @for (row of skeletonLoadingRows; track row) {
+                <tr class="skeleton-row">
+                  <td><span class="skeleton skeleton-cell"></span></td>
+                  <td><span class="skeleton skeleton-cell"></span></td>
+                  <td><span class="skeleton skeleton-cell" style="width: 70%"></span></td>
+                  <td><span class="skeleton skeleton-cell" style="width: 55%"></span></td>
+                  <td><span class="skeleton skeleton-cell" style="width: 80%"></span></td>
+                </tr>
+              }
+            </tbody>
+          }
+          @if (!isLoading && activities.length > 0) {
+            <tbody>
+              @for (activity of activities; track $index) {
+                <tr>
+                  <td>{{ activity.catalogItemSlug || '—' }}</td>
+                  <td>{{ activity.componentId || '—' }}</td>
+                  <td>{{ activity.projectKey || '—' }}</td>
+                  <td>{{ activity.status || '—' }}</td>
+                  <td>{{ activity.createdAt ? (activity.createdAt | date:'MMM d, y HH:mm:ss') : '—' }}</td>
+                </tr>
+              }
+              @if (isLoadingMore) {
+                @for (row of skeletonLoadingRows; track row) {
+                  <tr class="skeleton-row load-more-skeleton-row">
+                    <td><span class="skeleton skeleton-cell"></span></td>
+                    <td><span class="skeleton skeleton-cell"></span></td>
+                    <td><span class="skeleton skeleton-cell" style="width: 70%"></span></td>
+                    <td><span class="skeleton skeleton-cell" style="width: 55%"></span></td>
+                    <td><span class="skeleton skeleton-cell" style="width: 80%"></span></td>
+                  </tr>
+                }
+              }
+            </tbody>
+          }
+        </table>
+      </section>
+    }
+
+    @if (!isLoading && activities.length === 0 && !connectionErrorHtmlMessage) {
+      <section class="no-results-ctn"
+        role="status" aria-live="polite" tabindex="0">
+        <div class="no-results-icon" aria-hidden="true">
+          <appshell-icon icon="smiley_sad"></appshell-icon>
+        </div>
+        <div>No catalog activity was found for the current filter selection.</div>
+      </section>
+    }
+
+    @if (hasMore) {
+      <div #loadMoreAnchor class="load-more-anchor"></div>
+    }
+  </div>
+</div>

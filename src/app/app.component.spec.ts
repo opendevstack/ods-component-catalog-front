@@ -15,6 +15,7 @@ import { ProjectService } from './services/project.service';
 import { AppProject } from './models/project';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PlatformSelectorWidgetDialogComponent } from './components/platform-selector-widget-dialog/platform-selector-widget-dialog.component';
+import { CatalogAccessStore } from './services/catalog-access-store.service';
 
 describe('AppComponent', () => {
   let component: AppComponent;
@@ -28,12 +29,14 @@ describe('AppComponent', () => {
   let mockToastService: jasmine.SpyObj<AppShellToastService>;
   let mockAppConfigService: jasmine.SpyObj<AppConfigService>;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let catalogOwnersGroupAccessStore: jasmine.SpyObj<CatalogAccessStore>;
   let mockMatDialog: jasmine.SpyObj<MatDialog>;
   const dialogSubject = new Subject<any>();
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<PlatformSelectorWidgetDialogComponent>>;
   let azureLoggedUser$: Subject<AppUser>;
   let natsLiveMessage$: Subject<NatsMessage | null>;
   let natsMessageCount$: Subject<number>;
+  let userGroupsSubject: Subject<string[]>;
   const routerEventsSubject = new Subject<any>();
   const projectSubject = new Subject<AppProject>();
 
@@ -41,18 +44,20 @@ describe('AppComponent', () => {
     azureLoggedUser$ = new Subject<AppUser>();
     natsLiveMessage$ = new Subject<NatsMessage | null>();
     natsMessageCount$ = new Subject<number>();
-    mockAzureService = jasmine.createSpyObj('AzureService', ['initialize', 'login', 'logout', 'getAccessToken'], { loggedUser$: azureLoggedUser$.asObservable() });
+    userGroupsSubject = new Subject<string[]>();
+    mockAzureService = jasmine.createSpyObj('AzureService', ['initialize', 'login', 'logout', 'getAccessToken'], { loggedUser$: azureLoggedUser$.asObservable(), userGroups$: userGroupsSubject.asObservable() });
     mockNatsService = jasmine.createSpyObj('NatsService', ['initialize', 'initializeUser', 'readMessages', 'isValidMessage'], { liveMessage$: natsLiveMessage$.asObservable(), unreadMessagesCount$: natsMessageCount$.asObservable() });
     mockToastService = jasmine.createSpyObj('AppShellToastService', ['showToast'], { toasts$: of([]) });
     mockCatalogService = jasmine.createSpyObj(
       'CatalogService',
-      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor'],
+      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor', 'refreshSelectedCatalog'],
       { selectedCatalogSlug$: selectedCatalogSlugSubject.asObservable() }
     );
     routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl', 'getCurrentNavigation'], { events: routerEventsSubject.asObservable(), url: '/' });
     routerSpy.navigateByUrl.and.resolveTo(true);
     mockAppConfigService = jasmine.createSpyObj('AppConfigService', ['getConfig']);
     mockProjectService = jasmine.createSpyObj('ProjectService', ['getCurrentProject', 'setCurrentProject', 'getUserProjects', 'getProjectCluster'], { project$: projectSubject.asObservable() });
+    catalogOwnersGroupAccessStore = jasmine.createSpyObj('CatalogOwnersGroupAccessStore', [], { currentOwners$: of([]) });
     mockMatDialog = jasmine.createSpyObj('MatDialog', ['open']);
     mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
 
@@ -66,6 +71,7 @@ describe('AppComponent', () => {
         { provide: AppShellToastService, useValue: mockToastService },
         { provide: AppConfigService, useValue: mockAppConfigService },
         { provide: ProjectService, useValue: mockProjectService },
+        { provide: CatalogAccessStore, useValue: catalogOwnersGroupAccessStore },
         { provide: MatDialog, useValue: mockMatDialog },
         provideHttpClient()
       ]
@@ -77,6 +83,7 @@ describe('AppComponent', () => {
     mockCatalogService.getCatalog.and.returnValue(of({ slug: 'test-catalog', id: '1', links: [] } as Catalog));
     mockCatalogService.getSelectedCatalogSlug.and.returnValue(null);
     mockCatalogService.getSelectedCatalogDescriptor.and.returnValue({ slug: 'test-catalog', id: '1' });
+    mockCatalogService.refreshSelectedCatalog;
     mockAppConfigService.getConfig.and.returnValue({ natsUrl: 'nats://localhost:4222', chatbotConfig: { widgetConfig: { baseUrl: 'https://example.com', theme: 'light' }, scriptSrc: 'https://example.com/chat-widget.js' } });
     mockAzureService.getAccessToken.and.returnValue(Promise.resolve('new-token'));
     mockProjectService.getUserProjects.and.returnValue(of([]));
@@ -163,6 +170,9 @@ describe('AppComponent', () => {
       ]
     } as Catalog;
 
+    component.userGroups = [];
+    component.catalogOwners = [];
+
     mockCatalogService.getCatalog.and.returnValue(of(mockCatalog));
 
     component.setCatalogShell({ slug: 'test-catalog', id: '1' });
@@ -190,6 +200,9 @@ describe('AppComponent', () => {
       links: []
     };
 
+    component.userGroups = [];
+    component.catalogOwners = [];
+
     mockCatalogService.getCatalog.and.returnValue(of(mockCatalog));
 
     component.setCatalogShell(mockCatalog);
@@ -213,6 +226,9 @@ describe('AppComponent', () => {
       id: '1',
       links: undefined
     };
+    
+    component.userGroups = [];
+    component.catalogOwners = [];
 
     mockCatalogService.getCatalog.and.returnValue(of(mockCatalog));
 
@@ -229,6 +245,67 @@ describe('AppComponent', () => {
     ]);
 
     expect(component.sidenavLinks.links).toEqual([]);
+  });
+
+  it('should add Catalog Activity link when user has access to current catalog', () => {
+    component.userGroups = ['owners-group'];
+    component.catalogOwners = ['owners-group'];
+
+    mockCatalogService.getCatalog.and.returnValue(
+      of({
+        slug: 'test-catalog',
+        id: '1',
+        links: []
+      } as Catalog)
+    );
+
+    component.setCatalogShell({
+      slug: 'test-catalog',
+      id: '1'
+    } as CatalogDescriptor);
+
+    expect(component.sidenavSections).toEqual([
+      {
+        label: 'TEST-CATALOG',
+        links: [
+          { label: 'Add Components', anchor: '/test-catalog', icon: 'cart' },
+          { label: 'Community', anchor: '/test-catalog/community', icon: 'people' },
+          {
+            label: 'Catalog Activity',
+            anchor: '/test-catalog/catalog-activity',
+            icon: 'bar_chart_up'
+          }
+        ]
+      }
+    ]);
+  });
+
+  it('should not add Catalog Activity link when user has no access to current catalog', () => {
+    component.userGroups = ['group-a'];
+    component.catalogOwners = ['group-b'];
+
+    mockCatalogService.getCatalog.and.returnValue(
+      of({
+        slug: 'test-catalog',
+        id: '1',
+        links: []
+      } as Catalog)
+    );
+
+    component.setCatalogShell({
+      slug: 'test-catalog',
+      id: '1'
+    } as CatalogDescriptor);
+
+    expect(component.sidenavSections).toEqual([
+      {
+        label: 'TEST-CATALOG',
+        links: [
+          { label: 'Add Components', anchor: '/test-catalog', icon: 'cart' },
+          { label: 'Community', anchor: '/test-catalog/community', icon: 'people' }
+        ]
+      }
+    ]);
   });
   
   it('should set the catalog shell when the selected catalog slug changes in CatalogService', fakeAsync(() => {
@@ -325,6 +402,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
     newComponent.initializeNats(null);
@@ -459,6 +537,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
 
@@ -567,6 +646,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
 
@@ -597,6 +677,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
 
@@ -646,6 +727,7 @@ describe('AppComponent', () => {
     component.ngOnInit();
     tick();
 
+    setCatalogShellSpy.calls.reset();
     selectedCatalogSlugSubject.next('known');
     tick();
 
@@ -721,6 +803,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
     const setCatalogShellSpy = spyOn(newComponent, 'setCatalogShell');
@@ -748,6 +831,7 @@ describe('AppComponent', () => {
       mockNatsService,
       mockAppConfigService,
       mockProjectService,
+      catalogOwnersGroupAccessStore,
       mockMatDialog
     );
     const setCatalogShellSpy = spyOn(newComponent, 'setCatalogShell');
