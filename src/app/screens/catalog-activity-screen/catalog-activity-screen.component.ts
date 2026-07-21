@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent } from '@opendevstack/ngx-appshell';
 import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
 import { CatalogActivity, PaginatedCatalogActivities, SortOrder, SortParameter } from '../../openapi/component-catalog';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, delay } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { MatInput, MatLabel, MatFormField } from "@angular/material/input";
@@ -163,7 +163,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
       page,
       size: this.PAGE_SIZE
     })
-      .pipe(takeUntil(this._destroying$))
+      .pipe(delay(300), takeUntil(this._destroying$))
       .subscribe({
         next: (result) => {
           if (requestId !== this.activeRequestId) {
