@@ -5,7 +5,7 @@ appshell-platform-layout {
 }
 
 app-top-disclaimer {
-    position: absolute;
+    position: fixed;
     top: 65px;
     left: 50%;
     transform: translateX(-50%);
