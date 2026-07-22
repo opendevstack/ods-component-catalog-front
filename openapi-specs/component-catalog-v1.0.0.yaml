@@ -429,7 +429,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
-  /catalog-activities/{id}:
+  /catalog/{id}/activities:
     get:
       tags:
         - CatalogActivity
