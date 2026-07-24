@@ -1,3 +1,9 @@
+app-catalog-activity-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 .catalog-activity-page {
   width: 100%;
   margin: 0;
@@ -5,6 +11,7 @@
   box-sizing: border-box;
   background: var(--appshell-color-grey-light);
   color: var(--appshell-color-secondary-main);
+  flex: 1;
 }
 
 .catalog-activity-page-inner {
@@ -102,7 +109,7 @@ button.primary:disabled {
 
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid var(--appshell-border-color);
+  border: 1px solid var(--appshell-color-grey-warm);
   background: var(--appshell-surface-secondary);
 }
 
@@ -214,10 +221,6 @@ button.primary:disabled {
 
 .catalog-activity-table tbody tr:hover {
   background: var(--appshell-color-surface);
-}
-
-.catalog-activity-table tr:last-child td {
-  border-bottom: none;
 }
 
 .no-results-ctn {
