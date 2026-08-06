@@ -372,12 +372,20 @@ describe('CatalogActivityScreenComponent', () => {
       nativeElement: anchor
     } as any;
 
-    spyOn(anchor, 'getBoundingClientRect').and.returnValue({
-      top: 0,
-      bottom: 0
-    } as DOMRect);
+    const observeSpy = jasmine.createSpy('observe').and.callFake(() => {
+      observerCallback([{ isIntersecting: false }]);
+    });
 
-    (component as any).tryLoadMoreIfAnchorAlreadyVisible();
+    const observerDisconnectSpy = jasmine.createSpy('disconnect');
+    let observerCallback: (entries: { isIntersecting: boolean }[]) => void;
+
+    spyOn(window as any, 'IntersectionObserver').and.callFake(function(this: any, callback: (entries: { isIntersecting: boolean }[]) => void) {
+      observerCallback = callback;
+      this.observe = observeSpy;
+      this.disconnect = observerDisconnectSpy;
+    });
+
+    (component as any).observeLoadMoreAnchor();
 
     expect(loadMoreSpy).not.toHaveBeenCalled();
   });

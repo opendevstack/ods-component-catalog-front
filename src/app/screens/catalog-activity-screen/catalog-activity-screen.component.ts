@@ -239,25 +239,6 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
     }, { rootMargin: '120px 0px 120px 0px', threshold: 0.1 });
 
     this.intersectionObserver.observe(this.loadMoreAnchor.nativeElement);
-    this.tryLoadMoreIfAnchorAlreadyVisible();
-  }
-
-  private tryLoadMoreIfAnchorAlreadyVisible(): void {
-    if (!this.loadMoreAnchor?.nativeElement || !this.hasMore || this.isLoading || this.isLoadingMore) {
-      return;
-    }
-
-    const anchorElement = this.loadMoreAnchor.nativeElement;
-    const anchorRect = anchorElement.getBoundingClientRect();
-
-    if (!anchorElement.isConnected || (anchorRect.top === 0 && anchorRect.bottom === 0)) {
-      return;
-    }
-
-    const viewportBottom = window.innerHeight + 120;
-    if (anchorRect.top <= viewportBottom) {
-      this.onLoadMore();
-    }
   }
 
   ngOnDestroy(): void {
