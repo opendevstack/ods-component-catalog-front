@@ -379,12 +379,10 @@ describe('CatalogActivityScreenComponent', () => {
     const observerDisconnectSpy = jasmine.createSpy('disconnect');
     let observerCallback: (entries: { isIntersecting: boolean }[]) => void;
 
-    spyOn(window as any, 'IntersectionObserver').and.callFake((callback: (entries: { isIntersecting: boolean }[]) => void) => {
+    spyOn(window as any, 'IntersectionObserver').and.callFake(function(this: any, callback: (entries: { isIntersecting: boolean }[]) => void) {
       observerCallback = callback;
-      return {
-        observe: observeSpy,
-        disconnect: observerDisconnectSpy
-      };
+      this.observe = observeSpy;
+      this.disconnect = observerDisconnectSpy;
     });
 
     (component as any).observeLoadMoreAnchor();
