@@ -25,6 +25,9 @@ module.exports = function (config) {
     jasmineHtmlReporter: {
       suppressAll: true // removes the duplicated traces
     },
+    browserConsoleLogOptions: {
+      terminal: process.env.KARMA_BROWSER_CONSOLE !== 'false'
+    },
     coverageReporter: {
       dir: require('path').join(__dirname, './coverage/component-catalog-front'),
       subdir: '.',
