@@ -3,12 +3,18 @@
     <appshell-icon icon="close" (click)="onCancel()"></appshell-icon>
 </div>
 <mat-dialog-content>
-    <div class="help-message-ctn">
+    <div class="warning-message-ctn">
         <appshell-icon class="info-icon" icon="circle_i"></appshell-icon>
-        <span>To request deletion for deployed components, a change requested is needed.</span>
+        <span>This action is irreversible. The component and its associated resources will be deleted.</span>
     </div>
+    <div class="confirmation-message">
+        <span>To confirm deletion, type <strong>{{ data.componentName }}</strong>:</span>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+        <input matInput [(ngModel)]="componentNameConfirmation" placeholder="Type the component name">
+    </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
     <button mat-button (click)="onCancel()">Cancel</button>
-    <button mat-flat-button color="accent" (click)="onAccept()">Request</button>
+    <button mat-flat-button color="accent" (click)="onAccept()" [disabled]="componentNameConfirmation !== data.componentName">Confirm</button>
 </mat-dialog-actions>

@@ -28,12 +28,17 @@ import { AppShellIconComponent } from "@opendevstack/ngx-appshell";
 })
 export class RequestDeletionSimpleDialogComponent {
 
+  componentNameConfirmation = '';
+
   constructor(
     public dialogRef: MatDialogRef<RequestDeletionSimpleDialogComponent>, 
     @Inject(MAT_DIALOG_DATA) public data: RequestDeletionDialogData
   ) {}
 
   onAccept(): void {
+    if (this.componentNameConfirmation !== this.data.componentName) {
+      return;
+    }
     this.dialogRef.close(this.data);
   }
 

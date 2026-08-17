@@ -39,22 +39,58 @@ app-request-deletion-simple-dialog {
     mat-dialog-content {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 1rem;
+        padding-top: 1.5rem!important;
         min-height: 100px;
 
-        .help-message-ctn {
-            background-color: #D2F2F7;
-            color: #076D7E;
+        .warning-message-ctn {
+            background-color: #FDE8E7;
+            color: #A4262C;
             padding: 1rem;
             display: flex;
             flex-direction: row;
             align-items: center;
-            margin: 1.5rem 0!important;
+            margin: 0 0 1rem!important;
             gap: 0.75rem;
             font-size: 14px;
             font-style: normal;
             font-weight: 400;
             line-height: 20px;
+        }
+
+        .confirmation-message {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 14px;
+            line-height: 20px;
+
+            strong {
+                font-weight: 600;
+                word-break: break-word;
+            }
+        }
+
+        .full-width {
+            width: 100%;
+            margin: 1rem 0 0.5rem!important;
+            --mat-select-enabled-trigger-text-color: var(--appshell-color-secondary-main);
+            --mdc-outlined-text-field-focus-outline-color: var(--appshell-color-accent-green-main);
+            --mdc-outlined-text-field-container-shape: 0.125rem;
+
+            .mat-mdc-text-field-wrapper {
+                height: 3rem;
+
+                .mat-mdc-form-field-flex {
+                    height: 100%;
+                }
+
+                .mat-mdc-form-field-infix {
+                    height: 100%;
+                    min-height: unset;
+                    padding: 0.75rem 0;
+                }
+            }
         }
     }
 
@@ -84,6 +120,11 @@ app-request-deletion-simple-dialog {
                 background-color: transparent;
                 text-decoration-color: var(--appshell-color-accent-green-medium);
             }
+
+            &:disabled {
+                color: var(--appshell-color-grey-main);
+                text-decoration-color: var(--appshell-color-grey-main);
+            }
         }
 
         button:last-of-type {
@@ -103,7 +144,7 @@ app-request-deletion-simple-dialog {
             border: 2px solid var(--mdc-filled-button-container-color);
 
             &:disabled {
-                border: none;
+                border-color: transparent;
             }
         }
     }

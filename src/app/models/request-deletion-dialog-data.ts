@@ -7,7 +7,4 @@ export interface RequestDeletionDialogData {
 export interface RequestDeletionDialogResult {
     projectKey: string;
     componentName: string;
-    deploymentStatus: boolean;
-    changeNumber: string;
-    reason: string;
 }

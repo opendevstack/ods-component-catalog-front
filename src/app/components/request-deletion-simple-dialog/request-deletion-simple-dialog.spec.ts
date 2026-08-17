@@ -37,9 +37,18 @@ describe('RequestDeletionSimpleDialogComponent', () => {
   });
 
   it('should close dialog with data on accept', () => {
+    component.componentNameConfirmation = dialogData.componentName;
     component.onAccept();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(dialogData);
+  });
+
+  it('should not close dialog when the component name does not match', () => {
+    component.componentNameConfirmation = 'other-component';
+
+    component.onAccept();
+
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 
   it('should close dialog without data on cancel', () => {
@@ -71,12 +80,14 @@ describe('RequestDeletionSimpleDialogComponent', () => {
     expect(component.onCancel).toHaveBeenCalled();
   });
 
-  it('should call onAccept when Request button is clicked', () => {
+  it('should call onAccept when Confirm button is clicked with the component name', () => {
     spyOn(component, 'onAccept');
+    component.componentNameConfirmation = dialogData.componentName;
+    fixture.detectChanges();
 
     const requestButton = fixture.debugElement
       .queryAll(By.css('button'))
-      .find(btn => btn.nativeElement.textContent.trim() === 'Request');
+      .find(btn => btn.nativeElement.textContent.trim() === 'Confirm');
 
     requestButton!.nativeElement.click();
 

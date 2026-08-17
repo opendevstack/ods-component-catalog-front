@@ -1,20 +1,18 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { AppShellIconComponent, AppShellLink, AppShellNotification, AppShellPageHeaderComponent, AppShellToastService } from '@opendevstack/ngx-appshell';
-import { ProjectService } from '../../services/project.service';
-import { Subject, map, switchMap, takeUntil } from 'rxjs';
-import { AppProject } from '../../models/project';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ProjectComponent } from '../../models/project-component';
-import { ComponentCardComponent } from '../../components/component-card/component-card.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { RequestDeletionDialogComponent } from '../../components/request-deletion-dialog/request-deletion-dialog.component';
-import { RequestDeletionDialogResult } from '../../models/request-deletion-dialog-data';
-import { ProvisionerService } from '../../services/provisioner.service';
-import { AzureService } from '../../services/azure.service';
-import { AppUser } from '../../models/app-user';
-import { CreateIncidentParameter } from '../../openapi/component-provisioner';
-import { ComponentStatus } from '../../models/component-status';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AppShellIconComponent, AppShellLink, AppShellNotification, AppShellPageHeaderComponent, AppShellToastService } from '@opendevstack/ngx-appshell';
+import { Subject, map, switchMap, takeUntil } from 'rxjs';
+import { ComponentCardComponent } from '../../components/component-card/component-card.component';
 import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
+import { AppUser } from '../../models/app-user';
+import { ComponentStatus } from '../../models/component-status';
+import { AppProject } from '../../models/project';
+import { ProjectComponent } from '../../models/project-component';
+import { RequestDeletionDialogResult } from '../../models/request-deletion-dialog-data';
+import { AzureService } from '../../services/azure.service';
+import { ProjectService } from '../../services/project.service';
+import { ProvisionerService } from '../../services/provisioner.service';
 
 @Component({
   selector: 'app-project-components-screen',
@@ -124,19 +122,15 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const shouldRequestAutomaticDeletion = component.hasAutomatedDeletionWorkflow;
-
-    const dialogRef = this.dialog.open(shouldRequestAutomaticDeletion ? RequestDeletionSimpleDialogComponent : RequestDeletionDialogComponent, {
+    const dialogRef = this.dialog.open(RequestDeletionSimpleDialogComponent, {
       autoFocus: false,
       data: {
         componentName: component.name,
-        projectKey: this.selectedProject.projectKey,
+        projectKey: this.selectedProject.projectKey
       }
     });
-    // Extended message when automatic deletion is incorrect, since no human intervention is expected
-    const msg = shouldRequestAutomaticDeletion ?
-      'The request has successfully been sent.' :
-      'The request has successfully been sent. Support will receive a ticket and manage the component deletion.';
+    
+    const msg = 'The request has successfully been sent.';
 
     dialogRef.afterClosed().subscribe((result: RequestDeletionDialogResult | undefined) => {
       if (result) {
@@ -153,30 +147,11 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       originalStatus = this.projectComponents[componentIndex].status;
       this.projectComponents[componentIndex].status = 'DELETING';
     }
-    /* eslint-disable @typescript-eslint/no-wrapper-object-types */
-    const incidentParams: CreateIncidentParameter[] = [
-      {
-        name: 'is_deployed',
-        type: 'boolean',
-        value: result.deploymentStatus as Boolean // NOSONAR
-
-      },
-      {
-        name: 'change_number',
-        type: 'string',
-        value: result.changeNumber as String // NOSONAR
-      },
-      {
-        name: 'reason',
-        type: 'string',
-        value: result.reason as String // NOSONAR
-      }
-    ].filter(p => p.value != null); // Filter by defined values, which are undefined when the simple dialog is called
+    
     /* eslint-enable @typescript-eslint/no-wrapper-object-types */
     this.provisionerService.requestComponentDeletion(
       result.projectKey,
-      result.componentName,
-      incidentParams
+      result.componentName
     ).subscribe({
       next: () => this.onDeletionRequestSuccess(notificationMsg),
       error: (error) => {
