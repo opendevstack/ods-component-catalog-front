@@ -122,6 +122,13 @@ describe('ComponentCardComponent', () => {
       expect(component.statusClass()).toBe('deleting');
     });
 
+    it('should convert status "DELETION_FAILED" correctly', () => {
+      fixture.componentRef.setInput('status', 'DELETION_FAILED');
+      fixture.detectChanges();
+      
+      expect(component.statusClass()).toBe('deletion_failed');
+    });
+
     it('should convert status "UNKNOWN" correctly', () => {
       fixture.componentRef.setInput('status', 'UNKNOWN');
       fixture.detectChanges();
@@ -193,6 +200,20 @@ describe('ComponentCardComponent', () => {
       
       expect(component.isProvisioning()).toBe(false);
     });
+
+    it('should return false when status is "DELETION_FAILED"', () => {
+      fixture.componentRef.setInput('status', 'DELETION_FAILED');
+      fixture.detectChanges();
+      
+      expect(component.isProvisioning()).toBe(false);
+    });
+
+    it('should return false when status is "UNKNOWN"', () => {
+      fixture.componentRef.setInput('status', 'UNKNOWN');
+      fixture.detectChanges();
+      
+      expect(component.isProvisioning()).toBe(false);
+    });
   });
 
   describe('isDeleting', () => {
@@ -226,6 +247,20 @@ describe('ComponentCardComponent', () => {
       fixture.detectChanges();
       
       expect(component.isDeleting()).toBe(false);
+    });
+
+    it('should return false when status is "DELETION_FAILED"', () => {
+      fixture.componentRef.setInput('status', 'DELETION_FAILED');
+      fixture.detectChanges();
+      
+      expect(component.isProvisioning()).toBe(false);
+    });
+
+    it('should return false when status is "UNKNOWN"', () => {
+      fixture.componentRef.setInput('status', 'UNKNOWN');
+      fixture.detectChanges();
+      
+      expect(component.isProvisioning()).toBe(false);
     });
   });
 
