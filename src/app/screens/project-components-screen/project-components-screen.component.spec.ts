@@ -1,18 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ProjectComponentsScreenComponent } from './project-components-screen.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProjectService } from '../../services/project.service';
-import { Subject, of, throwError } from 'rxjs';
-import { AppProject } from '../../models/project';
-import { RequestDeletionDialogComponent } from '../../components/request-deletion-dialog/request-deletion-dialog.component';
-import { ProjectComponent } from '../../models/project-component';
-import { ProvisionerService } from '../../services/provisioner.service';
-import { AzureService } from '../../services/azure.service';
 import { AppShellNotification, AppShellToastService } from '@opendevstack/ngx-appshell';
-import { AppUser } from '../../models/app-user';
-import { CreateIncidentParameter } from '../../openapi/component-provisioner';
+import { Subject, of, throwError } from 'rxjs';
 import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
+import { AppUser } from '../../models/app-user';
+import { AppProject } from '../../models/project';
+import { ProjectComponent } from '../../models/project-component';
+import { AzureService } from '../../services/azure.service';
+import { ProjectService } from '../../services/project.service';
+import { ProvisionerService } from '../../services/provisioner.service';
+import { ProjectComponentsScreenComponent } from './project-components-screen.component';
 
 describe('ProjectComponentsScreenComponent', () => {
   let component: ProjectComponentsScreenComponent;
@@ -176,7 +174,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
 
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
         autoFocus: false,
         data: { 
           componentName: 'test-component',
@@ -198,7 +196,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
 
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
         autoFocus: false,
         data: { 
           componentName: 'another-test-component',
@@ -213,16 +211,14 @@ describe('ProjectComponentsScreenComponent', () => {
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: true
+        canDelete: true
       } as ProjectComponent];
       const testComponent = {
         name: 'test-component',
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: true
+        canDelete: true
       } as ProjectComponent;
       component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
       const mockResult = {
@@ -242,11 +238,9 @@ describe('ProjectComponentsScreenComponent', () => {
         }
       });
       expect(component.projectComponents[0].status).toBe('DELETING');
-      const incidentParams: CreateIncidentParameter[] = [];
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
-        'test-component',
-        incidentParams
+        'test-component'
       );
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
@@ -262,16 +256,14 @@ describe('ProjectComponentsScreenComponent', () => {
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: true
       } as ProjectComponent];
       const testComponent = {
         name: 'test-component',
         status: 'CREATED',
         logo: 'http://example.com/logo.png',
         url: 'http://example.com',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: true
       } as ProjectComponent;
       component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
       const mockResult = {
@@ -286,7 +278,7 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
         autoFocus: false,
         data: {
           componentName: 'test-component',
@@ -294,21 +286,15 @@ describe('ProjectComponentsScreenComponent', () => {
         }
       });
       expect(component.projectComponents[0].status).toBe('DELETING');
-      const incidentParams: CreateIncidentParameter[] = [
-        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
-        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String }
-      ];
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
-        'test-component',
-        incidentParams
+        'test-component'
       );
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
         read: false,
         subject: 'only_toast',
-        title: 'The request has successfully been sent. Support will receive a ticket and manage the component deletion.'
+        title: 'The request has successfully been sent.'
       } as AppShellNotification, 8000);
     });
 
@@ -343,15 +329,9 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
 
-      const incidentParams: CreateIncidentParameter[] = [
-        { name: 'is_deployed', type: 'boolean', value: false as Boolean },
-        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String }
-      ];
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
-        'test-component',
-        incidentParams
+        'test-component'
       );
     });
 
@@ -383,15 +363,9 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
       provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => new Error('Deletion failed')));
       component.onRequestDeletionClicked(testComponent);
-      const incidentParams: CreateIncidentParameter[] = [
-        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
-        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String }
-      ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
-        'test-component',
-        incidentParams
+        'test-component'
       );
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
@@ -429,15 +403,9 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
       component.loggedUser = null;
       component.onRequestDeletionClicked(testComponent);
-      const incidentParams: CreateIncidentParameter[] = [
-        { name: 'is_deployed', type: 'boolean', value: true as Boolean },
-        { name: 'change_number', type: 'string', value: 'CHG1234567' as String },
-        { name: 'reason', type: 'string', value: 'Test reason' as String }
-      ]
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
-        'test-component',
-        incidentParams
+        'test-component'
       );
     });
   });
