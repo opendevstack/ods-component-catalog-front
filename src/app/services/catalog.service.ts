@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AppShellFilter } from '@opendevstack/ngx-appshell';
 import { BehaviorSubject, firstValueFrom, map, Observable, switchMap } from 'rxjs';
-import { Catalog, CatalogActivity, CatalogActivityService, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService, PaginatedCatalogActivities, SortOrder, SortParameter } from '../openapi/component-catalog';
 import { AppProduct } from '../models/app-product';
-import { ProductActionParameter } from '../models/product-action-parameter';
 import { ProductAction } from '../models/product-action';
+import { ProductActionParameter } from '../models/product-action-parameter';
+import { Catalog, CatalogActivityService, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService, PaginatedCatalogActivities, ProvisioningStatus, SortOrder, SortParameter } from '../openapi/component-catalog';
 
 @Injectable({
   providedIn: 'root'
@@ -108,7 +108,7 @@ export class CatalogService {
       sortParameter?: SortParameter;
       sortOrder?: SortOrder;
       project?: string;
-      status?: CatalogActivity.StatusEnum;
+      status?: ProvisioningStatus;
       startDate?: number;
       endDate?: number;
       page?: number;

@@ -259,16 +259,14 @@ describe('ProjectService', () => {
         status: 'Active',
         logoUrl: 'http://example.com/image.png',
         componentUrl: 'http://example.com/comp1',
-        canBeDeleted: true,
-        hasAutomatedDeletionWorkflow: true
+        canBeDeleted: true
       },
       {
         componentId: 'comp2',
         status: 'Inactive',
         logoUrl: null,
         componentUrl: 'http://example.com/comp2',
-        canBeDeleted: false,
-        hasAutomatedDeletionWorkflow: false
+        canBeDeleted: false
       }
     ];
 
@@ -288,16 +286,14 @@ describe('ProjectService', () => {
         status: 'Active',
         logo: 'http://example.com/image.png',
         url: 'http://example.com/comp1',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: true
+        canDelete: true
       },
       {
         name: 'comp2',
         status: 'Inactive',
         logo: null,
         url: 'http://example.com/comp2',
-        canDelete: false,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: false
       }
     ]);
   }));
@@ -309,16 +305,14 @@ describe('ProjectService', () => {
         status: null,
         logoUrl: undefined,
         componentUrl: '',
-        canBeDeleted: undefined,
-        hasAutomatedDeletionWorkflow: undefined
+        canBeDeleted: undefined
       },
       {
         componentId: '',
         status: '',
         logoUrl: null,
         componentUrl: null,
-        canBeDeleted: false,
-        hasAutomatedDeletionWorkflow: false
+        canBeDeleted: false
       },
       {
         // All properties missing
@@ -341,24 +335,21 @@ describe('ProjectService', () => {
         status: 'UNKNOWN',
         logo: null,
         url: '',
-        canDelete: false,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: false
       },
       {
         name: '',
         status: 'UNKNOWN',
         logo: null,
         url: '',
-        canDelete: false,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: false
       },
       {
         name: '',
         status: 'UNKNOWN',
         logo: null,
         url: '',
-        canDelete: false,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: false
       }
     ]);
   }));
@@ -370,16 +361,14 @@ describe('ProjectService', () => {
         status: 'Active',
         logoUrl: 'image-id-1',
         componentUrl: 'http://example.com/comp1',
-        canBeDeleted: true,
-        hasAutomatedDeletionWorkflow: true
+        canBeDeleted: true
       },
       {
         componentId: 'comp2',
         status: 'Inactive',
         logoUrl: 'image-id-2',
         componentUrl: 'http://example.com/comp2',
-        canBeDeleted: false,
-        hasAutomatedDeletionWorkflow: false
+        canBeDeleted: false
       }
     ];
 
@@ -401,16 +390,14 @@ describe('ProjectService', () => {
         status: 'Active',
         logo: null,
         url: 'http://example.com/comp1',
-        canDelete: true,
-        hasAutomatedDeletionWorkflow: true
+        canDelete: true
       },
       {
         name: 'comp2',
         status: 'Inactive',
         logo: null,
         url: 'http://example.com/comp2',
-        canDelete: false,
-        hasAutomatedDeletionWorkflow: false
+        canDelete: false
       }
     ]);
   }));

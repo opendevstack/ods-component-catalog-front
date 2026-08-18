@@ -155,8 +155,7 @@ paths:
           required: true
           example: CREATING
           schema:
-            type: string
-            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+            $ref: '#/components/schemas/ProvisioningStatus'
       requestBody:
         required: true
         content:
@@ -194,8 +193,7 @@ paths:
           required: true
           example: CREATING
           schema:
-            type: string
-            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+            $ref: '#/components/schemas/ProvisioningStatus'
       requestBody:
         required: true
         content:
@@ -347,6 +345,7 @@ paths:
           required: false
           schema:
             type: integer
+            minimum: 0
             default: 0
 
         - name: size
@@ -355,6 +354,7 @@ paths:
           required: false
           schema:
             type: integer
+            minimum: 1
             default: 20
       responses:
         "200":
@@ -507,6 +507,18 @@ components:
       required:
         - message
 
+    ProvisioningStatus:
+      type: string
+      description: Provisioning status of a component.
+      enum:
+        - CREATING
+        - CREATED
+        - FAILED
+        - DELETING
+        - DELETION_FAILED
+        - UNKNOWN
+      example: CREATING
+
     ProvisioningStatusPartialUpdateRequest:
       type: object
       properties:
@@ -616,8 +628,7 @@ components:
           type: string
           example: 'more-encoded-info'
         status:
-          type: string
-          example: 'CREATING'
+          $ref: '#/components/schemas/ProvisioningStatus'
         componentUrl:
           type: string
           example: 'https://bitbucket.com/projects/CATALOGS/repos/project-components/browse/projects'

@@ -2,13 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 
-import { RequestDeletionSimpleDialogComponent } from './request-deletion-simple-dialog.component';
+import { RequestDeletionDialogComponent } from './request-deletion-dialog.component';
 import { RequestDeletionDialogData } from '../../models/request-deletion-dialog-data';
 
-describe('RequestDeletionSimpleDialogComponent', () => {
-  let component: RequestDeletionSimpleDialogComponent;
-  let fixture: ComponentFixture<RequestDeletionSimpleDialogComponent>;
-  let dialogRefSpy: jasmine.SpyObj<MatDialogRef<RequestDeletionSimpleDialogComponent>>;
+describe('RequestDeletionDialogComponent', () => {
+  let component: RequestDeletionDialogComponent;
+  let fixture: ComponentFixture<RequestDeletionDialogComponent>;
+  let dialogRefSpy: jasmine.SpyObj<MatDialogRef<RequestDeletionDialogComponent>>;
 
   const dialogData: RequestDeletionDialogData = {
     componentName: 'test-component',
@@ -20,14 +20,14 @@ describe('RequestDeletionSimpleDialogComponent', () => {
     dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [RequestDeletionSimpleDialogComponent],
+      imports: [RequestDeletionDialogComponent],
       providers: [
         { provide: MatDialogRef, useValue: dialogRefSpy },
         { provide: MAT_DIALOG_DATA, useValue: dialogData }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RequestDeletionSimpleDialogComponent);
+    fixture = TestBed.createComponent(RequestDeletionDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -37,9 +37,18 @@ describe('RequestDeletionSimpleDialogComponent', () => {
   });
 
   it('should close dialog with data on accept', () => {
+    component.componentNameConfirmation = dialogData.componentName;
     component.onAccept();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(dialogData);
+  });
+
+  it('should not close dialog when the component name does not match', () => {
+    component.componentNameConfirmation = 'other-component';
+
+    component.onAccept();
+
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 
   it('should close dialog without data on cancel', () => {
@@ -71,12 +80,14 @@ describe('RequestDeletionSimpleDialogComponent', () => {
     expect(component.onCancel).toHaveBeenCalled();
   });
 
-  it('should call onAccept when Request button is clicked', () => {
+  it('should call onAccept when Confirm button is clicked with the component name', () => {
     spyOn(component, 'onAccept');
+    component.componentNameConfirmation = dialogData.componentName;
+    fixture.detectChanges();
 
     const requestButton = fixture.debugElement
       .queryAll(By.css('button'))
-      .find(btn => btn.nativeElement.textContent.trim() === 'Request');
+      .find(btn => btn.nativeElement.textContent.trim() === 'Confirm');
 
     requestButton!.nativeElement.click();
 

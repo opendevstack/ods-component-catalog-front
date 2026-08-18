@@ -1,14 +1,8 @@
-import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
-import { ProjectService } from './project.service';
 import { provideHttpClient } from '@angular/common/http';
-import { BASE_PATH, ProjectInfo, ProjectsService } from '../openapi/projects-info-service';
-import { ProjectComponentsService } from '../openapi/component-catalog';
-import { AzureService } from './azure.service';
-import { AuthenticationResult } from "@azure/msal-browser";
-import { Observable, of, throwError } from 'rxjs';
-import { CatalogService } from './catalog.service';
+import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { ProvisionResultsService } from '../openapi/component-provisioner';
 import { ProvisionerService } from './provisioner.service';
-import { CreateIncidentAction, CreateIncidentParameter, ProvisionResultsService } from '../openapi/component-provisioner';
 
 describe('ProvisionerService', () => {
   let service: ProvisionerService;
@@ -42,29 +36,12 @@ describe('ProvisionerService', () => {
   it('requestComponentDeletion should call requestDeletion with correct parameters', fakeAsync(() => {
     const projectKey = 'TEST_PROJECT';
     const componentName = 'TEST_COMPONENT';
-    const username = 'test-user';
-    const location = 'test-location';
-    const reason = 'No longer needed';
-    const deploymentStatus = false;
-    const changeNumber = '-';
 
-    const incidentParams: CreateIncidentParameter[] = [
-      { name: 'cluster_location', type: 'string', value: location as String },
-      { name: 'caller', type: 'string', value: username as String },
-      { name: 'is_deployed', type: 'boolean', value: deploymentStatus as Boolean },
-      { name: 'change_number', type: 'string', value: changeNumber as String },
-      { name: 'reason', type: 'string', value: reason as String }
-    ]
-
-    service.requestComponentDeletion(projectKey, componentName, incidentParams).subscribe();
+    service.requestComponentDeletion(projectKey, componentName).subscribe();
 
     flushMicrotasks();
 
-    const expectedAction = {
-      parameters: incidentParams
-    } as CreateIncidentAction;
-
-    expect(provisionResultsServiceSpy.requestDeletion).toHaveBeenCalledWith(projectKey,componentName,expectedAction);
+    expect(provisionResultsServiceSpy.requestDeletion).toHaveBeenCalledWith(projectKey,componentName, {});
   }));
 
 });
