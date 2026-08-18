@@ -34,6 +34,8 @@ tags:
     description: Schema Validations operations.
   - name: ProvisionerActions
     description: Provisioning notifications from AWX/Provisioner
+  - name: CacheAdministration
+    description: Internal cache administration operations.
 paths:
   /project/components:
     get:
@@ -476,8 +478,7 @@ paths:
           required: false
           example: CREATING
           schema:
-            type: string
-            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+            $ref: '#/components/schemas/ProvisioningStatus'
         - name: startDate
           in: query
           description: Start date for the filter based on creationDate at project component.
@@ -921,8 +922,7 @@ paths:
           required: true
           example: CREATING
           schema:
-            type: string
-            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+            $ref: '#/components/schemas/ProvisioningStatus'
       requestBody:
         required: true
         content:
@@ -960,8 +960,7 @@ paths:
           required: true
           example: CREATING
           schema:
-            type: string
-            enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+            $ref: '#/components/schemas/ProvisioningStatus'
       requestBody:
         required: true
         content:
@@ -1014,6 +1013,38 @@ paths:
           description: Insufficient permissions for the client to access the resource.
         "500":
           description: Server error.
+  /caches/{cache}/refresh:
+    post:
+      security:
+        - basicAuth: [ ]
+      tags:
+        - CacheAdministration
+      summary: Refresh a cache
+      description: >
+        Clears the specified cache and triggers its warmup process.
+        Intended for internal automation.
+      operationId: refreshCache
+      parameters:
+        - name: cache
+          in: path
+          required: true
+          description: Cache name.
+          schema:
+            type: string
+            example: bitbucketServiceCache
+      responses:
+        "202":
+          description: Cache refresh accepted and warmup started.
+        "400":
+          description: Invalid cache name.
+        "401":
+          description: Invalid credentials.
+        "403":
+          description: Insufficient permissions.
+        "404":
+          description: Cache not found.
+        "500":
+          description: Server error.
 
 components:
   securitySchemes:
@@ -1063,12 +1094,8 @@ components:
           type: string
           example: 'edpc-4132-v2'
         status:
-          type: string
-          example: 'CREATING'
+          $ref: '#/components/schemas/ProvisioningStatus'
         canBeDeleted:
-          type: boolean
-          example: true
-        hasAutomatedDeletionWorkflow:
           type: boolean
           example: true
         logoUrl:
@@ -1101,8 +1128,7 @@ components:
           type: string
           example: 'more-encoded-info'
         status:
-          type: string
-          example: 'CREATING'
+          $ref: '#/components/schemas/ProvisioningStatus'
         componentUrl:
           type: string
           example: 'https://bitbucket.com/projects/CATALOGS/repos/project-components/browse/projects'
@@ -1460,12 +1486,22 @@ components:
           type: string
           example: 'MYSAMPLEPROJECT'
         status:
-          type: string
-          enum: [ CREATING, CREATED, FAILED, DELETING, UNKNOWN ]
+          $ref: '#/components/schemas/ProvisioningStatus'
         createdAt:
           description: The timestamp of the provision action.
           example: 1707043200000
           type: number
+    ProvisioningStatus:
+      type: string
+      description: Provisioning status of a component.
+      enum:
+        - CREATING
+        - CREATED
+        - FAILED
+        - DELETING
+        - DELETION_FAILED
+        - UNKNOWN
+      example: CREATING
     SortParameter:
       type: string
       enum:
