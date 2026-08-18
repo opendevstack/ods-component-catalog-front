@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, finalize, from, map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
+import { ComponentStatus } from '../models/component-status';
+import { AppProject } from '../models/project';
+import { ProjectComponent } from '../models/project-component';
+import { ProjectComponentsService } from '../openapi/component-catalog';
 import { ProjectsService } from '../openapi/projects-info-service';
 import { AzureService } from './azure.service';
-import { AppProject } from '../models/project';
-import { ProjectComponentsService } from '../openapi/component-catalog';
-import { ProjectComponent } from '../models/project-component';
-import { ComponentStatus } from '../models/component-status';
 import { CatalogService } from './catalog.service';
 
 @Injectable({
@@ -103,8 +103,7 @@ export class ProjectService {
           status: (component.status as ComponentStatus) || 'UNKNOWN',
           logo: component.logoUrl ? (await this.catalogService.getProductImage(component.logoUrl)) ?? null : null,
           url: component.componentUrl || '',
-          canDelete: component.canBeDeleted || false,
-          hasAutomatedDeletionWorkflow: component.hasAutomatedDeletionWorkflow || false
+          canDelete: component.canBeDeleted || false
         }))))
       )
     );
