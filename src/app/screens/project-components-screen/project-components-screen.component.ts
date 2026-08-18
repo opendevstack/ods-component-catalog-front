@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AppShellIconComponent, AppShellLink, AppShellNotification, AppShellPageHeaderComponent, AppShellToastService } from '@opendevstack/ngx-appshell';
 import { Subject, map, switchMap, takeUntil } from 'rxjs';
 import { ComponentCardComponent } from '../../components/component-card/component-card.component';
-import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
+import { RequestDeletionDialogComponent } from '../../components/request-deletion-dialog/request-deletion-dialog.component';
 import { AppUser } from '../../models/app-user';
 import { ComponentStatus } from '../../models/component-status';
 import { AppProject } from '../../models/project';
@@ -122,7 +122,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.dialog.open(RequestDeletionSimpleDialogComponent, {
+    const dialogRef = this.dialog.open(RequestDeletionDialogComponent, {
       autoFocus: false,
       data: {
         componentName: component.name,

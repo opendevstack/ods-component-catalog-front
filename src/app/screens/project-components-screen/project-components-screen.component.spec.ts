@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShellNotification, AppShellToastService } from '@opendevstack/ngx-appshell';
 import { Subject, of, throwError } from 'rxjs';
-import { RequestDeletionSimpleDialogComponent } from '../../components/request-deletion-simple-dialog/request-deletion-simple-dialog.component';
+import { RequestDeletionDialogComponent } from '../../components/request-deletion-dialog/request-deletion-dialog.component';
 import { AppUser } from '../../models/app-user';
 import { AppProject } from '../../models/project';
 import { ProjectComponent } from '../../models/project-component';
@@ -174,7 +174,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
 
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
         data: { 
           componentName: 'test-component',
@@ -196,7 +196,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       component.onRequestDeletionClicked(testComponent);
 
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
         data: { 
           componentName: 'another-test-component',
@@ -230,7 +230,7 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
         data: {
           componentName: 'test-component',
@@ -278,7 +278,7 @@ describe('ProjectComponentsScreenComponent', () => {
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
-      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionSimpleDialogComponent, {
+      expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
         data: {
           componentName: 'test-component',

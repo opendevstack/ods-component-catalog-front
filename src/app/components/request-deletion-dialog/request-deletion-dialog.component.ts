@@ -10,7 +10,7 @@ import { RequestDeletionDialogData } from "../../models/request-deletion-dialog-
 import { AppShellIconComponent } from "@opendevstack/ngx-appshell";
 
 @Component({
-  selector: 'app-request-deletion-simple-dialog',
+  selector: 'app-request-deletion-dialog',
   imports: [
     CommonModule,
     MatButtonModule,
@@ -22,16 +22,16 @@ import { AppShellIconComponent } from "@opendevstack/ngx-appshell";
     MatDialogContent,
     MatDialogActions
 ],
-  templateUrl: './request-deletion-simple-dialog.component.html',
-  styleUrl: './request-deletion-simple-dialog.component.scss',
+  templateUrl: './request-deletion-dialog.component.html',
+  styleUrl: './request-deletion-dialog.component.scss',
   encapsulation: ViewEncapsulation.None
 })
-export class RequestDeletionSimpleDialogComponent {
+export class RequestDeletionDialogComponent {
 
   componentNameConfirmation = '';
 
   constructor(
-    public dialogRef: MatDialogRef<RequestDeletionSimpleDialogComponent>, 
+    public dialogRef: MatDialogRef<RequestDeletionDialogComponent>, 
     @Inject(MAT_DIALOG_DATA) public data: RequestDeletionDialogData
   ) {}
 

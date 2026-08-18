@@ -2,13 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 
-import { RequestDeletionSimpleDialogComponent } from './request-deletion-simple-dialog.component';
+import { RequestDeletionDialogComponent } from './request-deletion-dialog.component';
 import { RequestDeletionDialogData } from '../../models/request-deletion-dialog-data';
 
-describe('RequestDeletionSimpleDialogComponent', () => {
-  let component: RequestDeletionSimpleDialogComponent;
-  let fixture: ComponentFixture<RequestDeletionSimpleDialogComponent>;
-  let dialogRefSpy: jasmine.SpyObj<MatDialogRef<RequestDeletionSimpleDialogComponent>>;
+describe('RequestDeletionDialogComponent', () => {
+  let component: RequestDeletionDialogComponent;
+  let fixture: ComponentFixture<RequestDeletionDialogComponent>;
+  let dialogRefSpy: jasmine.SpyObj<MatDialogRef<RequestDeletionDialogComponent>>;
 
   const dialogData: RequestDeletionDialogData = {
     componentName: 'test-component',
@@ -20,14 +20,14 @@ describe('RequestDeletionSimpleDialogComponent', () => {
     dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [RequestDeletionSimpleDialogComponent],
+      imports: [RequestDeletionDialogComponent],
       providers: [
         { provide: MatDialogRef, useValue: dialogRefSpy },
         { provide: MAT_DIALOG_DATA, useValue: dialogData }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RequestDeletionSimpleDialogComponent);
+    fixture = TestBed.createComponent(RequestDeletionDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
