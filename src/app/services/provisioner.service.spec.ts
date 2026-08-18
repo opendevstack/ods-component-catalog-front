@@ -41,7 +41,7 @@ describe('ProvisionerService', () => {
 
     flushMicrotasks();
 
-    expect(provisionResultsServiceSpy.requestDeletion).toHaveBeenCalledWith(projectKey,componentName);
+    expect(provisionResultsServiceSpy.requestDeletion).toHaveBeenCalledWith(projectKey,componentName, {});
   }));
 
 });
