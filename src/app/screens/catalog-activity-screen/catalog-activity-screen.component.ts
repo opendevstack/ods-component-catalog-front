@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnI
 import { CommonModule } from '@angular/common';
 import { AppShellFilter, AppShellIconComponent, AppShellLink, AppShellPageHeaderComponent } from '@opendevstack/ngx-appshell';
 import { DropdownSelectComponent } from '../../components/input-dropdown-select/input-dropdown-select.component'
-import { CatalogActivity, PaginatedCatalogActivities, SortOrder, SortParameter } from '../../openapi/component-catalog';
+import { CatalogActivity, PaginatedCatalogActivities, ProvisioningStatus, SortOrder, SortParameter } from '../../openapi/component-catalog';
 import { Subject, takeUntil, delay } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
@@ -10,7 +10,7 @@ import { MatInput, MatLabel, MatFormField } from "@angular/material/input";
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 
-type CatalogActivityStatusFilter = CatalogActivity.StatusEnum | '';
+type CatalogActivityStatusFilter = ProvisioningStatus | '';
 type DateRangeFilterValue = 'Last 30 days' | 'Last 90 days' | 'Last 180 days' | 'Last 365 days' | '';
 type DateRangeFilterDays = '30' | '90' | '180' | '365' | '';
 
@@ -40,7 +40,7 @@ export class CatalogActivityScreenComponent implements OnInit, AfterViewInit, On
 
   readonly statusFilterData = {
     label: 'Status',
-    options: ['CREATING', 'CREATED', 'FAILED', 'DELETING', 'UNKNOWN'],
+    options: ['CREATING', 'CREATED', 'FAILED', 'DELETING', 'DELETION_FAILED', 'UNKNOWN'],
     placeholder: 'Select a status'
   } as AppShellFilter;
 
