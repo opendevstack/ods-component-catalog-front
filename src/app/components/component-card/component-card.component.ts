@@ -31,6 +31,8 @@ export class ComponentCardComponent {
         return 'Provisioning Failed';
       case 'DELETING':
         return 'Deletion Requested';
+      case 'DELETION_FAILED':
+        return 'Deletion Failed';
       case 'UNKNOWN':
       default:
         return 'Unknown';

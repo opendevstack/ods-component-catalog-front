@@ -83,6 +83,13 @@
             --mdc-chip-focus-state-layer-color: var(--appshell-color-red-light)!important;
         }
 
+        .deletion_failed .appshell-chip {
+            --mdc-chip-disabled-label-text-color: #6D1313!important;
+            --mdc-chip-elevated-container-color: var(--appshell-color-red-light)!important;
+            --mdc-chip-label-text-color: #6D1313!important;
+            --mdc-chip-focus-state-layer-color: var(--appshell-color-red-light)!important;
+        }
+
         .deleting .appshell-chip {
             --mdc-chip-disabled-label-text-color: var(--appshell-color-violet-contrast)!important;
             --mdc-chip-elevated-container-color: var(--appshell-color-violet-light)!important;
