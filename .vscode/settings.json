@@ -1,0 +1,50 @@
+{
+  // Match the project's .editorconfig (2 spaces, single quotes for TS, LF final newline)
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.tabSize": 2
+  },
+  "[html]": {
+    "editor.tabSize": 2
+  },
+  "[scss]": {
+    "editor.tabSize": 2
+  },
+  "[json][jsonc]": {
+    "editor.tabSize": 2
+  },
+
+  "js/ts.preferences.quoteStyle": "single",
+
+  "eslint.validate": ["typescript", "html"],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+
+  "angular.enable-strict-mode-prompt": false,
+
+  // Generated OpenAPI clients are not meant to be hand-edited or linted in the editor
+  "files.readonlyInclude": {
+    "src/app/openapi/**": true
+  },
+  "search.exclude": {
+    "src/app/openapi/**": true,
+    "coverage/**": true,
+    "dist/**": true,
+    "build/**": true
+  },
+  "files.watcherExclude": {
+    "src/app/openapi/**": true,
+    "coverage/**": true,
+    "dist/**": true
+  }
+}
