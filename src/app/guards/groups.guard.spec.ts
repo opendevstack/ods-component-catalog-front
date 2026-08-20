@@ -6,13 +6,17 @@ import { GroupsGuard } from './groups.guard';
 import { AzureService } from '../services/azure.service';
 import { CatalogAccessStore } from '../services/catalog-access-store.service';
 import { CatalogService } from '../services/catalog.service';
+import { Catalog, CatalogDescriptor } from '../openapi/component-catalog';
+
+// Owners aren't part of the generated CatalogDescriptor model; GroupsGuard reads them via its own CatalogDescriptorWithOwners cast.
+type CatalogDescriptorFixture = CatalogDescriptor & { owners?: string[] };
 
 describe('GroupsGuard', () => {
   let guard: GroupsGuard;
 
-  let azureServiceMock: any;
+  let azureServiceMock: jasmine.SpyObj<AzureService>;
   let catalogAccessStoreMock: jasmine.SpyObj<CatalogAccessStore>;
-  let catalogServiceMock: any;
+  let catalogServiceMock: jasmine.SpyObj<CatalogService>;
   let routerMock: jasmine.SpyObj<Router>;
   let mockUrlTree: UrlTree;
   let userGroups$: BehaviorSubject<string[]>;
@@ -21,10 +25,12 @@ describe('GroupsGuard', () => {
     mockUrlTree = {} as UrlTree;
     userGroups$ = new BehaviorSubject<string[]>([]);
 
-    azureServiceMock = {
-      userGroups$,
-      loadUserGroups: jasmine.createSpy('loadUserGroups').and.returnValue(of([]))
-    };
+    azureServiceMock = jasmine.createSpyObj<AzureService>(
+      'AzureService',
+      ['loadUserGroups'],
+      { userGroups$ }
+    );
+    azureServiceMock.loadUserGroups.and.returnValue(of([]));
 
     catalogAccessStoreMock = jasmine.createSpyObj(
       'CatalogAccessStore',
@@ -32,14 +38,17 @@ describe('GroupsGuard', () => {
     );
     catalogAccessStoreMock.getCurrentOwners.and.returnValue([]);
 
-    catalogServiceMock = {
-      getSlugUrl: jasmine.createSpy('getSlugUrl').and.callFake((slug: string) => slug),
-      selectedCatalogSlug: null,
-      getCatalogDescriptors: jasmine.createSpy('getCatalogDescriptors').and.returnValue([]),
-      retrieveCatalogDescriptors: jasmine.createSpy('retrieveCatalogDescriptors').and.returnValue(of([])),
-      setCatalogDescriptors: jasmine.createSpy('setCatalogDescriptors'),
-      getCatalog: jasmine.createSpy('getCatalog').and.returnValue(of({ owners: [] }))
-    };
+    catalogServiceMock = jasmine.createSpyObj<CatalogService>(
+      'CatalogService',
+      ['getSlugUrl', 'getCatalogDescriptors', 'retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalog'],
+      { selectedCatalogSlug: null }
+    );
+    // jasmine.createSpyObj's property option is get-only; force a writable data property so tests can reassign it.
+    Object.defineProperty(catalogServiceMock, 'selectedCatalogSlug', { value: null, writable: true, configurable: true });
+    catalogServiceMock.getSlugUrl.and.callFake((slug: string) => slug);
+    catalogServiceMock.getCatalogDescriptors.and.returnValue([]);
+    catalogServiceMock.retrieveCatalogDescriptors.and.returnValue(of([]));
+    catalogServiceMock.getCatalog.and.returnValue(of({ owners: [] } as Catalog));
 
     routerMock = jasmine.createSpyObj('Router', ['parseUrl']);
     routerMock.parseUrl.and.returnValue(mockUrlTree);
@@ -60,7 +69,7 @@ describe('GroupsGuard', () => {
   it('should allow access when user is owner', async () => {
     azureServiceMock.loadUserGroups.and.returnValue(of(['owner1']));
     catalogServiceMock.getCatalogDescriptors.and.returnValue([
-      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] } as CatalogDescriptorFixture
     ]);
 
     const route: any = {
@@ -83,7 +92,7 @@ describe('GroupsGuard', () => {
   it('should use cached groups when already loaded', async () => {
     userGroups$.next(['owner1']);
     catalogServiceMock.getCatalogDescriptors.and.returnValue([
-      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] } as CatalogDescriptorFixture
     ]);
 
     const route: any = {
@@ -123,7 +132,7 @@ describe('GroupsGuard', () => {
   it('should redirect when user has no access', async () => {
     azureServiceMock.loadUserGroups.and.returnValue(of(['groupA']));
     catalogServiceMock.getCatalogDescriptors.and.returnValue([
-      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] } as CatalogDescriptorFixture
     ]);
 
     const route: any = {
@@ -150,7 +159,7 @@ describe('GroupsGuard', () => {
     ));
 
     catalogServiceMock.getCatalogDescriptors.and.returnValue([
-      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] }
+      { id: 'cat-1', slug: 'catalog-a', owners: ['owner1'] } as CatalogDescriptorFixture
     ]);
 
     const route: any = {
@@ -175,7 +184,7 @@ describe('GroupsGuard', () => {
     catalogServiceMock.getCatalogDescriptors.and.returnValue([
       { id: 'cat-2', slug: 'catalog-b' }
     ]);
-    catalogServiceMock.getCatalog.and.returnValue(of({ owners: ['owner2'] }));
+    catalogServiceMock.getCatalog.and.returnValue(of({ owners: ['owner2'] } as Catalog));
 
     const route: any = {
       data: {
