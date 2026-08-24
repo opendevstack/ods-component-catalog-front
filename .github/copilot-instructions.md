@@ -48,9 +48,8 @@ This project **never hand-writes HTTP clients**. All calls to the catalog, provi
 - Global test coverage must always stay at **80% or above** (`npm run test` / `npm run test:quiet:coverage` report it); any new or modified code must keep the overall coverage at or above that threshold.
 
 ## Configuration & secrets
-- `public/config/config.json` and `proxy.conf.json` are environment-specific (Azure app registration, backend host, catalog id). Do not commit real/production values or secrets; local overrides live under `overrides/`.
+- `public/config/config.json` and `proxy.conf.json` are environment-specific (Azure app registration, backend host, catalog id). Do not commit real/production values or secrets.
 - Repository has a `gitleaks` pre-commit hook (`.pre-commit-config.yaml`) — never introduce API keys, tokens or credentials in source, config samples or specs.
-- This is a submodule of `devstack-component-catalog-front`; keep changes self-contained to this module unless a task explicitly spans the parent repo.
 
 ## General guidance for Copilot
 - Prefer editing/extending existing services and components over introducing new architectural patterns (state management libraries, alternative HTTP clients, CSS frameworks).
