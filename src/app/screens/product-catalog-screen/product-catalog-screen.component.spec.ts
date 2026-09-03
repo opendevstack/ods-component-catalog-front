@@ -29,7 +29,7 @@ describe('ProductCatalogScreenComponent', () => {
     mockProjectService = jasmine.createSpyObj('ProjectService', ['getCurrentProject'], { project$: projectSubject.asObservable() });
     activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], { 'params': activatedRouteSubject.asObservable() });
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    
+
     await TestBed.configureTestingModule({
       imports: [BrowserAnimationsModule, ProductCatalogScreenComponent],
       providers: [
@@ -40,12 +40,12 @@ describe('ProductCatalogScreenComponent', () => {
         { provide: ProjectService, useValue: mockProjectService }
       ]
     })
-    .compileComponents();
+      .compileComponents();
 
     mockCatalogService.getProductsList.and.returnValue(of([]));
     mockCatalogService.getFilters.and.returnValue(of([]));
-    mockCatalogService.getCatalogDescriptors.and.returnValue([{slug: 'catalog', id: 'fake'}]);
-    mockCatalogService.getSlugUrl.and.callFake((id: string) => {return id;});
+    mockCatalogService.getCatalogDescriptors.and.returnValue([{ slug: 'catalog', id: 'fake' }]);
+    mockCatalogService.getSlugUrl.and.callFake((id: string) => { return id; });
     mockCatalogService.getSelectedCatalogSlug.and.returnValue(null);
 
     fixture = TestBed.createComponent(ProductCatalogScreenComponent);
@@ -66,8 +66,8 @@ describe('ProductCatalogScreenComponent', () => {
   it('should return all products if there are no active filters', () => {
     const activeFilters = new Map();
     const products = [
-      { tags: [{ label: 'label 1', options: ['value 1']}] },
-      { tags: [{ label: 'label 2', options: ['value 2']}] }
+      { tags: [{ label: 'label 1', options: ['value 1'] }] },
+      { tags: [{ label: 'label 2', options: ['value 2'] }] }
     ] as AppProduct[];
     component.products = [...products];
     component.filterProducts(activeFilters);
@@ -76,7 +76,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should filter products based on active filters', () => {
     const products = [
-      { 
+      {
         id: '1',
         title: 'Product 1',
         shortDescription: 'Short 1',
@@ -84,9 +84,10 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 1',
         authors: [],
         date: new Date(),
-        tags: [{ label: 'label 1', options: ['value 1']}]
+        tags: [{ label: 'label 1', options: ['value 1'] }],
+        visible: true
       },
-      { 
+      {
         id: '2',
         title: 'Product 2',
         shortDescription: 'Short 2',
@@ -94,7 +95,8 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 2',
         authors: [],
         date: new Date(),
-        tags: [{ label: 'label 2', options: ['value 2']}]
+        tags: [{ label: 'label 2', options: ['value 2'] }],
+        visible: true
       }
     ] as AppProduct[];
 
@@ -111,8 +113,8 @@ describe('ProductCatalogScreenComponent', () => {
     const activeFilters = new Map();
     activeFilters.set('label 1', ['value 3']);
     component.products = [
-      { tags: [{ label: 'label 1', options: ['value 1']}] },
-      { tags: [{ label: 'label 2', options: ['value 2']}] },
+      { tags: [{ label: 'label 1', options: ['value 1'] }] },
+      { tags: [{ label: 'label 2', options: ['value 2'] }] },
     ] as AppProduct[];
 
     component.filterProducts(activeFilters);
@@ -125,9 +127,9 @@ describe('ProductCatalogScreenComponent', () => {
   it('should return false for products without labels', () => {
     const activeFilters = new Map();
     activeFilters.set('label 1', ['value 1']);
-    
+
     const products = [
-      { 
+      {
         id: '1',
         title: 'Product 1',
         shortDescription: 'Short 1',
@@ -135,9 +137,10 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 1',
         authors: [],
         date: new Date(),
-        tags: [{ label: 'label 1', options: ['value 1']}]
+        tags: [{ label: 'label 1', options: ['value 1'] }],
+        visible: true
       },
-      { 
+      {
         id: '2',
         title: 'Product 2',
         shortDescription: 'Short 2',
@@ -145,7 +148,8 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 2',
         authors: [],
         date: new Date(),
-        tags: null
+        tags: null,
+        visible: true
       }
     ] as AppProduct[];
 
@@ -176,13 +180,17 @@ describe('ProductCatalogScreenComponent', () => {
     activeFilters.set('label 2', ['value 2']);
 
     const products = [
-      { tags: [
-        { label: 'label 1', options: ['value 1'] },
-        { label: 'label 2', options: ['value 2'] },
-      ] },
-      { tags: [
-        { label: 'label 1', options: ['value 1'] },
-      ] },
+      {
+        tags: [
+          { label: 'label 1', options: ['value 1'] },
+          { label: 'label 2', options: ['value 2'] },
+        ]
+      },
+      {
+        tags: [
+          { label: 'label 1', options: ['value 1'] },
+        ]
+      },
     ] as AppProduct[];
 
     component.products = products;
@@ -192,7 +200,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should set the proper message if the call to retrieve the products fails', () => {
     mockCatalogService.getProductsList.and.returnValue(throwError(() => new Error('test')));
-    activatedRouteSubject.next({'catalogSlug': 'catalog'});
+    activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
     expect(component.noProductsIcon).toEqual('smiley_sad');
     expect(component.noProductsHtmlMessage).toEqual('Sorry, we are having trouble loading the results.<br/> Please check back in a few minutes.');
   });
@@ -208,7 +216,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should load products and run initial filtering when products are returned', () => {
     const products = [
-      { id: '1', title: 'P1', tags: [{ label: 'label 1', options: ['value 1'] }] },
+      { id: '1', title: 'P1', tags: [{ label: 'label 1', options: ['value 1'] }], visible: true },
     ] as unknown as AppProduct[];
 
     mockProjectService.getCurrentProject.and.returnValue(null);
@@ -250,7 +258,7 @@ describe('ProductCatalogScreenComponent', () => {
     activatedRouteSubject.next({ 'catalogSlug': 'missing' });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/page-not-found']);
   });
-  
+
   it('should call getProductsList when current project is null', () => {
     mockCatalogService.getProductsList.calls.reset();
     mockCatalogService.getProjectProductsList.calls.reset();
@@ -347,7 +355,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should enable owner view when at least one product has componentCount', () => {
     component.products = [
-      { 
+      {
         id: '1',
         title: 'Product 1',
         shortDescription: 'Short 1',
@@ -355,8 +363,9 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 1',
         authors: [],
         date: new Date(),
-        tags: [{ label: 'label 1', options: ['value 1']}],
-        componentCount: 2
+        tags: [{ label: 'label 1', options: ['value 1'] }],
+        componentCount: 2,
+        visible: true
       }
     ] as AppProduct[];
 
@@ -367,7 +376,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should disable owner view when no product has componentCount', () => {
     component.products = [
-      { 
+      {
         id: '1',
         title: 'Product 1',
         shortDescription: 'Short 1',
@@ -376,7 +385,8 @@ describe('ProductCatalogScreenComponent', () => {
         authors: [],
         date: new Date(),
         tags: [],
-        componentCount: undefined
+        componentCount: undefined,
+        visible: true
       }
     ] as AppProduct[];
 
@@ -387,7 +397,7 @@ describe('ProductCatalogScreenComponent', () => {
 
   it('should prepend owner-view tag when componentCount exists', () => {
     component.products = [
-      { 
+      {
         id: '1',
         title: 'Product 1',
         shortDescription: 'Short 1',
@@ -395,8 +405,9 @@ describe('ProductCatalogScreenComponent', () => {
         image: 'Img 1',
         authors: [],
         date: new Date(),
-        tags: [{ label: 'existing', options: ['value']}],
-        componentCount: 5
+        tags: [{ label: 'existing', options: ['value'] }],
+        componentCount: 5,
+        visible: true
       }
     ] as AppProduct[];
 

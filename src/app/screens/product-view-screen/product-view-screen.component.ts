@@ -11,11 +11,11 @@ import { Subject, takeUntil } from 'rxjs';
 import { CatalogDescriptor } from '../../openapi/component-catalog';
 
 @Component({
-    selector: 'app-product-view-screen',
-    imports: [AppShellProductViewScreenComponent, MatDialogModule],
-    templateUrl: './product-view-screen.component.html',
-    styleUrl: './product-view-screen.component.scss',
-    encapsulation: ViewEncapsulation.None
+  selector: 'app-product-view-screen',
+  imports: [AppShellProductViewScreenComponent, MatDialogModule],
+  templateUrl: './product-view-screen.component.html',
+  styleUrl: './product-view-screen.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
@@ -35,17 +35,17 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly catalogService: CatalogService,
-    private readonly router: Router, 
+    private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly projectService: ProjectService,
     public dialog: MatDialog
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.projectService.project$
       .pipe(takeUntil(this._destroying$))
       .subscribe(() => {
-        if(this.currentCatalog && this.currentCatalogItemId) {
+        if (this.currentCatalog && this.currentCatalogItemId) {
           this.loadProduct(this.currentCatalogItemId, this.currentCatalog);
         }
       });
@@ -53,20 +53,20 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
     this.route.params
       .pipe(takeUntil(this._destroying$))
       .subscribe((params: Params) => {
-      this.currentCatalogItemId = params['id'] || '';
-      const catalogSlug = params['catalogSlug'] || '';
+        this.currentCatalogItemId = params['id'] || '';
+        const catalogSlug = params['catalogSlug'] || '';
 
-      this.catalogService.setSelectedCatalogSlug(catalogSlug);
+        this.catalogService.setSelectedCatalogSlug(catalogSlug);
 
-      this.currentCatalog = this.catalogService.getCatalogDescriptors().find(catalog => this.catalogService.getSlugUrl(catalog.slug!) === catalogSlug);
-      
-      if(this.currentCatalogItemId === '' || !this.currentCatalog) {
-        this.router.navigate(['/']);
-        return;
-      }
+        this.currentCatalog = this.catalogService.getCatalogDescriptors().find(catalog => this.catalogService.getSlugUrl(catalog.slug!) === catalogSlug);
 
-      this.loadProduct(this.currentCatalogItemId!, this.currentCatalog);
-    });
+        if (this.currentCatalogItemId === '' || !this.currentCatalog) {
+          this.router.navigate(['/']);
+          return;
+        }
+
+        this.loadProduct(this.currentCatalogItemId!, this.currentCatalog);
+      });
   }
 
   private loadProduct(id: string, catalog: CatalogDescriptor) {
@@ -74,7 +74,7 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
     const productObservable = currentProject
       ? this.catalogService.getProjectProduct(currentProject.projectKey, id)
       : this.catalogService.getProduct(id);
-    
+
     productObservable.subscribe({
       next: (product) => this.handleProductLoaded(product, catalog),
       error: () => this.handleProductLoadError()
@@ -84,19 +84,24 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
   private handleProductLoaded(product: AppProduct, catalog: CatalogDescriptor) {
     const hasComponentCount = product.componentCount !== undefined;
     this.isOwnerView = hasComponentCount;
-    
+
     const modifiedForOwnersProduct = {
       ...product,
       tags: hasComponentCount
-          ? [
-              {
-                label: 'owner-view',
-                options: [ `${product.componentCount} component${product.componentCount === 1 ? '' : 's'}` ]
-              },
-              ...(product.tags ?? [])
-            ]
-          : product.tags
+        ? [
+          {
+            label: 'owner-view',
+            options: [`${product.componentCount} component${product.componentCount === 1 ? '' : 's'}`]
+          },
+          ...(product.tags ?? [])
+        ]
+        : product.tags
     } as AppProduct;
+
+    if (modifiedForOwnersProduct.visible === false) {
+      this.router.navigate(['/']);
+      return;
+    }
 
     this.product = modifiedForOwnersProduct;
     this.pageTitle = modifiedForOwnersProduct.title;
@@ -203,10 +208,10 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
   }
 
   viewCodeAction(action: ProductAction) {
-    if(action.url) {
+    if (action.url) {
       window.open(action.url, '_blank');
     } else {
-      const buttonElement = document.activeElement as HTMLElement; 
+      const buttonElement = document.activeElement as HTMLElement;
       buttonElement.blur();
 
       // The productId is in the format of /projects/XXXX/repos/YYYY/raw/Catalog.yaml?at=refs/heads/.... encoded using base64url (not standard base64)
@@ -231,12 +236,12 @@ export class ProductViewScreenComponent implements OnInit, OnDestroy {
       .replaceAll('_', '/');
 
     const pad = str.length % 4;
-    if(pad) {
-      if(pad === 1) {
+    if (pad) {
+      if (pad === 1) {
         console.error('InvalidLengthError: Input base64url string is the wrong length to determine padding');
         return originalStr;
       }
-      str += new Array(5-pad).join('=');
+      str += new Array(5 - pad).join('=');
     }
 
     return atob(str);

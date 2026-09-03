@@ -394,6 +394,12 @@ paths:
           schema:
             type: string
             example: 'aSdFam...yCg=='
+        - name: X-Shared-Secret
+          in: header
+          required: false
+          schema:
+            type: string
+            example: 'SKiPJ...K46h'
       responses:
         "200":
           description: The CatalogItem.
@@ -579,6 +585,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: X-Shared-Secret
+          in: header
+          required: false
+          schema:
+            type: string
+            example: 'SKiPJ...K46h'
       responses:
         "200":
           description: A list of valid CatalogItems.
@@ -639,6 +651,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: X-Shared-Secret
+          in: header
+          required: false
+          schema:
+            type: string
+            example: 'SKiPJ...K46h'
       responses:
         "200":
           description: The CatalogItem.
@@ -1135,6 +1153,9 @@ components:
         workflowJobId:
           type: string
           example: '123456'
+        deletionWorkflowJobId:
+          type: string
+          example: '123456'
         parameters:
           type: array
           items:
@@ -1212,6 +1233,10 @@ components:
             @com.fasterxml.jackson.annotation.JsonInclude(
               com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
             )
+        visible:
+          type: boolean
+          example: true
+          description: Whether the catalog item is visible for the user requesting it
 
         userActions:
           type: array
@@ -1227,6 +1252,7 @@ components:
         - authors
         - date
         - updatedAt
+        - visible
       example:
         id: aSdFam...yCg==
         slug: myproject_some-repo
@@ -1245,6 +1271,9 @@ components:
           - '@SomeAuthor'
           - '@SomeOtherAuthor'
         date: "2021-07-01T00:00:00Z"
+        updatedAt: 1625097600000
+        componentCount: 5
+        visible: true
     CatalogItemUserAction:
       properties:
         id:
@@ -1301,7 +1330,7 @@ components:
           type: string
           nullable: false
           example: >
-            Authorization error: please check your user credentials for deployment 
+            Authorization error: please check your user credentials for deployment
             and try again later.
         createsIncident:
           type: boolean
@@ -1576,6 +1605,12 @@ components:
           example: "123456"
           nullable: true
 
+        deletionWorkflowJobId:
+          type: string
+          description: the workflow job id from AWX for the job to delete the component from the cluster
+          example: '123456'
+          nullable: true
+
         parameters:
           type: array
           description: List of name/value string parameters.
@@ -1620,15 +1655,15 @@ components:
               name:
                 type: string
                 description: Parameter name
-                example: "environment"
+                example: "deletion_requester"
               values:
                 type: array
                 description: Parameter values
                 items:
                   type: string
                 example:
-                  - "production"
-                  - "staging"
+                  - "any-user@example.com"
+                  - "ignored-parameter"
 
     ProjectComponentMetrics:
       type: object
