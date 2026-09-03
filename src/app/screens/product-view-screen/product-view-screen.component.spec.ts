@@ -370,4 +370,74 @@ describe('ProductViewScreenComponent', () => {
       options: ['value']
     });
   });
+
+  describe('visible catalog item restriction', () => {
+    const buildProduct = (visible: unknown): AppProduct => ({
+      id: '1',
+      title: 'Product 1',
+      shortDescription: 'Short 1',
+      description: 'Desc 1',
+      image: 'Img 1',
+      authors: [],
+      date: new Date(),
+      tags: [{ label: 'existing', options: ['value'] }],
+      visible
+    } as unknown as AppProduct);
+
+    beforeEach(() => {
+      routerSpy.navigate.calls.reset();
+    });
+
+    it('should navigate to / and not expose the product when it is not visible', fakeAsync(() => {
+      projectServiceSpy.getCurrentProject.and.returnValue(null);
+      catalogServiceSpy.getProduct.and.returnValue(of(buildProduct(false)));
+
+      activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog' });
+      tick();
+
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+      expect(component.product?.id).toBeUndefined();
+      expect(component.pageTitle).not.toEqual('Product 1');
+    }));
+
+    it('should render the product when it is visible', fakeAsync(() => {
+      projectServiceSpy.getCurrentProject.and.returnValue(null);
+      const product = buildProduct(true);
+      catalogServiceSpy.getProduct.and.returnValue(of(product));
+
+      activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog' });
+      tick();
+
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+      expect(component.product.id).toEqual('1');
+      expect(component.pageTitle).toEqual('Product 1');
+      expect(component.breadcrumbLinks.length).toBeGreaterThan(0);
+    }));
+
+    it('should navigate to / when a hidden product is loaded in the project (owner) view', fakeAsync(() => {
+      projectServiceSpy.getCurrentProject.and.returnValue({ projectKey: 'ABC' } as AppProject);
+      catalogServiceSpy.getProjectProduct.and.returnValue(of({ ...buildProduct(false), componentCount: 2 }));
+
+      activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog' });
+      tick();
+
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+      expect(component.product?.id).toBeUndefined();
+    }));
+
+    it('should not set up action buttons for a hidden product', fakeAsync(() => {
+      projectServiceSpy.getCurrentProject.and.returnValue(null);
+      catalogServiceSpy.getProduct.and.returnValue(of({
+        ...buildProduct(false),
+        actions: [{ id: CatalogService.CODE_PRODUCT_TYPE, url: 'http://link.com', label: 'View Code' }]
+      } as AppProduct));
+
+      activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog' });
+      tick();
+
+      expect(component.actionButton).toBeUndefined();
+      expect(component.secondaryActionButton).toBeUndefined();
+      expect(component.actionPicker).toBeUndefined();
+    }));
+  });
 });

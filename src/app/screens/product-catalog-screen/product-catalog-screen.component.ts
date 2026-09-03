@@ -120,7 +120,7 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
 
     productListObservable.subscribe({
       next: (products) => {
-        const onlyVisibleProducts = products.filter(p => p.visible);
+        const onlyVisibleProducts = products.filter(p => p.visible === true);
         if (!onlyVisibleProducts || onlyVisibleProducts.length === 0) {
           this.showNoProductsMessage();
         }

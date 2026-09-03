@@ -423,4 +423,82 @@ describe('ProductCatalogScreenComponent', () => {
       options: ['value']
     });
   });
+
+  describe('visible catalog items filtering', () => {
+    const buildProduct = (id: string, visible: unknown): AppProduct => ({
+      id,
+      title: `Product ${id}`,
+      shortDescription: `Short ${id}`,
+      description: `Desc ${id}`,
+      image: `Img ${id}`,
+      authors: [],
+      date: new Date(),
+      tags: [{ label: 'label 1', options: ['value 1'] }],
+      visible
+    } as unknown as AppProduct);
+
+    beforeEach(() => {
+      mockProjectService.getCurrentProject.and.returnValue(null);
+    });
+
+    it('should keep only the products flagged as visible', () => {
+      const visibleProduct = buildProduct('1', true);
+      const hiddenProduct = buildProduct('2', false);
+      mockCatalogService.getProductsList.and.returnValue(of([visibleProduct, hiddenProduct]));
+
+      activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
+
+      expect(component.products).toEqual([visibleProduct]);
+      expect(component.filteredProducts).toEqual([visibleProduct]);
+      expect(component.noProductsIcon).toBeUndefined();
+    });
+
+    it('should discard products without an explicit visible flag', () => {
+      const visibleProduct = buildProduct('1', true);
+      const undefinedVisibilityProduct = buildProduct('2', undefined);
+      mockCatalogService.getProductsList.and.returnValue(of([visibleProduct, undefinedVisibilityProduct]));
+
+      activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
+
+      expect(component.products).toEqual([visibleProduct]);
+    });
+
+    it('should show the no products message when every product is hidden', () => {
+      mockCatalogService.getProductsList.and.returnValue(of([buildProduct('1', false), buildProduct('2', false)]));
+
+      activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
+
+      expect(component.products).toEqual([]);
+      expect(component.filteredProducts).toEqual([]);
+      expect(component.noProductsIcon).toEqual('smiley_sad');
+      expect(component.noProductsHtmlMessage).toEqual('Sorry, we are having trouble loading the results.<br/> Please check back in a few minutes.');
+    });
+
+    it('should also filter hidden products in the project (owner) view', () => {
+      mockProjectService.getCurrentProject.and.returnValue({ projectKey: 'ABC' } as AppProject);
+      const visibleProduct = { ...buildProduct('1', true), componentCount: 2 };
+      const hiddenProduct = { ...buildProduct('2', false), componentCount: 3 };
+      mockCatalogService.getProjectProductsList.and.returnValue(of([visibleProduct, hiddenProduct]));
+
+      activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
+
+      expect(component.products).toEqual([visibleProduct]);
+      expect(component.filteredProducts.length).toBe(1);
+      expect(component.filteredProducts[0].id).toBe('1');
+    });
+
+    it('should not take hidden products into account when applying tag filters', () => {
+      const visibleProduct = buildProduct('1', true);
+      const hiddenProduct = buildProduct('2', false);
+      mockCatalogService.getProductsList.and.returnValue(of([visibleProduct, hiddenProduct]));
+
+      activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
+
+      const activeFilters = new Map<string, string[]>();
+      activeFilters.set('label 1', ['value 1']);
+      component.filterProducts(activeFilters);
+
+      expect(component.filteredProducts).toEqual([visibleProduct]);
+    });
+  });
 });

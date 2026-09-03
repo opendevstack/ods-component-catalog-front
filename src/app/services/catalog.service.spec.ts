@@ -726,4 +726,62 @@ describe('CatalogService', () => {
       done();
     });
   });
+
+  describe('visible flag mapping', () => {
+    it('getProductsList should map the visible flag of every item without filtering', (done) => {
+      const serviceItems: CatalogItem[] = [
+        { ...fakeServiceItems[0], visible: true },
+        { ...fakeServiceItems[1], visible: false }
+      ];
+
+      catalogItemsServiceSpy.getCatalogItems.and.returnValue(of(serviceItems));
+      filesServiceSpy.getFileById.and.returnValue(of('img'));
+
+      service.getProductsList({ id: '1', slug: 'catalog1' }).subscribe(products => {
+        expect(products.length).toBe(2);
+        expect(products[0].visible).toBeTrue();
+        expect(products[1].visible).toBeFalse();
+        done();
+      });
+    });
+
+    it('getProjectProductsList should map the visible flag of every item without filtering', (done) => {
+      const serviceItems: CatalogItem[] = [
+        { ...fakeServiceItems[0], visible: false },
+        { ...fakeServiceItems[1], visible: true }
+      ];
+
+      catalogItemsServiceSpy.getCatalogItemsForProjectKey.and.returnValue(of(serviceItems));
+      filesServiceSpy.getFileById.and.returnValue(of('img'));
+
+      service.getProjectProductsList('test-project', { id: '1', slug: 'catalog1' }).subscribe(products => {
+        expect(products.map(product => product.visible)).toEqual([false, true]);
+        done();
+      });
+    });
+
+    it('getProduct should map the visible flag of the item', (done) => {
+      const serviceItem: CatalogItem = { ...fakeServiceItems[0], visible: false };
+
+      catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
+      filesServiceSpy.getFileById.and.returnValue(of('Description 1'));
+
+      service.getProduct(serviceItem.id!).subscribe(product => {
+        expect(product.visible).toBeFalse();
+        done();
+      });
+    });
+
+    it('getProjectProduct should map the visible flag of the item', (done) => {
+      const serviceItem: CatalogItem = { ...fakeServiceItems[0], visible: false };
+
+      catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
+      filesServiceSpy.getFileById.and.returnValue(of('Description 1'));
+
+      service.getProjectProduct('test-project', serviceItem.id!).subscribe(product => {
+        expect(product.visible).toBeFalse();
+        done();
+      });
+    });
+  });
 });
