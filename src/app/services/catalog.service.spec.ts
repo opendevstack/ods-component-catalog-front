@@ -738,7 +738,7 @@ describe('CatalogService', () => {
       filesServiceSpy.getFileById.and.returnValue(of('img'));
 
       service.getProductsList({ id: '1', slug: 'catalog1' }).subscribe(products => {
-        expect(products.length).toBe(2);
+        expect(products).toHaveSize(2);
         expect(products[0].visible).toBeTrue();
         expect(products[1].visible).toBeFalse();
         done();

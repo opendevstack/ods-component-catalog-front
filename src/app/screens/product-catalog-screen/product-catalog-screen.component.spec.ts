@@ -483,7 +483,7 @@ describe('ProductCatalogScreenComponent', () => {
       activatedRouteSubject.next({ 'catalogSlug': 'catalog' });
 
       expect(component.products).toEqual([visibleProduct]);
-      expect(component.filteredProducts.length).toBe(1);
+      expect(component.filteredProducts).toHaveSize(1);
       expect(component.filteredProducts[0].id).toBe('1');
     });
 
