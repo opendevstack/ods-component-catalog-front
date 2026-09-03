@@ -10,17 +10,17 @@ import { CatalogService } from './catalog.service';
 const currentDate = new Date();
 
 const fakeServiceItems: CatalogItem[] = [
-  { id: '1', title: 'Product 1', shortDescription: 'Short description 1', descriptionFileId: 'Description 1', imageFileId: 'image1.jpg', itemSrc: 'item1Src', tags: [{label: 'cat1', options: new Set(['tag1'])}], authors: [], date: currentDate.toISOString(), updatedAt: currentDate.getTime() },
-  { id: '2', title: 'Product 2', shortDescription: 'Short description 2', descriptionFileId: 'Description 2', imageFileId: undefined, itemSrc: 'item1Src', tags: [{label: 'cat1'}, {options: new Set(['tag-without-label'])}], authors: ['author2'], date: currentDate.toISOString(), updatedAt: currentDate.getTime(), userActions: [{displayName: 'action', id: 'name', triggerMessage: 'fake', url: 'url', parameters: [{name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{regex: '*', errorMessage: 'Error'}]}, {name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{location: 'location 1', value: 'test 2'}, {location: 'location 2', value: 'test 22'}]}]}, {displayName: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2'}] }
+  { id: '1', title: 'Product 1', shortDescription: 'Short description 1', descriptionFileId: 'Description 1', imageFileId: 'image1.jpg', itemSrc: 'item1Src', tags: [{ label: 'cat1', options: new Set(['tag1']) }], authors: [], date: currentDate.toISOString(), updatedAt: currentDate.getTime(), visible: true },
+  { id: '2', title: 'Product 2', shortDescription: 'Short description 2', descriptionFileId: 'Description 2', imageFileId: undefined, itemSrc: 'item1Src', tags: [{ label: 'cat1' }, { options: new Set(['tag-without-label']) }], authors: ['author2'], date: currentDate.toISOString(), updatedAt: currentDate.getTime(), visible: true, userActions: [{ displayName: 'action', id: 'name', triggerMessage: 'fake', url: 'url', parameters: [{ name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{ regex: '*', errorMessage: 'Error' }] }, { name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{ location: 'location 1', value: 'test 2' }, { location: 'location 2', value: 'test 22' }] }] }, { displayName: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2' }] }
 ];
 
 const fakeProductsFromItems: AppProduct[] = [
-  { id: '1', title: 'Product 1', shortDescription: 'Short description 1', description: 'Description 1', image: '/component-catalog/files/image1.jpg/contents', tags: [{label: 'cat1', options: ['tag1']}], authors: [], date: undefined },
-  { id: '2', title: 'Product 2', shortDescription: 'Short description 2', description: 'Description 2', image: undefined, tags: [{label: 'cat1', options: []}, {label: '', options: ['tag-without-label']}], authors: ['author2'], date: currentDate, actions: [{label: 'action', id: 'name', triggerMessage: 'fake', url: 'url', requestable: false, restrictionMessage: '', parameters: [{name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{regex: '*', errorMessage: 'Error'}]}, {name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{location: 'location 1', value: 'test 2'}, {location: 'location 2', value: 'test 22'}]}]}, {label: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2', requestable: false, restrictionMessage: '', parameters: []}] }
+  { id: '1', title: 'Product 1', shortDescription: 'Short description 1', description: 'Description 1', image: '/component-catalog/files/image1.jpg/contents', tags: [{ label: 'cat1', options: ['tag1'] }], authors: [], date: undefined, visible: true },
+  { id: '2', title: 'Product 2', shortDescription: 'Short description 2', description: 'Description 2', image: undefined, tags: [{ label: 'cat1', options: [] }, { label: '', options: ['tag-without-label'] }], authors: ['author2'], date: currentDate, visible: true, actions: [{ label: 'action', id: 'name', triggerMessage: 'fake', url: 'url', requestable: false, restrictionMessage: '', parameters: [{ name: 'name', label: 'label', required: true, type: 'string', visible: true, defaultValue: 'test', validations: [{ regex: '*', errorMessage: 'Error' }] }, { name: 'name 2', label: 'label 2', required: true, type: 'string', visible: true, defaultValue: null, locations: [{ location: 'location 1', value: 'test 2' }, { location: 'location 2', value: 'test 22' }] }] }, { label: 'action2', id: 'name2', triggerMessage: 'fake2', url: 'url2', requestable: false, restrictionMessage: '', parameters: [] }] }
 ];
 
-const fakeServiceItemsOwnerMode: CatalogItem[] = fakeServiceItems.map(item => { return {...item, componentCount: 0}; } );
-const fakeProductsFromItemsOwnerMode: AppProduct[] = fakeProductsFromItems.map(product => { return {...product, componentCount: 0}; });
+const fakeServiceItemsOwnerMode: CatalogItem[] = fakeServiceItems.map(item => { return { ...item, componentCount: 0 }; });
+const fakeProductsFromItemsOwnerMode: AppProduct[] = fakeProductsFromItems.map(product => { return { ...product, componentCount: 0 }; });
 
 describe('CatalogService', () => {
   let service: CatalogService;
@@ -74,14 +74,14 @@ describe('CatalogService', () => {
     filesServiceSpy.getFileById.and.returnValues(of('img'));
 
     service.getProductsList(catalogDescriptor).subscribe(products => {
-      for(let i=0; i<products.length; i++) {
+      for (let i = 0; i < products.length; i++) {
         const product = products[i];
         const expectedProduct = expectedProducts[i];
         expect(product.authors).toEqual(expectedProduct.authors);
         expect(product.date).toEqual(expectedProduct.date);
         expect(product.description).toEqual(expectedProduct.description);
         expect(product.id).toEqual(expectedProduct.id);
-        if(expectedProduct.image) {
+        if (expectedProduct.image) {
           expect(product.image).toContain('blob');
         } else {
           expect(product.image).toBeUndefined();
@@ -104,7 +104,7 @@ describe('CatalogService', () => {
     filesServiceSpy.getFileById.and.returnValues(of('img'));
 
     service.getProductsList(catalogDescriptor).subscribe(products => {
-      for(let i=0; i<products.length; i++) {
+      for (let i = 0; i < products.length; i++) {
         const product = products[i];
         const expectedProduct = expectedProducts[i];
         expect(product.componentCount).toBeDefined();
@@ -117,7 +117,7 @@ describe('CatalogService', () => {
   it('getProduct should return a single product', (done) => {
     const serviceItem: CatalogItem = fakeServiceItems[0];
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(of(expectedProduct.description));
@@ -136,10 +136,10 @@ describe('CatalogService', () => {
   });
 
   it('getProduct should return an empty description if file returns 422', (done) => {
-    const serviceItem: CatalogItem = {...fakeServiceItems[0]};
+    const serviceItem: CatalogItem = { ...fakeServiceItems[0] };
     serviceItem.imageFileId = undefined;
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     const error: Error & { status?: number } = new Error('Error loading file');
@@ -162,7 +162,7 @@ describe('CatalogService', () => {
   it('getProduct should fail if file returns error different than 422', (done) => {
     const serviceItem: CatalogItem = fakeServiceItems[0];
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(throwError(() => {
@@ -182,11 +182,11 @@ describe('CatalogService', () => {
       }
     });
   });
-  
+
   it('getProduct should return a single product even without image', (done) => {
     const serviceItem: CatalogItem = fakeServiceItems[1];
     const expectedProduct: AppProduct = fakeProductsFromItems[1];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(of(expectedProduct.description));
@@ -207,7 +207,7 @@ describe('CatalogService', () => {
   it('getFilters should return the filters', (done) => {
     const serviceFilters: CatalogItemFilter[] = [{ label: 'cat1', options: new Set(['tag2', 'tag1']) }, { label: 'cat2' }];
     const expectedFilters: AppShellFilter[] = [{ label: 'cat1', options: ['tag1', 'tag2'], placeholder: 'Select options' }, { label: 'cat2', options: [], placeholder: 'Select options' }];
-    
+
     catalogFiltersServiceSpy.getCatalogFilters.and.returnValue(of(serviceFilters));
 
     service.getFilters('fakeId').subscribe(filters => {
@@ -260,12 +260,12 @@ describe('CatalogService', () => {
       { id: '1', slug: 'catalog1' },
       { id: '2', slug: 'catalog2' }
     ];
-  
+
     service.setCatalogDescriptors(mockCatalogDescriptors);
-  
+
     expect(service.getCatalogDescriptors()).toEqual(mockCatalogDescriptors);
   });
-  
+
   it('setCatalogDescriptors should overwrite existing catalog descriptors', () => {
     const initialCatalogDescriptors = [
       { id: '1', slug: 'catalog1' }
@@ -274,19 +274,19 @@ describe('CatalogService', () => {
       { id: '2', slug: 'catalog2' },
       { id: '3', slug: 'catalog3' }
     ];
-  
+
     service.setCatalogDescriptors(initialCatalogDescriptors);
     expect(service.getCatalogDescriptors()).toEqual(initialCatalogDescriptors);
-  
+
     service.setCatalogDescriptors(newCatalogDescriptors);
     expect(service.getCatalogDescriptors()).toEqual(newCatalogDescriptors);
   });
-  
+
   it('setCatalogDescriptors should handle an empty array', () => {
     const emptyCatalogDescriptors: CatalogDescriptor[] = [];
-  
+
     service.setCatalogDescriptors(emptyCatalogDescriptors);
-  
+
     expect(service.getCatalogDescriptors()).toEqual(emptyCatalogDescriptors);
   });
 
@@ -599,7 +599,7 @@ describe('CatalogService', () => {
     expect(freshService.getSelectedCatalogSlug()).toBe('my-stored-catalog');
     expect(freshService.selectedCatalogSlug).toBe('my-stored-catalog');
   });
-  
+
   it('getProjectProductsList should return the list of products for a project', (done) => {
     const projectKey = 'test-project';
     const serviceItems: CatalogItem[] = fakeServiceItems;
@@ -611,14 +611,14 @@ describe('CatalogService', () => {
     filesServiceSpy.getFileById.and.returnValues(of('img'));
 
     service.getProjectProductsList(projectKey, catalogDescriptor).subscribe(products => {
-      for(let i=0; i<products.length; i++) {
+      for (let i = 0; i < products.length; i++) {
         const product = products[i];
         const expectedProduct = expectedProducts[i];
         expect(product.authors).toEqual(expectedProduct.authors);
         expect(product.date).toEqual(expectedProduct.date);
         expect(product.description).toEqual(expectedProduct.description);
         expect(product.id).toEqual(expectedProduct.id);
-        if(expectedProduct.image) {
+        if (expectedProduct.image) {
           expect(product.image).toContain('blob');
         } else {
           expect(product.image).toBeUndefined();
@@ -631,12 +631,12 @@ describe('CatalogService', () => {
       done();
     });
   });
-  
+
   it('getProjectProduct should return a single product for a project', (done) => {
     const projectKey = 'test-project';
     const serviceItem: CatalogItem = fakeServiceItems[0];
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(of(expectedProduct.description));
@@ -657,10 +657,10 @@ describe('CatalogService', () => {
 
   it('getProjectProduct should return an empty description if file returns 422', (done) => {
     const projectKey = 'test-project';
-    const serviceItem: CatalogItem = {...fakeServiceItems[0]};
+    const serviceItem: CatalogItem = { ...fakeServiceItems[0] };
     serviceItem.imageFileId = undefined;
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     const error: Error & { status?: number } = new Error('Error loading file');
@@ -684,7 +684,7 @@ describe('CatalogService', () => {
     const projectKey = 'test-project';
     const serviceItem: CatalogItem = fakeServiceItems[0];
     const expectedProduct: AppProduct = fakeProductsFromItems[0];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(throwError(() => {
@@ -709,7 +709,7 @@ describe('CatalogService', () => {
     const projectKey = 'test-project';
     const serviceItem: CatalogItem = fakeServiceItems[1];
     const expectedProduct: AppProduct = fakeProductsFromItems[1];
-    
+
     catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
     catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
     filesServiceSpy.getFileById.and.returnValue(of(expectedProduct.description));
@@ -724,6 +724,64 @@ describe('CatalogService', () => {
       expect(product.tags).toEqual(expectedProduct.tags);
       expect(product.title).toEqual(expectedProduct.title);
       done();
+    });
+  });
+
+  describe('visible flag mapping', () => {
+    it('getProductsList should map the visible flag of every item without filtering', (done) => {
+      const serviceItems: CatalogItem[] = [
+        { ...fakeServiceItems[0], visible: true },
+        { ...fakeServiceItems[1], visible: false }
+      ];
+
+      catalogItemsServiceSpy.getCatalogItems.and.returnValue(of(serviceItems));
+      filesServiceSpy.getFileById.and.returnValue(of('img'));
+
+      service.getProductsList({ id: '1', slug: 'catalog1' }).subscribe(products => {
+        expect(products).toHaveSize(2);
+        expect(products[0].visible).toBeTrue();
+        expect(products[1].visible).toBeFalse();
+        done();
+      });
+    });
+
+    it('getProjectProductsList should map the visible flag of every item without filtering', (done) => {
+      const serviceItems: CatalogItem[] = [
+        { ...fakeServiceItems[0], visible: false },
+        { ...fakeServiceItems[1], visible: true }
+      ];
+
+      catalogItemsServiceSpy.getCatalogItemsForProjectKey.and.returnValue(of(serviceItems));
+      filesServiceSpy.getFileById.and.returnValue(of('img'));
+
+      service.getProjectProductsList('test-project', { id: '1', slug: 'catalog1' }).subscribe(products => {
+        expect(products.map(product => product.visible)).toEqual([false, true]);
+        done();
+      });
+    });
+
+    it('getProduct should map the visible flag of the item', (done) => {
+      const serviceItem: CatalogItem = { ...fakeServiceItems[0], visible: false };
+
+      catalogItemsServiceSpy.getCatalogItemById.and.returnValue(of(serviceItem));
+      filesServiceSpy.getFileById.and.returnValue(of('Description 1'));
+
+      service.getProduct(serviceItem.id!).subscribe(product => {
+        expect(product.visible).toBeFalse();
+        done();
+      });
+    });
+
+    it('getProjectProduct should map the visible flag of the item', (done) => {
+      const serviceItem: CatalogItem = { ...fakeServiceItems[0], visible: false };
+
+      catalogItemsServiceSpy.getCatalogItemByIdForProjectKey.and.returnValue(of(serviceItem));
+      filesServiceSpy.getFileById.and.returnValue(of('Description 1'));
+
+      service.getProjectProduct('test-project', serviceItem.id!).subscribe(product => {
+        expect(product.visible).toBeFalse();
+        done();
+      });
     });
   });
 });

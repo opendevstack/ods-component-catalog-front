@@ -28,7 +28,7 @@ export class CatalogService {
     private readonly catalogFiltersService: CatalogFiltersService,
     private readonly catalogActivityService: CatalogActivityService,
     private readonly filesService: FilesService
-  ) {}
+  ) { }
 
   setSelectedCatalogSlug(slug: string | null): void {
     const normalizedSlug = slug ? this.getSlugUrl(slug) : null;
@@ -202,7 +202,8 @@ export class CatalogService {
       tags: this.mapTags(item.tags),
       authors: item.authors,
       date: item.authors.length > 0 ? new Date(item.date) : undefined,
-      componentCount: item.componentCount ?? undefined
+      componentCount: item.componentCount ?? undefined,
+      visible: item.visible
     };
   }
 

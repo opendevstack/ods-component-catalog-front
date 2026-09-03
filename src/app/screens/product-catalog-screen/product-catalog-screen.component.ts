@@ -8,10 +8,10 @@ import { ProjectService } from '../../services/project.service';
 import { CatalogDescriptor } from '../../openapi/component-catalog';
 
 @Component({
-    selector: 'app-product-catalog-screen',
-    imports: [AppShellProductCatalogScreenComponent],
-    templateUrl: './product-catalog-screen.component.html',
-    styleUrl: './product-catalog-screen.component.scss'
+  selector: 'app-product-catalog-screen',
+  imports: [AppShellProductCatalogScreenComponent],
+  templateUrl: './product-catalog-screen.component.html',
+  styleUrl: './product-catalog-screen.component.scss'
 })
 export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
   products: AppProduct[] = [];
@@ -22,7 +22,7 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
 
   noProductsIcon?: string = undefined;
   noProductsHtmlMessage?: string = undefined;
-  
+
   breadcrumbLinks: AppShellLink[] = []
 
   currentCatalog: CatalogDescriptor | undefined;
@@ -30,17 +30,17 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
   private readonly _destroying$ = new Subject<void>();
 
   constructor(
-    private readonly catalogService: CatalogService, 
-    private readonly router: Router, 
+    private readonly catalogService: CatalogService,
+    private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly projectService: ProjectService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.projectService.project$
       .pipe(takeUntil(this._destroying$))
       .subscribe(() => {
-        if(this.currentCatalog) {
+        if (this.currentCatalog) {
           this.initializeCatalogView(this.currentCatalog);
         }
       });
@@ -120,13 +120,14 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
 
     productListObservable.subscribe({
       next: (products) => {
-        if (!products || products.length === 0) { 
-          this.showNoProductsMessage(); 
+        const onlyVisibleProducts = products.filter(p => p.visible === true);
+        if (!onlyVisibleProducts || onlyVisibleProducts.length === 0) {
+          this.showNoProductsMessage();
         }
-        this.products = products;
+        this.products = onlyVisibleProducts;
         this.filterProducts(new Map<string, string[]>());
         this.isLoading = false;
-      }, 
+      },
       error: () => {
         this.showNoProductsMessage();
         this.isLoading = false;
@@ -143,11 +144,11 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
 
   filterProducts(activeFilters: Map<string, string[]>): void {
     const filters = Array.from(activeFilters.values()).flat();
-    if(filters.length === 0) { 
+    if (filters.length === 0) {
       this.filteredProducts = [...this.products]
     } else {
       this.filteredProducts = this.products.filter(product => {
-        if(!product.tags) {
+        if (!product.tags) {
           return false;
         }
         for (const [key, values] of activeFilters) {
@@ -166,14 +167,14 @@ export class ProductCatalogScreenComponent implements OnInit, OnDestroy {
     if (hasComponentCount) {
       this.filteredProducts = [...this.filteredProducts.map(product => ({
         ...product,
-        tags: 
-            [
-              {
-                label: 'owner-view',
-                options: [ `${product.componentCount} component${product.componentCount === 1 ? '' : 's'}` ]
-              },
-              ...(product.tags ?? [])
-            ]
+        tags:
+          [
+            {
+              label: 'owner-view',
+              options: [`${product.componentCount} component${product.componentCount === 1 ? '' : 's'}`]
+            },
+            ...(product.tags ?? [])
+          ]
       }))];
     }
 
