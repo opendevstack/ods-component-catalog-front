@@ -33,7 +33,7 @@ describe('ProjectComponentsScreenComponent', () => {
     );
     routerSpy = jasmine.createSpyObj('Router', ['navigateByUrl']);
     provisionerServiceSpy = jasmine.createSpyObj('ProvisionerService', ['requestComponentDeletion']);
-    azureServiceSpy = jasmine.createSpyObj('AzureService', ['getRefreshedAccessToken'], { loggedUser$: of({username: 'test-user'} as AppUser) });
+    azureServiceSpy = jasmine.createSpyObj('AzureService', ['getRefreshedAccessToken'], { loggedUser$: of({ username: 'test-user' } as AppUser) });
     appShellToastServiceSpy = jasmine.createSpyObj('AppShellToastService', ['showToast']);
 
     await TestBed.configureTestingModule({
@@ -47,7 +47,7 @@ describe('ProjectComponentsScreenComponent', () => {
         { provide: AppShellToastService, useValue: appShellToastServiceSpy }
       ]
     })
-    .compileComponents();
+      .compileComponents();
 
     projectServiceSpy.ensureUserProjectsLoaded.and.returnValue(of(['PROJECT_1', 'PROJECT_2']));
     projectServiceSpy.getCurrentProject.and.returnValue({ projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject);
@@ -176,7 +176,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
-        data: { 
+        data: {
           componentName: 'test-component',
           projectKey: 'PROJECT_1'
         }
@@ -198,7 +198,7 @@ describe('ProjectComponentsScreenComponent', () => {
 
       expect(dialogSpy).toHaveBeenCalledWith(RequestDeletionDialogComponent, {
         autoFocus: false,
-        data: { 
+        data: {
           componentName: 'another-test-component',
           projectKey: 'PROJECT_2'
         }
@@ -225,8 +225,8 @@ describe('ProjectComponentsScreenComponent', () => {
         projectKey: 'PROJECT_1',
         componentName: 'test-component'
       };
-      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({ 
-        afterClosed: () => of(mockResult) 
+      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of(mockResult)
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
@@ -273,8 +273,8 @@ describe('ProjectComponentsScreenComponent', () => {
         projectKey: 'PROJECT_1',
         componentName: 'test-component'
       };
-      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({ 
-        afterClosed: () => of(mockResult) 
+      const dialogSpy = spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of(mockResult)
       } as any);
 
       component.onRequestDeletionClicked(testComponent);
@@ -358,15 +358,48 @@ describe('ProjectComponentsScreenComponent', () => {
         projectKey: 'PROJECT_1',
         componentName: 'test-component'
       };
-      spyOn(component.dialog, 'open').and.returnValue({ 
-        afterClosed: () => of(mockResult) 
+      spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of(mockResult)
       } as any);
-      provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => new Error('Deletion failed')));
+      const errorMessage = 'The component cannot be deleted in its current state.';
+      provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => ({
+        error: { message: errorMessage }
+      })));
       component.onRequestDeletionClicked(testComponent);
       expect(provisionerServiceSpy.requestComponentDeletion).toHaveBeenCalledWith(
         'PROJECT_1',
         'test-component'
       );
+      expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
+        id: '',
+        read: false,
+        subject: 'only_toast',
+        title: errorMessage
+      } as AppShellNotification, 8000);
+    });
+
+    it('should show the generic error toast when deletion fails without a message', () => {
+      component.projectComponents = [{
+        name: 'test-component',
+        status: 'CREATED',
+        canDelete: true
+      } as ProjectComponent];
+      const testComponent = {
+        name: 'test-component',
+        status: 'CREATED',
+        canDelete: true
+      } as ProjectComponent;
+      component.selectedProject = { projectKey: 'PROJECT_1', location: 'LOC_1' } as AppProject;
+      spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of({
+          projectKey: 'PROJECT_1',
+          componentName: 'test-component'
+        })
+      } as any);
+      provisionerServiceSpy.requestComponentDeletion.and.returnValue(throwError(() => new Error('Deletion failed')));
+
+      component.onRequestDeletionClicked(testComponent);
+
       expect(appShellToastServiceSpy.showToast).toHaveBeenCalledWith({
         id: '',
         read: false,
@@ -398,8 +431,8 @@ describe('ProjectComponentsScreenComponent', () => {
         projectKey: 'PROJECT_1',
         componentName: 'test-component'
       };
-      spyOn(component.dialog, 'open').and.returnValue({ 
-        afterClosed: () => of(mockResult) 
+      spyOn(component.dialog, 'open').and.returnValue({
+        afterClosed: () => of(mockResult)
       } as any);
       component.loggedUser = null;
       component.onRequestDeletionClicked(testComponent);
