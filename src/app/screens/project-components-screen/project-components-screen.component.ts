@@ -29,7 +29,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
 
   projectComponents: ProjectComponent[] = [];
   isLoading = false;
-  
+
   connectionErrorHtmlMessage: string | undefined;
   connectionErrorIcon: string | undefined;
 
@@ -45,7 +45,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     private readonly azureService: AzureService,
     private readonly toastService: AppShellToastService,
     public dialog: MatDialog
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.projectService.project$
@@ -129,7 +129,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
         projectKey: this.selectedProject.projectKey
       }
     });
-    
+
     const msg = 'The request has successfully been sent.';
 
     dialogRef.afterClosed().subscribe((result: RequestDeletionDialogResult | undefined) => {
@@ -147,7 +147,7 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
       originalStatus = this.projectComponents[componentIndex].status;
       this.projectComponents[componentIndex].status = 'DELETING';
     }
-    
+
     /* eslint-enable @typescript-eslint/no-wrapper-object-types */
     this.provisionerService.requestComponentDeletion(
       result.projectKey,
@@ -174,11 +174,13 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
 
   private onDeletionRequestError(error: unknown): void {
     console.error('Error executing action:', error);
+    const errorMessage = (error as { error?: { message?: string } })?.error?.message
+      || 'Something went wrong. Please try again later.';
     this.toastService.showToast({
       id: '',
       read: false,
       subject: 'only_toast',
-      title: 'Something went wrong. Please try again later.'
+      title: errorMessage
     } as AppShellNotification, 8000);
   }
 
@@ -186,12 +188,12 @@ export class ProjectComponentsScreenComponent implements OnInit, OnDestroy {
     this.connectionErrorHtmlMessage = 'Sorry, we are having trouble loading the page.<br/>Please check back in a few minutes.';
     this.connectionErrorIcon = 'smiley_sad';
   }
-  
+
   private unsetConnectionErrorState() {
     this.connectionErrorHtmlMessage = undefined;
     this.connectionErrorIcon = undefined;
   }
-  
+
   ngOnDestroy(): void {
     this._destroying$.next(undefined);
     this._destroying$.complete();
