@@ -33,7 +33,7 @@ export class NotificationsScreenComponent implements OnDestroy {
   ]
 
   markAsRead(notification: AppShellNotification) {
-    const notif = this.notifications.some(n => n === notification);
+    const notif = this.notifications.includes(notification);
     if (!notif) {
       return;
     }
