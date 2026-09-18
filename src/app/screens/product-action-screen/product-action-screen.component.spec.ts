@@ -34,7 +34,7 @@ describe('ProductActionScreenComponent', () => {
 
   beforeEach(async () => {
     catalogServiceSpy = jasmine.createSpyObj('CatalogService', ['getProduct', 'getCatalogDescriptors', 'getSlugUrl', 'getProjectProduct', 'setSelectedCatalogSlug']);
-    activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {'params': activatedRouteSubject});
+    activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], { 'params': activatedRouteSubject });
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     toastServiceSpy = jasmine.createSpyObj('AppShellToastService', ['showToast']);
     projectServiceSpy = jasmine.createSpyObj('ProjectService', ['getProject', 'getProjectById'], { project$: projectSubject.asObservable() });
@@ -69,7 +69,7 @@ describe('ProductActionScreenComponent', () => {
         provideMarkdown()
       ]
     })
-    .compileComponents();
+      .compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
     const fakeProduct = {
@@ -82,34 +82,34 @@ describe('ProductActionScreenComponent', () => {
           parameters: [
             {
               name: 'param_1',
-              required: true, 
+              required: true,
               type: 'string'
-            }, 
+            },
             {
-              name: 'param_2', 
-              required: false, 
-              type: 'singlelist', 
-              options: ['option 1', 'option 2'], 
+              name: 'param_2',
+              required: false,
+              type: 'singlelist',
+              options: ['option 1', 'option 2'],
               defaultValue: 'option 1'
-            }, 
+            },
             {
-              name: 'param_2_b', 
-              required: false, 
-              type: 'singlelist', 
-              options: ['option 1', 'option 2'], 
+              name: 'param_2_b',
+              required: false,
+              type: 'singlelist',
+              options: ['option 1', 'option 2'],
               defaultValue: 'non-existent option'
-            }, 
+            },
             {
-              name: 'param_3', 
-              required: false, 
-              type: 'multiplelist', 
-              options: ['option 1', 'option 2', 'option 3'], 
+              name: 'param_3',
+              required: false,
+              type: 'multiplelist',
+              options: ['option 1', 'option 2', 'option 3'],
               defaultValues: ['option 1', 'option 3', 'non-existent option']
             },
             {
-              name: 'param_4', 
-              required: false, 
-              type: 'multiplelist', 
+              name: 'param_4',
+              required: false,
+              type: 'multiplelist',
               options: ['option 1', 'option 2', 'option 3']
             }
           ]
@@ -118,17 +118,17 @@ describe('ProductActionScreenComponent', () => {
     } as AppProduct
     catalogServiceSpy.getProduct.and.returnValue(of(fakeProduct));
     catalogServiceSpy.getProjectProduct.and.returnValue(of(fakeProduct));
-    catalogServiceSpy.getCatalogDescriptors.and.returnValue([{slug: 'catalog', id: 'fake'}]);
-    catalogServiceSpy.getSlugUrl.and.callFake((id: string) => {return id;});
+    catalogServiceSpy.getCatalogDescriptors.and.returnValue([{ slug: 'catalog', id: 'fake' }]);
+    catalogServiceSpy.getSlugUrl.and.callFake((id: string) => { return id; });
     azureServiceSpy.getRefreshedAccessToken.and.returnValue(of('fakeAccessToken'));
 
     fixture = TestBed.createComponent(ProductActionScreenComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog' });
     projectSubject.next({ projectKey: 'project 1', location: 'location 1' } as AppProject);
     loggedUserSubject.next({ username: 'test-user' } as AppUser);
-    
+
     component.formGroup = component['fb'].group({
       param_1: ['value1', Validators.required],
       param_2: ['value2']
@@ -147,39 +147,39 @@ describe('ProductActionScreenComponent', () => {
 
   it('should navigate to root if id or catalog are not found', () => {
     routerSpy.navigate.calls.reset();
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'fakeCatalog'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'fakeCatalog' });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
   });
 
   it('should navigate to product details if action is not found', () => {
     routerSpy.navigate.calls.reset();
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'nonExistentAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'nonExistentAction' });
     expect(routerSpy.navigate).toHaveBeenCalledWith([`/catalog/item/fakeId`]);
   });
 
   it('should set page title and breadcrumb links on init if params and product are well defined', () => {
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
     expect(component.pageTitle).toBe('Fake Action fakeProduct');
-    expect(component.breadcrumbLinks.length).toBe(3);
+    expect(component.breadcrumbLinks).toHaveSize(3);
     expect(component.breadcrumbLinks[0].label).toBe('Catalogs');
     expect(component.breadcrumbLinks[1].label).toBe('catalog');
     expect(component.breadcrumbLinks[2].label).toBe('fakeProduct');
   });
 
   it('should set actionParams accordingly to chosen action', () => {
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    expect(component.actionParams.length).toEqual(6); // 5+1 for project_key param added automatically
-    catalogServiceSpy.getProduct.and.returnValue(of({title: 'fakeProduct' ,actions: [{id: 'fakeAction', label: 'Fake Action'}]} as AppProduct));
-    catalogServiceSpy.getProjectProduct.and.returnValue(of({title: 'fakeProduct' ,actions: [{id: 'fakeAction', label: 'Fake Action', requestable: true}]} as AppProduct));
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    expect(component.actionParams.length).toEqual(0);
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+    expect(component.actionParams).toHaveSize(6); // 5+1 for project_key param added automatically
+    catalogServiceSpy.getProduct.and.returnValue(of({ title: 'fakeProduct', actions: [{ id: 'fakeAction', label: 'Fake Action' }] } as AppProduct));
+    catalogServiceSpy.getProjectProduct.and.returnValue(of({ title: 'fakeProduct', actions: [{ id: 'fakeAction', label: 'Fake Action', requestable: true }] } as AppProduct));
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+    expect(component.actionParams).toHaveSize(0);
   });
 
   it('should navigate to root if product retrieval fails', () => {
     routerSpy.navigate.calls.reset();
     catalogServiceSpy.getProduct.and.returnValue(throwError(() => new Error('test')));
     catalogServiceSpy.getProjectProduct.and.returnValue(throwError(() => new Error('test')));
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/page-not-found']);
   });
 
@@ -453,13 +453,13 @@ describe('ProductActionScreenComponent', () => {
     const mockProductWithValidations = {
       title: 'fakeProduct',
       actions: [{
-        id: 'fakeAction', 
+        id: 'fakeAction',
         label: 'Fake Action',
         requestable: true,
         parameters: [
           {
-            name: 'param_1', 
-            required: true, 
+            name: 'param_1',
+            required: true,
             validations: [
               { regex: '^[A-Z]+$', errorMessage: 'Must be uppercase letters only' },
               { regex: '^.{3,}$', errorMessage: 'Must be at least 3 characters' }
@@ -471,7 +471,7 @@ describe('ProductActionScreenComponent', () => {
 
     catalogServiceSpy.getProduct.and.returnValue(of(mockProductWithValidations));
     catalogServiceSpy.getProjectProduct.and.returnValue(of(mockProductWithValidations));
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
 
     const control = component.formGroup.get('param_1');
     expect(control).toBeTruthy();
@@ -491,13 +491,13 @@ describe('ProductActionScreenComponent', () => {
     const mockProductWithValidations = {
       title: 'fakeProduct',
       actions: [{
-        id: 'fakeAction', 
-        label: 'Fake Action', 
+        id: 'fakeAction',
+        label: 'Fake Action',
         requestable: true,
         parameters: [
           {
-            name: 'param_1', 
-            required: true, 
+            name: 'param_1',
+            required: true,
             validations: [
               { regex: '^[A-Z]+$' },
             ]
@@ -508,7 +508,7 @@ describe('ProductActionScreenComponent', () => {
 
     catalogServiceSpy.getProduct.and.returnValue(of(mockProductWithValidations));
     catalogServiceSpy.getProjectProduct.and.returnValue(of(mockProductWithValidations));
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
 
     const control = component.formGroup.get('param_1');
     expect(control).toBeTruthy();
@@ -525,13 +525,13 @@ describe('ProductActionScreenComponent', () => {
     const mockProductWithInvalidRegex = {
       title: 'fakeProduct',
       actions: [{
-        id: 'fakeAction', 
-        label: 'Fake Action', 
+        id: 'fakeAction',
+        label: 'Fake Action',
         requestable: true,
         parameters: [
           {
-            name: 'param_1', 
-            required: false, 
+            name: 'param_1',
+            required: false,
             validations: [
               { regex: '[invalid(regex', errorMessage: 'This should not be reached' }
             ]
@@ -543,7 +543,7 @@ describe('ProductActionScreenComponent', () => {
     catalogServiceSpy.getProduct.and.returnValue(of(mockProductWithInvalidRegex));
     catalogServiceSpy.getProjectProduct.and.returnValue(of(mockProductWithInvalidRegex));
     const consoleSpy = spyOn(console, 'error');
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
 
     const control = component.formGroup.get('param_1');
     control?.setValue('test');
@@ -732,10 +732,10 @@ describe('ProductActionScreenComponent', () => {
     control?.markAsTouched();
     expect(component.getValidationErrors('param_2')).toEqual(['Invalid value']);
   });
-  
+
   it('should initialize with project subscription and update project_key param', () => {
     const mockProject: AppProject = { projectKey: 'new-project', location: 'location 1' } as AppProject;
-    
+
     // Reset and setup
     catalogServiceSpy.getProduct.and.returnValue(of({
       title: 'fakeProduct',
@@ -754,11 +754,11 @@ describe('ProductActionScreenComponent', () => {
       ]
     } as AppProduct));
 
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     // Emit new project
     projectSubject.next(mockProject);
-    
+
     // Verify project_key param was updated
     const projectKeyParam = component.actionParams.find(p => p.name === 'project_key');
     expect(projectKeyParam?.defaultValue).toBe('new-project');
@@ -767,7 +767,7 @@ describe('ProductActionScreenComponent', () => {
 
   it('should update form controls when project changes', () => {
     const mockProject: AppProject = { projectKey: 'updated-project', location: 'location 1' } as AppProject;
-    
+
     catalogServiceSpy.getProduct.and.returnValue(of({
       title: 'fakeProduct',
       actions: [
@@ -785,11 +785,11 @@ describe('ProductActionScreenComponent', () => {
       ]
     } as AppProduct));
 
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     // Change project
     projectSubject.next(mockProject);
-    
+
     // Verify form was re-initialized
     const projectKeyControl = component.formGroup.get('project_key');
     expect(projectKeyControl?.value).toBe('updated-project');
@@ -798,7 +798,7 @@ describe('ProductActionScreenComponent', () => {
   it('should add project_key parameter with correct properties when action has parameters', () => {
     const mockProject: AppProject = { projectKey: 'test-project', location: 'location 1' } as AppProject;
     projectSubject.next(mockProject);
-    
+
     catalogServiceSpy.getProduct.and.returnValue(of({
       title: 'fakeProduct',
       actions: [
@@ -816,8 +816,8 @@ describe('ProductActionScreenComponent', () => {
       ]
     } as AppProduct));
 
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     const projectKeyParam = component.actionParams.find(p => p.name === 'project_key');
     expect(projectKeyParam).toBeDefined();
     expect(projectKeyParam?.type).toBe('string');
@@ -851,23 +851,23 @@ describe('ProductActionScreenComponent', () => {
       ]
     } as AppProduct));
 
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     const projectKeyParams = component.actionParams.filter(p => p.name === 'project_key');
-    expect(projectKeyParams.length).toBe(1);
+    expect(projectKeyParams).toHaveSize(1);
     expect(projectKeyParams[0].required).toBe(true); // Should use the new one
   });
 
   it('should unsubscribe from project$ on destroy', () => {
     const destroyingSpy = spyOn(component['_destroying$'], 'next');
     const completeSpy = spyOn(component['_destroying$'], 'complete');
-    
+
     component.ngOnDestroy();
-    
+
     expect(destroyingSpy).toHaveBeenCalledWith(undefined);
     expect(completeSpy).toHaveBeenCalled();
   });
-  
+
   it('should set project_key defaultValue to empty string when no project is selected and parameters exist', () => {
     // Manually set actionParams to simulate the state when project is null
     component.selectedProject = null;
@@ -882,7 +882,7 @@ describe('ProductActionScreenComponent', () => {
         disabled: true
       } as ProductActionParameter
     ];
-    
+
     const projectKeyParam = component.actionParams.find(p => p.name === 'project_key');
     expect(projectKeyParam?.defaultValue).toBe('');
   });
@@ -890,15 +890,15 @@ describe('ProductActionScreenComponent', () => {
   it('should redirect to page-not-found when selectedProject is null', () => {
     routerSpy.navigate.calls.reset();
     component.selectedProject = null;
-    
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/page-not-found']);
   });
 
   it('should redirect to page-not-found when requestable is false', () => {
     routerSpy.navigate.calls.reset();
-    
+
     const mockProductWithNonRequestableAction = {
       id: 'fakeId',
       title: 'fakeProduct',
@@ -917,9 +917,9 @@ describe('ProductActionScreenComponent', () => {
     } as unknown as AppProduct;
 
     catalogServiceSpy.getProjectProduct.and.returnValue(of(mockProductWithNonRequestableAction));
-    
-    activatedRouteSubject.next({'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction'});
-    
+
+    activatedRouteSubject.next({ 'id': 'fakeId', 'catalogSlug': 'catalog', 'action': 'fakeAction' });
+
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/page-not-found']);
   });
 
@@ -948,7 +948,7 @@ describe('ProductActionScreenComponent', () => {
   it('should not show trigger message toast if triggerMessage is empty', () => {
     toastServiceSpy.showToast.calls.reset();
     routerSpy.navigate.calls.reset();
-    
+
     component.action = {
       id: 'fakeAction',
       url: '/api/action',

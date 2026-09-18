@@ -71,7 +71,7 @@ describe('ProjectComponentsScreenComponent', () => {
     projectSubject.next(project);
 
     expect(component.selectedProject).toEqual(project);
-    expect(component.breadcrumbLinks.length).toBe(2);
+    expect(component.breadcrumbLinks).toHaveSize(2);
     expect(component.breadcrumbLinks[0].label).toBe('Project PROJECT_1');
     expect(component.breadcrumbLinks[1].label).toBe('My Components');
   });
