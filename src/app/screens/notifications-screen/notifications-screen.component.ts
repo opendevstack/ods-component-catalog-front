@@ -4,10 +4,10 @@ import { Subscription } from 'rxjs';
 import { NatsService } from '../../services/nats.service';
 
 @Component({
-    selector: 'app-notifications-screen',
-    imports: [AppShellNotificationsScreenComponent],
-    templateUrl: './notifications-screen.component.html',
-    styleUrl: './notifications-screen.component.scss'
+  selector: 'app-notifications-screen',
+  imports: [AppShellNotificationsScreenComponent],
+  templateUrl: './notifications-screen.component.html',
+  styleUrl: './notifications-screen.component.scss'
 })
 export class NotificationsScreenComponent implements OnDestroy {
 
@@ -29,17 +29,17 @@ export class NotificationsScreenComponent implements OnDestroy {
   }
 
   breadcrumbLinks: AppShellLink[] = [
-    {anchor: '', label: 'Notifications'}
+    { anchor: '', label: 'Notifications' }
   ]
 
   markAsRead(notification: AppShellNotification) {
-    const notif = this.notifications.find(n => n === notification);
+    const notif = this.notifications.includes(notification);
     if (!notif) {
       return;
     }
     this.natsService.readMessages(notification.subject, [notification.id]);
   }
-  
+
   markAllAsRead() {
     const groupedBySubject = this.notifications.reduce((acc, notification) => {
       if (!acc[notification.subject]) {
