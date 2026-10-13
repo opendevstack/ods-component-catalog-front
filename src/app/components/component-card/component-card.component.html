@@ -27,9 +27,11 @@
         </mat-card-content>
         <mat-card-actions>
             <div [matTooltip]="isDeleting() ? deletingTooltip : isProvisioning() ? provisioningTooltip : ''" class="btn-ctn">
-                <button mat-button class="request-deletion-btn" (click)="onRequestDeletionClick()" [disabled]="!canDelete() || isDeleting() || isProvisioning()">Request Deletion</button>
+                <button mat-button class="request-deletion-btn" (click)="onRequestDeletionClick()" [disabled]="!componentCanBeDeleted()">Request Deletion</button>
             </div>
-            <button mat-stroked-button class="view-repository-btn" (click)="onViewRepositoryClick()">View Repository</button>
+            <div [matTooltip]="!repositoryUrlIsAvailable() ? noURLTooltip : ''" class="btn-ctn">
+              <button mat-stroked-button class="view-repository-btn" (click)="onViewRepositoryClick()" [disabled]="!repositoryUrlIsAvailable()">View Repository</button>
+            </div>
         </mat-card-actions>
     }
 </mat-card>
