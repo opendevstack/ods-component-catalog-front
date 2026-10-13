@@ -45,7 +45,7 @@
                 max-height: 2.5rem;
             }
         }
-        
+
     }
 
     mat-card-content {
@@ -97,7 +97,7 @@
             --mdc-chip-focus-state-layer-color: var(--appshell-color-violet-light)!important;
         }
 
-        .unknown .appshell-chip { 
+        .unknown .appshell-chip {
             --mdc-chip-disabled-label-text-color: var(--appshell-color-grey-strong)!important;
             --mdc-chip-elevated-container-color: var(--appshell-color-grey-warm)!important;
             --mdc-chip-label-text-color: var(--appshell-color-grey-strong)!important;
@@ -124,7 +124,7 @@
             text-decoration-color: var(--appshell-color-accent-green-main);
             text-decoration-thickness: 2px;
             text-underline-offset: 6px;
-            
+
             --mat-text-button-hover-state-layer-opacity: 0;
             --mat-text-button-focus-state-layer-opacity: 0;
             --mat-text-button-pressed-state-layer-opacity: 0;
@@ -163,6 +163,10 @@
                 --mdc-outlined-button-outline-color: var(--appshell-color-dark-green-medium);
                 color: var(--appshell-color-dark-green-medium);
                 background-color: transparent;
+            }
+
+            &:disabled {
+                color: var(--appshell-color-grey-main);
             }
         }
     }

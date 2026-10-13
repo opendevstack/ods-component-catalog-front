@@ -46,6 +46,7 @@ export class ComponentCardComponent {
 
   deletingTooltip = 'This component has already a Deletion Request in progress. Please contact Support if there is any issue. ';
   provisioningTooltip = 'The provisioning has not yet been completed.';
+  noURLTooltip = 'No component URL is available for this component.';
 
   constructor() {}
 
@@ -63,7 +64,15 @@ export class ComponentCardComponent {
 
   onViewRepositoryClick() {
     if (this.url()) {
-      window.open(this.url(), '_self');
+      window.open(this.url());
     }
+  }
+
+  componentCanBeDeleted() {
+    return this.canDelete() && !this.isDeleting() && !this.isProvisioning();
+  }
+
+  repositoryUrlIsAvailable() {
+    return this.url();
   }
 }

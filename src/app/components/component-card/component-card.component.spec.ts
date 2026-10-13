@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ComponentCardComponent } from './component-card.component';
 
 describe('ComponentCardComponent', () => {
@@ -25,7 +27,7 @@ describe('ComponentCardComponent', () => {
     fixture.componentRef.setInput('name', 'Test Component');
     fixture.componentRef.setInput('status', 'Provisioned Successfully');
     fixture.detectChanges();
-    
+
     expect(component).toBeTruthy();
   });
 
@@ -35,7 +37,7 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('name', testName);
       fixture.componentRef.setInput('status', 'Test Status');
       fixture.detectChanges();
-      
+
       expect(component.name()).toBe(testName);
     });
 
@@ -44,7 +46,7 @@ describe('ComponentCardComponent', () => {
       const testStatus = 'Provisioning in Progress';
       fixture.componentRef.setInput('status', testStatus);
       fixture.detectChanges();
-      
+
       expect(component.status()).toBe(testStatus);
     });
 
@@ -54,7 +56,7 @@ describe('ComponentCardComponent', () => {
       const testImage = 'http://example.com/image.png';
       fixture.componentRef.setInput('image', testImage);
       fixture.detectChanges();
-      
+
       expect(component.image()).toBe(testImage);
     });
 
@@ -63,7 +65,7 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Test');
       fixture.componentRef.setInput('image', undefined);
       fixture.detectChanges();
-      
+
       expect(component.image()).toBeUndefined();
     });
 
@@ -73,7 +75,7 @@ describe('ComponentCardComponent', () => {
       const testUrl = 'http://github.com/repo';
       fixture.componentRef.setInput('url', testUrl);
       fixture.detectChanges();
-      
+
       expect(component.url()).toBe(testUrl);
     });
 
@@ -82,7 +84,7 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Test');
       fixture.componentRef.setInput('canDelete', true);
       fixture.detectChanges();
-      
+
       expect(component.canDelete()).toBe(true);
     });
 
@@ -91,7 +93,7 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Test');
       fixture.componentRef.setInput('canDelete', false);
       fixture.detectChanges();
-      
+
       expect(component.canDelete()).toBe(false);
     });
   });
@@ -104,35 +106,35 @@ describe('ComponentCardComponent', () => {
     it('should convert status "CREATED" correctly', () => {
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.detectChanges();
-      
+
       expect(component.statusClass()).toBe('created');
     });
 
     it('should convert status "FAILED" correctly', () => {
       fixture.componentRef.setInput('status', 'FAILED');
       fixture.detectChanges();
-      
+
       expect(component.statusClass()).toBe('failed');
     });
 
     it('should convert status "DELETING" correctly', () => {
       fixture.componentRef.setInput('status', 'DELETING');
       fixture.detectChanges();
-      
+
       expect(component.statusClass()).toBe('deleting');
     });
 
     it('should convert status "DELETION_FAILED" correctly', () => {
       fixture.componentRef.setInput('status', 'DELETION_FAILED');
       fixture.detectChanges();
-      
+
       expect(component.statusClass()).toBe('deletion_failed');
     });
 
     it('should convert status "UNKNOWN" correctly', () => {
       fixture.componentRef.setInput('status', 'UNKNOWN');
       fixture.detectChanges();
-      
+
       expect(component.statusClass()).toBe('unknown');
     });
   });
@@ -149,9 +151,9 @@ describe('ComponentCardComponent', () => {
       component.requestDeletionClicked.subscribe(() => {
         emitted = true;
       });
-      
+
       component.onRequestDeletionClick();
-      
+
       expect(emitted).toBe(true);
     });
 
@@ -160,10 +162,10 @@ describe('ComponentCardComponent', () => {
       component.requestDeletionClicked.subscribe(() => {
         emitCount++;
       });
-      
+
       component.onRequestDeletionClick();
       component.onRequestDeletionClick();
-      
+
       expect(emitCount).toBe(2);
     });
   });
@@ -176,42 +178,42 @@ describe('ComponentCardComponent', () => {
     it('should return true when status is "CREATING"', () => {
       fixture.componentRef.setInput('status', 'CREATING');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(true);
     });
 
     it('should return false when status is "CREATED"', () => {
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
 
     it('should return false when status is "FAILED"', () => {
       fixture.componentRef.setInput('status', 'FAILED');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
 
     it('should return false when status is "DELETING"', () => {
       fixture.componentRef.setInput('status', 'DELETING');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
 
     it('should return false when status is "DELETION_FAILED"', () => {
       fixture.componentRef.setInput('status', 'DELETION_FAILED');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
 
     it('should return false when status is "UNKNOWN"', () => {
       fixture.componentRef.setInput('status', 'UNKNOWN');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
   });
@@ -224,42 +226,42 @@ describe('ComponentCardComponent', () => {
     it('should return true when status is "DELETING"', () => {
       fixture.componentRef.setInput('status', 'DELETING');
       fixture.detectChanges();
-      
+
       expect(component.isDeleting()).toBe(true);
     });
 
     it('should return false when status is "CREATING"', () => {
       fixture.componentRef.setInput('status', 'CREATING');
       fixture.detectChanges();
-      
+
       expect(component.isDeleting()).toBe(false);
     });
 
     it('should return false when status is "CREATED"', () => {
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.detectChanges();
-      
+
       expect(component.isDeleting()).toBe(false);
     });
 
     it('should return false when status is "FAILED"', () => {
       fixture.componentRef.setInput('status', 'FAILED');
       fixture.detectChanges();
-      
+
       expect(component.isDeleting()).toBe(false);
     });
 
     it('should return false when status is "DELETION_FAILED"', () => {
       fixture.componentRef.setInput('status', 'DELETION_FAILED');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
 
     it('should return false when status is "UNKNOWN"', () => {
       fixture.componentRef.setInput('status', 'UNKNOWN');
       fixture.detectChanges();
-      
+
       expect(component.isProvisioning()).toBe(false);
     });
   });
@@ -275,19 +277,19 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('url', testUrl);
       fixture.detectChanges();
       const windowOpenSpy = spyOn(window, 'open');
-      
+
       component.onViewRepositoryClick();
-      
-      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_self');
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl);
     });
 
     it('should not call window.open when url is undefined', () => {
       fixture.componentRef.setInput('url', undefined);
       fixture.detectChanges();
       const windowOpenSpy = spyOn(window, 'open');
-      
+
       component.onViewRepositoryClick();
-      
+
       expect(windowOpenSpy).not.toHaveBeenCalled();
     });
 
@@ -295,9 +297,9 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('url', '');
       fixture.detectChanges();
       const windowOpenSpy = spyOn(window, 'open');
-      
+
       component.onViewRepositoryClick();
-      
+
       expect(windowOpenSpy).not.toHaveBeenCalled();
     });
 
@@ -306,10 +308,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('url', testUrl);
       fixture.detectChanges();
       const windowOpenSpy = spyOn(window, 'open');
-      
+
       component.onViewRepositoryClick();
-      
-      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_self');
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl);
     });
   });
 
@@ -328,10 +330,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('name', 'Integration Test Component');
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const titleElement = compiled.querySelector('mat-card-title');
-      
+
       expect(titleElement.textContent).toContain('Integration Test Component');
     });
 
@@ -339,10 +341,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('name', 'Test');
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const chipElement = compiled.querySelector('appshell-chip');
-      
+
       expect(chipElement).toBeTruthy();
       expect(chipElement.getAttribute('ng-reflect-label')).toBe('Provisioned Successfully');
     });
@@ -351,10 +353,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('name', 'Test');
       fixture.componentRef.setInput('status', 'CREATING');
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const chipElement = compiled.querySelector('appshell-chip');
-      
+
       expect(chipElement.classList.contains('creating')).toBe(true);
     });
 
@@ -363,10 +365,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Test');
       fixture.componentRef.setInput('image', 'http://example.com/logo.png');
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const imageElement = compiled.querySelector('img[mat-card-image]');
-      
+
       expect(imageElement).toBeTruthy();
       expect(imageElement.getAttribute('src')).toBe('http://example.com/logo.png');
     });
@@ -376,10 +378,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Test');
       fixture.componentRef.setInput('image', undefined);
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const imageElement = compiled.querySelector('img[mat-card-image]');
-      
+
       expect(imageElement).toBeFalsy();
     });
 
@@ -388,10 +390,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Provisioned Successfully');
       fixture.componentRef.setInput('canDelete', false);
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const deleteButton = compiled.querySelector('.request-deletion-btn');
-      
+
       expect(deleteButton.disabled).toBe(true);
     });
 
@@ -400,10 +402,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'DELETING');
       fixture.componentRef.setInput('canDelete', true);
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const deleteButton = compiled.querySelector('.request-deletion-btn');
-      
+
       expect(deleteButton.disabled).toBe(true);
     });
 
@@ -412,10 +414,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'CREATING');
       fixture.componentRef.setInput('canDelete', true);
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const deleteButton = compiled.querySelector('.request-deletion-btn');
-      
+
       expect(deleteButton.disabled).toBe(true);
     });
 
@@ -424,10 +426,10 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'CREATED');
       fixture.componentRef.setInput('canDelete', true);
       fixture.detectChanges();
-      
+
       const compiled = fixture.nativeElement;
       const deleteButton = compiled.querySelector('.request-deletion-btn');
-      
+
       expect(deleteButton.disabled).toBe(false);
     });
 
@@ -436,30 +438,85 @@ describe('ComponentCardComponent', () => {
       fixture.componentRef.setInput('status', 'Provisioned Successfully');
       fixture.componentRef.setInput('canDelete', true);
       fixture.detectChanges();
-      
+
       spyOn(component, 'onRequestDeletionClick');
-      
+
       const compiled = fixture.nativeElement;
       const deleteButton = compiled.querySelector('.request-deletion-btn');
       deleteButton.click();
-      
+
       expect(component.onRequestDeletionClick).toHaveBeenCalled();
     });
 
     it('should call onViewRepositoryClick when view repository button is clicked', () => {
       fixture.componentRef.setInput('name', 'Test');
-      fixture.componentRef.setInput('status', 'Provisioned Successfully');
+      fixture.componentRef.setInput('status', 'CREATED');
       fixture.componentRef.setInput('url', 'http://example.com');
       fixture.detectChanges();
-      
+
       spyOn(component, 'onViewRepositoryClick');
-      
+
       const compiled = fixture.nativeElement;
       const viewButton = compiled.querySelector('.view-repository-btn');
       viewButton.click();
-      
+
       expect(component.onViewRepositoryClick).toHaveBeenCalled();
+    });
+
+    it('should disable view repository button when url is unavailable', () => {
+      fixture.componentRef.setInput('name', 'Test');
+      fixture.componentRef.setInput('status', 'CREATED');
+      fixture.componentRef.setInput('url', undefined);
+      fixture.detectChanges();
+
+      const viewButton = fixture.nativeElement.querySelector('.view-repository-btn');
+
+      expect(viewButton.disabled).toBe(true);
+    });
+
+    it('should enable view repository button while component is provisioning when url is available', () => {
+      fixture.componentRef.setInput('name', 'Test');
+      fixture.componentRef.setInput('status', 'CREATING');
+      fixture.componentRef.setInput('url', 'http://example.com');
+      fixture.detectChanges();
+
+      const viewButton = fixture.nativeElement.querySelector('.view-repository-btn');
+
+      expect(viewButton.disabled).toBe(false);
+    });
+
+    it('should enable view repository button while component is deleting when url is available', () => {
+      fixture.componentRef.setInput('name', 'Test');
+      fixture.componentRef.setInput('status', 'DELETING');
+      fixture.componentRef.setInput('url', 'http://example.com');
+      fixture.detectChanges();
+
+      const viewButton = fixture.nativeElement.querySelector('.view-repository-btn');
+
+      expect(viewButton.disabled).toBe(false);
+    });
+
+    it('should enable view repository button when url is available and status allows it', () => {
+      fixture.componentRef.setInput('name', 'Test');
+      fixture.componentRef.setInput('status', 'CREATED');
+      fixture.componentRef.setInput('url', 'http://example.com');
+      fixture.detectChanges();
+
+      const viewButton = fixture.nativeElement.querySelector('.view-repository-btn');
+
+      expect(viewButton.disabled).toBe(false);
+    });
+
+    it('should show the no URL tooltip when repository url is unavailable', () => {
+      fixture.componentRef.setInput('name', 'Test');
+      fixture.componentRef.setInput('status', 'CREATED');
+      fixture.componentRef.setInput('url', undefined);
+      fixture.detectChanges();
+
+      const viewButton = fixture.debugElement.query(By.css('.view-repository-btn'));
+      const tooltip = viewButton.parent!.injector.get(MatTooltip);
+
+      expect(tooltip.message).toBe(component.noURLTooltip);
     });
   });
 });
-
