@@ -24,3 +24,10 @@
 @if (displayTopDisclaimer) {
   <app-top-disclaimer [disclaimerTextHtml]="topDisclaimerTextHtml" (disclaimerClosed)="closeDisclaimer()"></app-top-disclaimer>
 }
+<appshell-feedback-launcher
+  [icon]="'thumb_up'"
+  [shape]="'tab'"
+  [side]="'right'"
+  [feedback]="feedback"
+  [hidden]="false"
+  (submitted)="handleFeedbackSubmission($event)" />
