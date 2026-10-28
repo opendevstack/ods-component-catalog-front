@@ -3,7 +3,7 @@ import { AzureService } from './services/azure.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppShellConfiguration as AppShellConfig } from './appshell.configuration';
-import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent, AppShellFeedback, AppShellFeedbackAnswers } from '@opendevstack/ngx-appshell';
+import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent, AppShellFeedback, AppShellFeedbackAnswers, AppShellFeedbackLauncherComponent } from '@opendevstack/ngx-appshell';
 import { Subject, Subscription } from 'rxjs';
 import { CatalogService } from './services/catalog.service';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
@@ -19,7 +19,6 @@ import { PlatformSelectorWidgetDialogComponent } from './components/platform-sel
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
 import { CatalogAccessStore } from './services/catalog-access-store.service';
 import { CATALOG_ACTIVITY_ACCESS_RULE, hasAccessForRule } from './guards/catalog-activity-access-rule';
-import { AppShellFeedbackLauncherComponent } from '@opendevstack/ngx-appshell';
 import { MARKETPLACE_FEEDBACK_PRODUCT_QUESTION, MARKETPLACE_FEEDBACK_QUESTIONS } from './config/feedback-questionnaire';
 
 @Component({
