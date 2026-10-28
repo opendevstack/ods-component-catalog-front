@@ -148,14 +148,18 @@ describe('AppComponent', () => {
     });
   });
 
-  it('should log an error when the feedback submission fails', () => {
+  it('should show a toast when the feedback submission fails', () => {
     const submissionError = new Error('Submission failed');
-    const consoleErrorSpy = spyOn(console, 'error');
     mockCatalogService.registerFeedbackSubmission.and.returnValue(throwError(() => submissionError));
 
     component.handleFeedbackSubmission({ goal: 'Find a data product' });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to submit feedback:', submissionError);
+    expect(mockToastService.showToast).toHaveBeenCalledWith({
+      id: '',
+      read: false,
+      subject: 'only_toast',
+      title: 'We could not submit your feedback. Please try again later.'
+    }, 8000);
   });
 
   it('should initialize the service on ngOnInit', () => {

@@ -336,7 +336,12 @@ export class AppComponent implements OnInit, OnDestroy {
       questions,
       answers: feedbackAnswers
     }).subscribe({
-      error: error => console.error('Failed to submit feedback:', error)
+      error: () => this.toastService.showToast({
+        id: '',
+        read: false,
+        subject: 'only_toast',
+        title: 'We could not submit your feedback. Please try again later.'
+      } as AppShellNotification, 8000)
     });
   }
 
