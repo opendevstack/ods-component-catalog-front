@@ -2,7 +2,7 @@ import { AppShellToastsComponent, AppShellToastService } from '@opendevstack/ngx
 import { NatsMessage, NatsService } from './services/nats.service'
 import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 import { AzureService } from './services/azure.service';
@@ -119,6 +119,43 @@ describe('AppComponent', () => {
       ],
       answers
     });
+  });
+
+  it('should not submit feedback when the user has no email', () => {
+    component.loggedUser = null;
+    const consoleErrorSpy = spyOn(console, 'error');
+    mockProjectService.getCurrentProject.calls.reset();
+
+    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Cannot submit feedback without a submitter email.');
+    expect(mockProjectService.getCurrentProject).not.toHaveBeenCalled();
+    expect(mockCatalogService.registerFeedbackSubmission).not.toHaveBeenCalled();
+  });
+
+  it('should omit the project and product question when they are not configured', () => {
+    const answers = { goal: 'Find a data product' };
+    component.feedback.productQuestion = undefined;
+    mockProjectService.getCurrentProject.and.returnValue(null);
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
+
+    component.handleFeedbackSubmission(answers);
+
+    expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledWith({
+      submitter: 'fake.user@fakemail.com',
+      questions: component.feedback.questions,
+      answers
+    });
+  });
+
+  it('should log an error when the feedback submission fails', () => {
+    const submissionError = new Error('Submission failed');
+    const consoleErrorSpy = spyOn(console, 'error');
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(throwError(() => submissionError));
+
+    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to submit feedback:', submissionError);
   });
 
   it('should initialize the service on ngOnInit', () => {
