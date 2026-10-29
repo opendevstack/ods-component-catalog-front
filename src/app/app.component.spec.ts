@@ -2,12 +2,12 @@ import { AppShellToastsComponent, AppShellToastService } from '@opendevstack/ngx
 import { NatsMessage, NatsService } from './services/nats.service'
 import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 import { AzureService } from './services/azure.service';
 import { CatalogService } from './services/catalog.service';
-import { Catalog, CatalogDescriptor } from './openapi/component-catalog';
+import { Catalog, CatalogDescriptor, FeedbackSubmission } from './openapi/component-catalog';
 import { NavigationEnd, Router } from '@angular/router';
 import { AppConfigService } from './services/app-config.service';
 import { AppUser } from './models/app-user';
@@ -50,7 +50,7 @@ describe('AppComponent', () => {
     mockToastService = jasmine.createSpyObj('AppShellToastService', ['showToast'], { toasts$: of([]) });
     mockCatalogService = jasmine.createSpyObj(
       'CatalogService',
-      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor', 'refreshSelectedCatalog'],
+      ['retrieveCatalogDescriptors', 'setCatalogDescriptors', 'getCatalogDescriptors', 'getSlugUrl', 'getCatalog', 'setSelectedCatalogSlug', 'getSelectedCatalogSlug', 'getSelectedCatalogDescriptor', 'refreshSelectedCatalog', 'registerFeedbackSubmission'],
       { selectedCatalogSlug$: selectedCatalogSlugSubject.asObservable() }
     );
     routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl', 'getCurrentNavigation'], { events: routerEventsSubject.asObservable(), url: '/' });
@@ -98,9 +98,68 @@ describe('AppComponent', () => {
     await fixture.whenStable();
     azureLoggedUser$.next({fullName: 'Fake', username: 'fake.user@fakemail.com', projects: []} as AppUser);
   });
-  
+
   it('should create the component', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should submit feedback with its questions, answers, submitter and current project', () => {
+    const answers = { goal: 'Find a data product', satisfaction: 4 };
+    mockProjectService.getCurrentProject.and.returnValue({ projectKey: 'PROJECT 1', location: 'LOCATION 1' });
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
+
+    component.handleFeedbackSubmission(answers);
+
+    expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledWith({
+      projectKey: 'PROJECT 1',
+      submitter: 'fake.user@fakemail.com',
+      questions: [
+        ...component.feedback.questions,
+        ...(component.feedback.productQuestion ? [component.feedback.productQuestion] : [])
+      ],
+      answers
+    });
+  });
+
+  it('should not submit feedback when the user has no email', () => {
+    component.loggedUser = null;
+    const consoleErrorSpy = spyOn(console, 'error');
+    mockProjectService.getCurrentProject.calls.reset();
+
+    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Cannot submit feedback without a submitter email.');
+    expect(mockProjectService.getCurrentProject).not.toHaveBeenCalled();
+    expect(mockCatalogService.registerFeedbackSubmission).not.toHaveBeenCalled();
+  });
+
+  it('should omit the project and product question when they are not configured', () => {
+    const answers = { goal: 'Find a data product' };
+    component.feedback.productQuestion = undefined;
+    mockProjectService.getCurrentProject.and.returnValue(null);
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
+
+    component.handleFeedbackSubmission(answers);
+
+    expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledWith({
+      submitter: 'fake.user@fakemail.com',
+      questions: component.feedback.questions,
+      answers
+    });
+  });
+
+  it('should show a toast when the feedback submission fails', () => {
+    const submissionError = new Error('Submission failed');
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(throwError(() => submissionError));
+
+    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+
+    expect(mockToastService.showToast).toHaveBeenCalledWith({
+      id: '',
+      read: false,
+      subject: 'only_toast',
+      title: 'We could not submit your feedback. Please try again later.'
+    }, 8000);
   });
 
   it('should initialize the service on ngOnInit', () => {
@@ -143,23 +202,23 @@ describe('AppComponent', () => {
     const mockCatalog = { slug: 'test-catalog', id: '1' };
     mockCatalogService.getCatalogDescriptors.and.returnValue([mockCatalog]);
     spyOn(component, 'setCatalogShell');
-  
+
     component.pickCatalog('test-catalog');
-  
+
     expect(component.setCatalogShell).toHaveBeenCalledWith(mockCatalog);
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/test-catalog']);
   });
-  
+
   it('should not set the catalog shell or navigate if the catalog is not found', () => {
     mockCatalogService.getCatalogDescriptors.and.returnValue([]);
     spyOn(component, 'setCatalogShell');
-    
+
     component.pickCatalog('non-existent-catalog');
-  
+
     expect(component.setCatalogShell).not.toHaveBeenCalled();
     expect(routerSpy.navigate).not.toHaveBeenCalled();
   });
-  
+
   it('should set sidenavSections with catalog slug and links', () => {
     const mockCatalog = {
       slug: 'test-catalog',
@@ -226,7 +285,7 @@ describe('AppComponent', () => {
       id: '1',
       links: undefined
     };
-    
+
     component.userGroups = [];
     component.catalogOwners = [];
 
@@ -307,7 +366,7 @@ describe('AppComponent', () => {
       }
     ]);
   });
-  
+
   it('should set the catalog shell when the selected catalog slug changes in CatalogService', fakeAsync(() => {
     const mockCatalogs = [{ slug: 'catalog-1', id: '1' }];
     mockCatalogService.getCatalogDescriptors.and.returnValue(mockCatalogs);
@@ -375,18 +434,18 @@ describe('AppComponent', () => {
   it('should set first project when no project is in URL and no current project exists', fakeAsync(() => {
     const mockProjects = ['PROJECT1', 'PROJECT2'];
     const mockUser = { fullName: 'Test User', username: 'test.user@example.com', projects: [] } as AppUser;
-    
+
     Object.defineProperty(routerSpy, 'url', { get: () => '/test-catalog', configurable: true });
-    
+
     mockProjectService.getUserProjects.and.returnValue(of(mockProjects));
     mockProjectService.getCurrentProject.and.returnValue(null);
-    
+
     component.ngOnInit();
     tick();
-    
+
     azureLoggedUser$.next(mockUser);
     tick();
-    
+
     expect(mockProjectService.setCurrentProject).toHaveBeenCalledWith('PROJECT1');
     expect(component.projectPicker.selected).toBe('PROJECT1');
   }));
@@ -413,18 +472,18 @@ describe('AppComponent', () => {
     const mockProjects = ['PROJECT1', 'PROJECT2'];
     const mockUser = { fullName: 'Test User', username: 'test.user@example.com', projects: [] } as AppUser;
     const currentProject = { projectKey: 'PROJECT2', location: 'LOCATION' } as AppProject;
-    
+
     Object.defineProperty(routerSpy, 'url', { get: () => '/test-catalog', configurable: true });
-    
+
     mockProjectService.getUserProjects.and.returnValue(of(mockProjects));
     mockProjectService.getCurrentProject.and.returnValue(currentProject);
-    
+
     component.ngOnInit();
     tick();
-    
+
     azureLoggedUser$.next(mockUser);
     tick();
-    
+
     expect(mockProjectService.setCurrentProject).toHaveBeenCalledWith('PROJECT2');
     expect(component.projectPicker.selected).toBe('PROJECT2');
     expect(component.projectPicker.options).toEqual(mockProjects);
@@ -434,18 +493,18 @@ describe('AppComponent', () => {
     const mockProjects = ['PROJECT1', 'PROJECT2'];
     const mockUser = { fullName: 'Test User', username: 'test.user@example.com', projects: [] } as AppUser;
     const currentProject = { projectKey: 'PROJECT3', location: 'LOCATION' } as AppProject;
-    
+
     Object.defineProperty(routerSpy, 'url', { get: () => '/test-catalog', configurable: true });
-    
+
     mockProjectService.getUserProjects.and.returnValue(of(mockProjects));
     mockProjectService.getCurrentProject.and.returnValue(currentProject);
-    
+
     component.ngOnInit();
     tick();
-    
+
     azureLoggedUser$.next(mockUser);
     tick();
-    
+
     expect(mockProjectService.setCurrentProject).toHaveBeenCalledWith('PROJECT1');
     expect(component.projectPicker.selected).toBe('PROJECT1');
   }));
@@ -453,19 +512,19 @@ describe('AppComponent', () => {
   it('should update project picker when project$ emits', fakeAsync(() => {
     component.ngOnInit();
     tick();
-    
+
     const newProject = { projectKey: 'NEW_PROJECT', location: 'NEW_LOCATION' } as AppProject;
     projectSubject.next(newProject);
     tick();
-    
+
     expect(component.projectPicker.selected).toBe('NEW_PROJECT');
   }));
-  
+
   it('should call setCurrentProject and update projectPicker when pickProject is called', () => {
     const projectKey = 'PROJECT1';
-    
+
     component.pickProject(projectKey);
-    
+
     expect(mockProjectService.setCurrentProject).toHaveBeenCalledWith(projectKey);
     expect(component.projectPicker.selected).toBe(projectKey);
   });
@@ -477,9 +536,9 @@ describe('AppComponent', () => {
       options: initialOptions,
       selected: 'PROJECT1'
     };
-    
+
     component.pickProject('PROJECT2');
-    
+
     expect(component.projectPicker.label).toBe('Project: ');
     expect(component.projectPicker.options).toEqual(initialOptions);
     expect(component.projectPicker.selected).toBe('PROJECT2');
@@ -488,9 +547,9 @@ describe('AppComponent', () => {
 
   it('should extract project from query params and update project picker', fakeAsync(() => {
     const projectKey = 'TEST_PROJECT';
-    Object.defineProperty(routerSpy, 'url', { 
-      get: () => `/test-catalog?projectKey=${projectKey}`, 
-      configurable: true 
+    Object.defineProperty(routerSpy, 'url', {
+      get: () => `/test-catalog?projectKey=${projectKey}`,
+      configurable: true
     });
 
     component.ngOnInit();
@@ -504,9 +563,9 @@ describe('AppComponent', () => {
   }));
 
   it('should not update project when projectKey query param is missing', fakeAsync(() => {
-    Object.defineProperty(routerSpy, 'url', { 
-      get: () => '/test-catalog', 
-      configurable: true 
+    Object.defineProperty(routerSpy, 'url', {
+      get: () => '/test-catalog',
+      configurable: true
     });
 
     mockProjectService.setCurrentProject.calls.reset();
@@ -515,7 +574,7 @@ describe('AppComponent', () => {
     tick();
 
     const initialSelected = component.projectPicker.selected;
-    
+
     routerEventsSubject.next(new NavigationEnd(1, '/test-catalog', '/test-catalog'));
     tick();
 
@@ -524,9 +583,9 @@ describe('AppComponent', () => {
 
   it('should extract project from query params on initial load', fakeAsync(() => {
     const projectKey = 'INITIAL_PROJECT';
-    Object.defineProperty(routerSpy, 'url', { 
-      get: () => `/test-catalog?projectKey=${projectKey}`, 
-      configurable: true 
+    Object.defineProperty(routerSpy, 'url', {
+      get: () => `/test-catalog?projectKey=${projectKey}`,
+      configurable: true
     });
 
     const newComponent = new AppComponent(
@@ -550,9 +609,9 @@ describe('AppComponent', () => {
 
   it('should handle URL with multiple query params and extract projectKey', fakeAsync(() => {
     const projectKey = 'MULTI_PARAM_PROJECT';
-    Object.defineProperty(routerSpy, 'url', { 
-      get: () => `/test-catalog?foo=bar&projectKey=${projectKey}&baz=qux`, 
-      configurable: true 
+    Object.defineProperty(routerSpy, 'url', {
+      get: () => `/test-catalog?foo=bar&projectKey=${projectKey}&baz=qux`,
+      configurable: true
     });
 
     component.ngOnInit();

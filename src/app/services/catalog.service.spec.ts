@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AppShellFilter } from '@opendevstack/ngx-appshell';
 import { of, throwError } from 'rxjs';
 import { AppProduct } from '../models/app-product';
-import { BASE_PATH, Catalog, CatalogActivityService, CatalogActivityServiceInterface, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
+import { BASE_PATH, Catalog, CatalogActivityService, CatalogActivityServiceInterface, CatalogDescriptor, CatalogDescriptorsService, CatalogDescriptorsServiceInterface, CatalogFiltersService, CatalogFiltersServiceInterface, CatalogItem, CatalogItemFilter, CatalogItemsService, CatalogItemsServiceInterface, CatalogsService, CatalogsServiceInterface, FeedbackSubmission, FeedbackSubmissionRequest, FeedbackSubmissionsService, FeedbackSubmissionsServiceInterface, FilesService, FilesServiceInterface } from '../openapi/component-catalog';
 import { CatalogService } from './catalog.service';
 
 const currentDate = new Date();
@@ -30,6 +30,7 @@ describe('CatalogService', () => {
   let catalogsServiceSpy: jasmine.SpyObj<CatalogsServiceInterface>;
   let catalogDescriptorsServiceSpy: jasmine.SpyObj<CatalogDescriptorsServiceInterface>;
   let catalogActivityServiceSpy: jasmine.SpyObj<CatalogActivityServiceInterface>;
+  let feedbackSubmissionsServiceSpy: jasmine.SpyObj<FeedbackSubmissionsServiceInterface>;
 
   beforeEach(() => {
     try {
@@ -43,6 +44,8 @@ describe('CatalogService', () => {
     filesServiceSpy = jasmine.createSpyObj('FilesService', ['getFileById']);
     catalogsServiceSpy = jasmine.createSpyObj('CatalogsService', ['getCatalog']);
     catalogDescriptorsServiceSpy = jasmine.createSpyObj('CatalogDescriptorsService', ['getCatalogDescriptors']);
+    catalogActivityServiceSpy = jasmine.createSpyObj('CatalogActivityService', ['getCatalogActivitiesById']);
+    feedbackSubmissionsServiceSpy = jasmine.createSpyObj('FeedbackSubmissionsService', ['registerFeedbackSubmission']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -52,6 +55,8 @@ describe('CatalogService', () => {
         { provide: FilesService, useValue: filesServiceSpy },
         { provide: CatalogsService, useValue: catalogsServiceSpy },
         { provide: CatalogDescriptorsService, useValue: catalogDescriptorsServiceSpy },
+        { provide: CatalogActivityService, useValue: catalogActivityServiceSpy },
+        { provide: FeedbackSubmissionsService, useValue: feedbackSubmissionsServiceSpy },
         { provide: BASE_PATH, useValue: '/component-catalog' },
         provideHttpClient()
       ]
@@ -62,6 +67,22 @@ describe('CatalogService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  it('registerFeedbackSubmission should delegate to the generated API service', () => {
+    const request: FeedbackSubmissionRequest = {
+      submitter: 'person@example.com',
+      questions: [{ id: 'satisfaction', type: 'scale' }],
+      answers: { satisfaction: 4 }
+    };
+    const response = {} as FeedbackSubmission;
+    feedbackSubmissionsServiceSpy.registerFeedbackSubmission.and.returnValue(of(response));
+
+    let result: FeedbackSubmission | undefined;
+    service.registerFeedbackSubmission(request).subscribe(submission => result = submission);
+
+    expect(feedbackSubmissionsServiceSpy.registerFeedbackSubmission).toHaveBeenCalledWith(request);
+    expect(result).toBe(response);
   });
 
   it('getProductsList should return the list of products', (done) => {
@@ -573,7 +594,8 @@ describe('CatalogService', () => {
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
       catalogActivityServiceSpy as unknown as CatalogActivityService,
-      filesServiceSpy as unknown as FilesService
+      filesServiceSpy as unknown as FilesService,
+      feedbackSubmissionsServiceSpy as unknown as FeedbackSubmissionsService
     );
 
     expect(getItemSpy).toHaveBeenCalledWith('catalogSlug');
@@ -591,7 +613,8 @@ describe('CatalogService', () => {
       catalogItemsServiceSpy as unknown as CatalogItemsService,
       catalogFiltersServiceSpy as unknown as CatalogFiltersService,
       catalogActivityServiceSpy as unknown as CatalogActivityService,
-      filesServiceSpy as unknown as FilesService
+      filesServiceSpy as unknown as FilesService,
+      feedbackSubmissionsServiceSpy as unknown as FeedbackSubmissionsService
     );
 
     expect(getItemSpy).toHaveBeenCalledWith('catalogSlug');

@@ -3,7 +3,7 @@ import { AzureService } from './services/azure.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppShellConfiguration as AppShellConfig } from './appshell.configuration';
-import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent } from '@opendevstack/ngx-appshell';
+import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent, AppShellFeedback, AppShellFeedbackAnswers, AppShellFeedbackLauncherComponent } from '@opendevstack/ngx-appshell';
 import { Subject, Subscription } from 'rxjs';
 import { CatalogService } from './services/catalog.service';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
@@ -19,11 +19,11 @@ import { PlatformSelectorWidgetDialogComponent } from './components/platform-sel
 import { TopDisclaimerComponent } from './components/top-disclaimer/top-disclaimer.component';
 import { CatalogAccessStore } from './services/catalog-access-store.service';
 import { CATALOG_ACTIVITY_ACCESS_RULE, hasAccessForRule } from './guards/catalog-activity-access-rule';
-
+import { MARKETPLACE_FEEDBACK_PRODUCT_QUESTION, MARKETPLACE_FEEDBACK_QUESTIONS } from './config/feedback-questionnaire';
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, AppShellPlatformLayoutComponent, AppShellToastsComponent, TopDisclaimerComponent],
+    imports: [CommonModule, AppShellPlatformLayoutComponent, AppShellToastsComponent, TopDisclaimerComponent, AppShellFeedbackLauncherComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -62,6 +62,12 @@ export class AppComponent implements OnInit, OnDestroy {
   displayTopDisclaimer: boolean | null = null;
   topDisclaimerTextHtml: string = AppShellConfig.topDisclaimerTextHtml;
 
+  feedback: AppShellFeedback = {
+    questions: MARKETPLACE_FEEDBACK_QUESTIONS,
+    productName: AppShellConfig.applicationName,
+    productQuestion: MARKETPLACE_FEEDBACK_PRODUCT_QUESTION
+  };
+
   loggedUser: AppUser|null = null;
 
   userGroups: string[] = [];
@@ -71,16 +77,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private _lastNotFoundState = false;
   private _loginFailedRedirectInProgress = false;
-  
+
   private readonly _destroying$ = new Subject<void>();
 
   private _script?: HTMLScriptElement;
 
   constructor(
-    private readonly catalogService: CatalogService, 
-    private readonly router: Router, 
-    private readonly azureService: AzureService, 
-    private readonly toastService: AppShellToastService, 
+    private readonly catalogService: CatalogService,
+    private readonly router: Router,
+    private readonly azureService: AzureService,
+    private readonly toastService: AppShellToastService,
     private readonly natsService: NatsService,
     private readonly appConfigService :AppConfigService,
     private readonly projectService: ProjectService,
@@ -194,7 +200,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     const chatbotConfig = this.appConfigService.getConfig()?.chatbotConfig;
     (window as Window & { ONB_CHAT_CONFIG?: object }).ONB_CHAT_CONFIG = chatbotConfig.widgetConfig;
-    
+
     this._script = document.createElement('script');
     this._script.src = chatbotConfig.scriptSrc;
     document.body.appendChild(this._script);
@@ -309,6 +315,34 @@ export class AppComponent implements OnInit, OnDestroy {
     this.liveMessageSubscription?.unsubscribe();
     this.unreadMessagesCountSubscription?.unsubscribe();
     this._script?.remove();
+  }
+
+  handleFeedbackSubmission(feedbackAnswers: AppShellFeedbackAnswers) {
+    const submitter = this.loggedUser?.username;
+    if (!submitter) {
+      console.error('Cannot submit feedback without a submitter email.');
+      return;
+    }
+
+    const projectKey = this.projectService.getCurrentProject()?.projectKey;
+    const questions = [
+      ...this.feedback.questions,
+      ...(this.feedback.productQuestion ? [this.feedback.productQuestion] : [])
+    ];
+
+    this.catalogService.registerFeedbackSubmission({
+      ...(projectKey ? { projectKey } : {}),
+      submitter,
+      questions,
+      answers: feedbackAnswers
+    }).subscribe({
+      error: () => this.toastService.showToast({
+        id: '',
+        read: false,
+        subject: 'only_toast',
+        title: 'We could not submit your feedback. Please try again later.'
+      } as AppShellNotification, 8000)
+    });
   }
 
   private listenForProjectInUrl(): void {

@@ -36,6 +36,8 @@ tags:
     description: Provisioning notifications from AWX/Provisioner
   - name: CacheAdministration
     description: Internal cache administration operations.
+  - name: FeedbackSubmissions
+    description: Feedback submissions operations.
 paths:
   /project/components:
     get:
@@ -171,6 +173,109 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestErrorMessage'
+
+  /project/{projectKey}/component/{componentId}/parameters:
+    post:
+      tags:
+        - Project-components
+      summary: Update the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      description: >
+        Updates the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      operationId: updateProjectComponentParameters
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                 type: array
+                 items:
+                   type: string
+      responses:
+        "201":
+          description: New parameters added to the project component.
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+    delete:
+      tags:
+        - Project-components
+      summary: Delete the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      description: >
+        Deletes the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      operationId: deleteProjectComponentParameters
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "204":
+          description: Parameters deleted from the project component.
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
   /catalog-descriptors:
     get:
       tags:
@@ -1064,6 +1169,50 @@ paths:
         "500":
           description: Server error.
 
+  /feedback/submissions:
+    post:
+      tags:
+        - FeedbackSubmissions
+      summary: Register a feedback submission
+      operationId: registerFeedbackSubmission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSubmissionRequest'
+      responses:
+        '201':
+          description: Feedback submission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSubmission'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        '401':
+          description: Invalid client token or unregistered client application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1156,6 +1305,9 @@ components:
         deletionWorkflowJobId:
           type: string
           example: '123456'
+        canBeDeleted:
+          type: boolean
+          example: 'true'
         parameters:
           type: array
           items:
@@ -1556,6 +1708,65 @@ components:
           type: string
       required:
         - message
+    FeedbackSubmissionRequest:
+      type: object
+      required:
+        - questions
+        - answers
+        - submitter
+      properties:
+        projectKey:
+          type: string
+          minLength: 1
+          description: Optional project key; omit to submit feedback without a project association.
+        submitter:
+          type: string
+          format: email
+          minLength: 1
+          description: Email address of the person submitting feedback.
+        questions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Question definitions shown to the submitter.
+        answers:
+          type: object
+          additionalProperties: true
+          description: Answers and possible follow-ups submitted.
+    FeedbackSubmission:
+      type: object
+      required:
+        - clientAppRegistrationId
+        - clientName
+        - submittedAt
+        - questions
+        - answers
+      properties:
+        clientAppRegistrationId:
+          type: string
+          format: uuid
+          description: Azure application registration identifier from the caller token.
+        clientName:
+          type: string
+        projectKey:
+          type: string
+          nullable: true
+          description: Project key, null when no project was supplied.
+        submitter:
+          type: string
+          description: Optional submitter identity.
+        submittedAt:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        answers:
+          type: object
+          additionalProperties: true
     ValidationResult:
       type: object
       properties:

@@ -4,7 +4,7 @@ import { BehaviorSubject, firstValueFrom, map, Observable, switchMap } from 'rxj
 import { AppProduct } from '../models/app-product';
 import { ProductAction } from '../models/product-action';
 import { ProductActionParameter } from '../models/product-action-parameter';
-import { Catalog, CatalogActivityService, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FileFormat, FilesService, PaginatedCatalogActivities, ProvisioningStatus, SortOrder, SortParameter } from '../openapi/component-catalog';
+import { Catalog, CatalogActivityService, CatalogDescriptor, CatalogDescriptorsService, CatalogFiltersService, CatalogItem, CatalogItemsService, CatalogsService, FeedbackSubmission, FeedbackSubmissionRequest, FeedbackSubmissionsService, FileFormat, FilesService, PaginatedCatalogActivities, ProvisioningStatus, SortOrder, SortParameter } from '../openapi/component-catalog';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +27,8 @@ export class CatalogService {
     private readonly catalogItemsService: CatalogItemsService,
     private readonly catalogFiltersService: CatalogFiltersService,
     private readonly catalogActivityService: CatalogActivityService,
-    private readonly filesService: FilesService
+    private readonly filesService: FilesService,
+    private readonly feedbackSubmissionsService: FeedbackSubmissionsService
   ) { }
 
   setSelectedCatalogSlug(slug: string | null): void {
@@ -72,6 +73,10 @@ export class CatalogService {
 
   retrieveCatalogDescriptors(): Observable<CatalogDescriptor[]> {
     return this.catalogDescriptorsService.getCatalogDescriptors();
+  }
+
+  registerFeedbackSubmission(request: FeedbackSubmissionRequest): Observable<FeedbackSubmission> {
+    return this.feedbackSubmissionsService.registerFeedbackSubmission(request);
   }
 
   getCatalogDescriptors(): CatalogDescriptor[] {
