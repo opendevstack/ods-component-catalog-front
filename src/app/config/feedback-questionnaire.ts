@@ -6,11 +6,10 @@ export const MARKETPLACE_FEEDBACK_QUESTIONS: AppShellFeedbackQuestion[] = [
         type: 'multiple',
         label: 'What did you come here to do today?',
         options: [
-            'Create a support ticket',
-            'Find a data product',
-            'Request access to data products',
-            'Check status on test executions',
-            'Discover learning activities',
+            'Provision a component',
+            'Delete a provisioned component',
+            'View catalog consumption',
+            'Track provisioning process updates',
             'Other'
         ],
         followUp: { option: 'Other', id: 'goalOther', label: 'What was it?', placeholder: 'Describe it briefly', maxLength: 500 }
