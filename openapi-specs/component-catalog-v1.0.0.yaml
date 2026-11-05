@@ -1482,7 +1482,7 @@ components:
           type: string
           nullable: false
           example: >
-            Authorization error: please check your user credentials for deployment
+            Authorization error: please check your user credentials for deployment 
             and try again later.
         createsIncident:
           type: boolean

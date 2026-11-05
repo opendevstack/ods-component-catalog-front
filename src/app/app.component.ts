@@ -3,8 +3,8 @@ import { AzureService } from './services/azure.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppShellConfiguration as AppShellConfig } from './appshell.configuration';
-import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent, AppShellFeedback, AppShellFeedbackAnswers, AppShellFeedbackLauncherComponent } from '@opendevstack/ngx-appshell';
-import { Subject, Subscription } from 'rxjs';
+import { AppShellPlatformLayoutComponent, AppShellLink, AppShellLinksGroup, AppShellNotification, AppShellPicker, AppShellToastService, AppShellToastsComponent, AppShellFeedback, AppShellFeedbackAnswers, AppShellFeedbackLauncherComponent, AppShellFeedbackSave } from '@opendevstack/ngx-appshell';
+import { firstValueFrom, Subject, Subscription } from 'rxjs';
 import { CatalogService } from './services/catalog.service';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { CatalogDescriptor, CatalogLink } from './openapi/component-catalog';
@@ -67,6 +67,8 @@ export class AppComponent implements OnInit, OnDestroy {
     productName: AppShellConfig.applicationName,
     productQuestion: MARKETPLACE_FEEDBACK_PRODUCT_QUESTION
   };
+
+  readonly saveFeedback: AppShellFeedbackSave = feedbackAnswers => this.handleFeedbackSubmission(feedbackAnswers);
 
   loggedUser: AppUser|null = null;
 
@@ -317,11 +319,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this._script?.remove();
   }
 
-  handleFeedbackSubmission(feedbackAnswers: AppShellFeedbackAnswers) {
+  async handleFeedbackSubmission(feedbackAnswers: AppShellFeedbackAnswers): Promise<void> {
     const submitter = this.loggedUser?.username;
     if (!submitter) {
       console.error('Cannot submit feedback without a submitter email.');
-      return;
+      throw new Error('Cannot submit feedback without a submitter email.');
     }
 
     const projectKey = this.projectService.getCurrentProject()?.projectKey;
@@ -330,19 +332,12 @@ export class AppComponent implements OnInit, OnDestroy {
       ...(this.feedback.productQuestion ? [this.feedback.productQuestion] : [])
     ];
 
-    this.catalogService.registerFeedbackSubmission({
+    await firstValueFrom(this.catalogService.registerFeedbackSubmission({
       ...(projectKey ? { projectKey } : {}),
       submitter,
       questions,
       answers: feedbackAnswers
-    }).subscribe({
-      error: () => this.toastService.showToast({
-        id: '',
-        read: false,
-        subject: 'only_toast',
-        title: 'We could not submit your feedback. Please try again later.'
-      } as AppShellNotification, 8000)
-    });
+    }));
   }
 
   private listenForProjectInUrl(): void {
