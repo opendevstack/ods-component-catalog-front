@@ -23,9 +23,9 @@ describe('AzureService', () => {
 
     beforeEach(() => {
         msalSubject$ = new Subject<EventMessage>();
-        inProgress$ = new Subject<InteractionStatus>();
+        inProgress$ = new BehaviorSubject<InteractionStatus>(InteractionStatus.Startup);
         
-        const msalServiceSpy = jasmine.createSpyObj('MsalService', ['handleRedirectObservable', 'instance', 'loginRedirect', 'logout']);
+        const msalServiceSpy = jasmine.createSpyObj('MsalService', ['handleRedirectObservable', 'instance', 'loginRedirect', 'logoutRedirect']);
         msalServiceSpy.loginRedirect.and.returnValue(of(void 0));
         const msalBroadcastServiceSpy = jasmine.createSpyObj('MsalBroadcastService', [], {
             msalSubject$: msalSubject$.asObservable(),
@@ -76,17 +76,10 @@ describe('AzureService', () => {
         expect(service.loggedUser$.value).toBeNull();
     });
 
-    it('initialize method works', () => {
-        service.initialize();
-        msalSubject$.next({eventType: EventType.ACCOUNT_ADDED} as EventMessage);
-        inProgress$.next(InteractionStatus.None);
-        expect(msalService.instance.enableAccountStorageEvents).toHaveBeenCalled();
-    });
-
     it('initialize - should set window.location.pathname to "/" when all accounts are removed', fakeAsync(() => {
         msalInstanceSpy.getAllAccounts.and.returnValue([]);
         service.initialize();
-        msalSubject$.next({ eventType: EventType.ACCOUNT_REMOVED } as EventMessage);
+        msalSubject$.next({ eventType: EventType.LOGOUT_SUCCESS } as EventMessage);
         tick();
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
     }));
@@ -218,7 +211,7 @@ describe('AzureService', () => {
 
         service.logout();
 
-        expect(msalService.logout).toHaveBeenCalled();
+        expect(msalService.logoutRedirect).toHaveBeenCalled();
         expect((service as any).cachedAccessToken).toBeNull();
         expect((service as any).tokenExpiresOn).toBeNull();
     });

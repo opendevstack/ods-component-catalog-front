@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnDestroy } from "@angular/core";
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
 import { EventMessage, EventType, InteractionStatus, RedirectRequest } from "@azure/msal-browser";
-import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, takeUntil } from "rxjs";
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, switchMap, takeUntil } from "rxjs";
 import { Router } from "@angular/router";
 import { AppUser } from "../models/app-user";
 import { AppConfigService } from "./app-config.service";
@@ -38,12 +38,11 @@ export class AzureService implements OnDestroy {
 
         this.setLoginDisplay();
 
-        this.msalService.instance.enableAccountStorageEvents(); // Optional - This will enable ACCOUNT_ADDED and ACCOUNT_REMOVED events emitted when a user logs in or out of another tab or window
         this.msalBroadcastService.msalSubject$
         .pipe(
             filter((msg: EventMessage) =>
-                msg.eventType === EventType.ACCOUNT_ADDED ||
-                msg.eventType === EventType.ACCOUNT_REMOVED
+                msg.eventType === EventType.LOGIN_SUCCESS  ||
+                msg.eventType === EventType.LOGOUT_SUCCESS
             ),
             takeUntil(this._destroying$)
         )
@@ -55,15 +54,23 @@ export class AzureService implements OnDestroy {
             }
         });
 
-        this.msalBroadcastService.inProgress$
+        this.msalService.handleRedirectObservable()
         .pipe(
+            switchMap(() => this.msalBroadcastService.inProgress$),
             filter((status: InteractionStatus) => status === InteractionStatus.None),
             takeUntil(this._destroying$)
         )
-        .subscribe(() => {
-            this.loginInProgress = false;
-            this.setLoginDisplay();
-            this.checkAndSetActiveAccount();
+        .subscribe({
+            next: () => {
+                this.loginInProgress = false;
+                this.setLoginDisplay();
+                this.checkAndSetActiveAccount();
+            },
+            error: error => {
+                this.loginInProgress = false;
+                this.isFirstTime = false;
+                console.error('Error handling login redirect', error);
+            }
         });
 
         this.checkAndSetActiveAccount();
@@ -211,7 +218,7 @@ export class AzureService implements OnDestroy {
     logout() {
         this.cachedAccessToken = null;
         this.tokenExpiresOn = null;
-        this.msalService.logout();
+        this.msalService.logoutRedirect();
     }
 
     ngOnDestroy(): void {
