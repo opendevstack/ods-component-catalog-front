@@ -1,8 +1,8 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MSAL_GUARD_CONFIG, MsalBroadcastService, MsalGuardConfiguration, MsalService } from "@azure/msal-angular";
-import { EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
-import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { AuthenticationResult, EventMessage, EventType, InteractionStatus, InteractionType, RedirectRequest } from '@azure/msal-browser';
+import { BehaviorSubject, firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { AppConfigService } from './app-config.service';
 import { AzureService } from './azure.service';
 import { AzureGroupsService } from '../openapi/projects-info-service';
@@ -16,7 +16,7 @@ describe('AzureService', () => {
     const msalGuardConfig: jasmine.SpyObj<MsalGuardConfiguration> = jasmine.createSpyObj('MsalGuardConfiguration', ['authRequest', 'interactionType']);
     let msalSubject$: Subject<EventMessage>;
     let inProgress$: Subject<InteractionStatus>;
-    const msalInstanceSpy = jasmine.createSpyObj('instance', ['enableAccountStorageEvents', 'getAllAccounts', 'getActiveAccount', 'setActiveAccount', 'acquireTokenSilent']);
+    const msalInstanceSpy = jasmine.createSpyObj('instance', ['getAllAccounts', 'getActiveAccount', 'setActiveAccount', 'acquireTokenSilent']);
     const mockRouter: jasmine.SpyObj<Router> =  jasmine.createSpyObj('Router', ['navigate']);;
     const appConfigServiceSpy = jasmine.createSpyObj('AppConfigService', ['getConfig']);    
     const azureGroupsServiceSpy = jasmine.createSpyObj('AzureGroupsService', ['getAzureGroups']);
@@ -26,6 +26,7 @@ describe('AzureService', () => {
         inProgress$ = new BehaviorSubject<InteractionStatus>(InteractionStatus.Startup);
         
         const msalServiceSpy = jasmine.createSpyObj('MsalService', ['handleRedirectObservable', 'instance', 'loginRedirect', 'logoutRedirect']);
+        msalServiceSpy.handleRedirectObservable.and.returnValue(of({} as AuthenticationResult));
         msalServiceSpy.loginRedirect.and.returnValue(of(void 0));
         const msalBroadcastServiceSpy = jasmine.createSpyObj('MsalBroadcastService', [], {
             msalSubject$: msalSubject$.asObservable(),
@@ -47,25 +48,21 @@ describe('AzureService', () => {
 
         service = TestBed.inject(AzureService);
         msalService = TestBed.inject(MsalService) as jasmine.SpyObj<MsalService>;
+        mockRouter.navigate.calls.reset();
+        msalInstanceSpy.getAllAccounts.calls.reset();
+        msalInstanceSpy.getActiveAccount.calls.reset();
+        msalInstanceSpy.setActiveAccount.calls.reset();
         msalInstanceSpy.getAllAccounts.and.returnValue([{}]);
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
         msalInstanceSpy.acquireTokenSilent.calls.reset();
         azureGroupsServiceSpy.getAzureGroups.and.returnValue(of([]));
         msalService.instance = msalInstanceSpy;
-        // Clear the token cache so each test starts fresh
-        (service as any).cachedAccessToken = null;
-        (service as any).tokenExpiresOn = null;
+        msalGuardConfig.authRequest = undefined;
         msalGuardConfig.interactionType = InteractionType.Redirect;
-        
-        window.onbeforeunload = () => "Oh no!"; // Prevent page reloads during tests 
     });
 
     afterEach(() => {
         service.ngOnDestroy();
-    });
-
-    it('should be created', () => {
-        expect(service).toBeTruthy();
     });
 
     it('should initialize properties in the constructor', () => {
@@ -74,128 +71,224 @@ describe('AzureService', () => {
         expect(service.isFirstTime).toBeTrue();
         expect(service.loggedUser$).toBeInstanceOf(BehaviorSubject);
         expect(service.loggedUser$.value).toBeNull();
+        expect(service.userGroups$.value).toEqual([]);
     });
 
-    it('refreshLoggedUser - should set loggedUser$ to null if no msalUser and isFirstTime is true', fakeAsync(() => {
-        service.isFirstTime = true;
-        msalInstanceSpy.getActiveAccount.and.returnValue(null);
+    describe('initialize', () => {
+        beforeEach(() => {
+            spyOn(service, 'checkAndSetActiveAccount');
+        });
+
+        for (const frame of [
+            { name: 'top-level window', parent: window, opener: null, expected: false },
+            { name: 'embedded frame', parent: {} as Window, opener: null, expected: true },
+            { name: 'frame with an opener', parent: {} as Window, opener: window, expected: false }
+        ]) {
+            it(`should initialize the ${frame.name} and account display`, () => {
+                spyOnProperty(window, 'parent', 'get').and.returnValue(frame.parent);
+                spyOnProperty(window, 'opener', 'get').and.returnValue(frame.opener);
+
+                service.initialize();
+
+                expect(service.isIframe).toBe(frame.expected);
+                expect(service.loginDisplay).toBeTrue();
+                expect(service.checkAndSetActiveAccount).toHaveBeenCalledTimes(1);
+                expect(msalService.handleRedirectObservable).toHaveBeenCalledTimes(1);
+            });
+        }
+
+        it('should handle login and logout events but ignore unrelated events', () => {
+            service.initialize();
+            msalInstanceSpy.getAllAccounts.and.returnValue([]);
+
+            msalSubject$.next({ eventType: EventType.ACQUIRE_TOKEN_SUCCESS } as EventMessage);
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+            expect(service.loginDisplay).toBeTrue();
+
+            msalSubject$.next({ eventType: EventType.LOGOUT_SUCCESS } as EventMessage);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
+
+            msalInstanceSpy.getAllAccounts.and.returnValue([{}]);
+            service.loginDisplay = false;
+            msalSubject$.next({ eventType: EventType.LOGIN_SUCCESS } as EventMessage);
+            expect(service.loginDisplay).toBeTrue();
+            expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reset pending login and refresh accounts only when redirect interaction finishes', () => {
+            service.initialize();
+            (service as any).loginInProgress = true;
+            msalInstanceSpy.getAllAccounts.and.returnValue([]);
+
+            inProgress$.next(InteractionStatus.HandleRedirect);
+            expect(service.checkAndSetActiveAccount).toHaveBeenCalledTimes(1);
+            expect((service as any).loginInProgress).toBeTrue();
+
+            inProgress$.next(InteractionStatus.None);
+            expect(service.checkAndSetActiveAccount).toHaveBeenCalledTimes(2);
+            expect(service.loginDisplay).toBeFalse();
+            expect((service as any).loginInProgress).toBeFalse();
+        });
+
+        it('should reset login state and report a redirect failure', () => {
+            const error = new Error('Redirect failed');
+            const consoleErrorSpy = spyOn(console, 'error');
+            msalService.handleRedirectObservable.and.returnValue(throwError(() => error));
+            (service as any).loginInProgress = true;
+
+            service.initialize();
+
+            expect((service as any).loginInProgress).toBeFalse();
+            expect(service.isFirstTime).toBeFalse();
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Error handling login redirect', error);
+        });
+
+        it('should stop reacting to authentication and interaction events after destruction', () => {
+            service.initialize();
+            service.ngOnDestroy();
+            msalInstanceSpy.getAllAccounts.and.returnValue([]);
+
+            msalSubject$.next({ eventType: EventType.LOGOUT_SUCCESS } as EventMessage);
+            inProgress$.next(InteractionStatus.None);
+
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+            expect(service.checkAndSetActiveAccount).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    it('refreshLoggedUser - should delay the first login by 100 milliseconds', fakeAsync(() => {
+        const loginSpy = spyOn(service, 'login');
+
         service.refreshLoggedUser();
-        expect(service.isFirstTime).toBe(false);
-        tick();
-        expect(service.loggedUser$.value).toBeNull();
+
+        expect(service.isFirstTime).toBeFalse();
+        tick(99);
+        expect(loginSpy).not.toHaveBeenCalled();
+        tick(1);
+        expect(loginSpy).toHaveBeenCalledTimes(1);
     }));
 
-    it('refreshLoggedUser - should set loggedUser$ to null if no msalUser and isFirstTime is false', fakeAsync(() => {
+    it('refreshLoggedUser - should clear the logged-in user when no active account remains', () => {
         service.isFirstTime = false;
-        msalInstanceSpy.getActiveAccount.and.returnValue(null);
+        service.loggedUser$.next({ fullName: 'Test User', username: 'user@example.com', projects: [] });
+
         service.refreshLoggedUser();
-        tick();
+
         expect(service.loggedUser$.value).toBeNull();
+    });
+
+    it('refreshLoggedUser - should publish the user and groups after loading the profile picture', fakeAsync(() => {
+        const msalUser = { name: 'Test User', username: 'user@example.com' };
+        const picture = new Blob(['profile']);
+        msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
+        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
+        azureGroupsServiceSpy.getAzureGroups.and.returnValue(of(['GROUP_A']));
+        const response = new Response(picture);
+        spyOn(response, 'blob').and.resolveTo(picture);
+        const fetchSpy = spyOn(window, 'fetch').and.resolveTo(response);
+        const avatarSpy = spyOn(URL, 'createObjectURL').and.returnValue('blob:profile');
+
+        service.refreshLoggedUser();
+        flushMicrotasks();
+
+        expect(msalInstanceSpy.acquireTokenSilent).toHaveBeenCalledWith({ scopes: ['User.Read'], account: msalUser });
+        expect(fetchSpy).toHaveBeenCalledWith('https://graph.microsoft.com/v1.0/me/photo/$value', {
+            headers: { Authorization: `Bearer ${fakeToken}` }
+        });
+        expect(avatarSpy).toHaveBeenCalledWith(picture);
+        expect(service.loggedUser$.value).toEqual({
+            fullName: msalUser.name,
+            username: msalUser.username,
+            avatarSrc: 'blob:profile',
+            projects: []
+        });
+        expect(service.userGroups$.value).toEqual(['GROUP_A']);
     }));
 
-    it('refreshLoggedUser - should handle error when acquiring token silently', (done) => {
+    it('refreshLoggedUser - should publish the user even when token acquisition fails', fakeAsync(() => {
         const msalUser = { name: 'Test User' };
+        const error = new Error('Error acquiring token silently');
+        const consoleErrorSpy = spyOn(console, 'error');
         msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.reject(new Error('Error acquiring token silently')));
+        msalInstanceSpy.acquireTokenSilent.and.rejectWith(error);
 
         service.refreshLoggedUser();
+        flushMicrotasks();
 
-        setTimeout(() => {
-            expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
-            done();
-        }, 0);
-    });
+        expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error acquiring token silently', error);
+    }));
 
-    it('refreshLoggedUser - should handle error when fetching profile picture', (done) => {
+    it('refreshLoggedUser - should publish the user even when the profile request fails', fakeAsync(() => {
         const msalUser = { name: 'Test User' };
+        const error = new Error('Error fetching profile picture');
+        const consoleErrorSpy = spyOn(console, 'error');
         msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
-
-        spyOn(window, 'fetch').and.callFake(() => Promise.reject(new Error('Error fetching profile picture')));
+        spyOn(window, 'fetch').and.rejectWith(error);
 
         service.refreshLoggedUser();
+        flushMicrotasks();
 
-        setTimeout(() => {
-            expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
-            done();
-        }, 0);
-    });
+        expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
+        expect(service.loggedUser$.value!.avatarSrc).toBeUndefined();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching profile picture', error);
+    }));
 
-    it('refreshLoggedUser - should handle 404 error when fetching profile picture', (done) => {
+    it('refreshLoggedUser - should publish the user without an avatar when the picture is not found', fakeAsync(() => {
         const msalUser = { name: 'Test User' };
+        const consoleWarnSpy = spyOn(console, 'warn');
         msalInstanceSpy.getActiveAccount.and.returnValue(msalUser);
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
-    
         spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(null, { status: 404 })));
-    
+
         service.refreshLoggedUser();
-    
-        setTimeout(() => {
-            expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
-            expect(service.loggedUser$.value!.avatarSrc).toBeUndefined();
-            done();
-        }, 0);
-    });
+        flushMicrotasks();
 
-    it('login - should call loginRedirect with authRequest if msalGuardConfig.authRequest is defined', () => {
-        msalGuardConfig.authRequest = { scopes: ['User.Read'] }
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+        expect(service.loggedUser$.value!.fullName).toBe(msalUser.name);
+        expect(service.loggedUser$.value!.avatarSrc).toBeUndefined();
+        expect(consoleWarnSpy).toHaveBeenCalledWith('Microsoft profile picture not found');
+    }));
 
-        service.login();
+    for (const authRequest of [undefined, { scopes: ['User.Read'] } as RedirectRequest]) {
+        describe(`login ${authRequest ? 'with' : 'without'} an auth request`, () => {
+            beforeEach(() => {
+                msalGuardConfig.authRequest = authRequest;
+                msalInstanceSpy.getAllAccounts.and.returnValue([]);
+            });
 
-        expect(msalService.loginRedirect).toHaveBeenCalledWith({
-            ...{ scopes: ['User.Read'] }
-        } as RedirectRequest);
-    });
+            it('should redirect once and ignore a duplicate login while pending', () => {
+                service.login();
+                service.login();
 
-    it('login - should call loginRedirect without parameters if msalGuardConfig.authRequest is not defined', () => {
-        msalGuardConfig.authRequest = undefined;
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
+                expect(msalService.loginRedirect).toHaveBeenCalledTimes(1);
+                if (authRequest) {
+                    expect(msalService.loginRedirect).toHaveBeenCalledWith(authRequest);
+                } else {
+                    expect(msalService.loginRedirect).toHaveBeenCalledWith();
+                }
+            });
 
-        service.login();
+            for (const errorCode of ['some_other_error', 'interaction_in_progress']) {
+                it(`should ${errorCode === 'interaction_in_progress' ? 'block' : 'allow'} retry after ${errorCode}`, () => {
+                    const error = { errorCode };
+                    const consoleErrorSpy = spyOn(console, 'error');
+                    msalService.loginRedirect.and.returnValue(throwError(() => error));
 
-        expect(msalService.loginRedirect).toHaveBeenCalledWith();
-    });
+                    service.login();
+                    service.login();
 
-    it('login - should reset loginInProgress when loginRedirect fails with non-interaction error', () => {
-        msalGuardConfig.authRequest = { scopes: ['User.Read'] };
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
-        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'some_other_error' })));
-
-        service.login();
-
-        expect((service as any).loginInProgress).toBeFalse();
-    });
-
-    it('login - should keep loginInProgress when loginRedirect fails with interaction_in_progress', () => {
-        msalGuardConfig.authRequest = { scopes: ['User.Read'] };
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
-        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'interaction_in_progress' })));
-
-        service.login();
-
-        expect((service as any).loginInProgress).toBeTrue();
-    });
-
-    it('login - should reset loginInProgress when loginRedirect without authRequest fails with non-interaction error', () => {
-        msalGuardConfig.authRequest = undefined;
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
-        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'some_other_error' })));
-
-        service.login();
-
-        expect((service as any).loginInProgress).toBeFalse();
-    });
-
-    it('login - should keep loginInProgress when loginRedirect without authRequest fails with interaction_in_progress', () => {
-        msalGuardConfig.authRequest = undefined;
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
-        msalService.loginRedirect.and.returnValue(throwError(() => ({ errorCode: 'interaction_in_progress' })));
-
-        service.login();
-
-        expect((service as any).loginInProgress).toBeTrue();
-    });
+                    if (errorCode === 'interaction_in_progress') {
+                        expect(msalService.loginRedirect).toHaveBeenCalledTimes(1);
+                        expect(consoleErrorSpy).not.toHaveBeenCalled();
+                    } else {
+                        expect(msalService.loginRedirect).toHaveBeenCalledTimes(2);
+                        expect(consoleErrorSpy).toHaveBeenCalledWith('Error during login redirect', error);
+                    }
+                });
+            }
+        });
+    }
 
     it('logout - should call logout on msalService and clear the token cache', () => {
         (service as any).cachedAccessToken = 'cached-token';
@@ -209,9 +302,7 @@ describe('AzureService', () => {
     });
 
     it('checkAndSetActiveAccount - should set the first account as active if no active account is set', () => {
-        msalInstanceSpy.setActiveAccount.calls.reset();
-        msalInstanceSpy.getActiveAccount.calls.reset();
-        msalInstanceSpy.getAllAccounts.calls.reset();
+        const refreshSpy = spyOn(service, 'refreshLoggedUser');
         const accounts = [{ username: 'testuser' }];
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
         msalInstanceSpy.getAllAccounts.and.returnValue(accounts);
@@ -219,44 +310,32 @@ describe('AzureService', () => {
         expect(msalInstanceSpy.setActiveAccount).toHaveBeenCalledWith(accounts[0]);
         expect(msalInstanceSpy.getActiveAccount).toHaveBeenCalled();
         expect(msalInstanceSpy.getAllAccounts).toHaveBeenCalled();
+        expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('checkAndSetActiveAccount - should not set active account if an active account is already set', fakeAsync(() => {
-        msalInstanceSpy.setActiveAccount.calls.reset();
-        msalInstanceSpy.getActiveAccount.calls.reset();
+    it('checkAndSetActiveAccount - should preserve the existing active account and refresh the user', () => {
+        const refreshSpy = spyOn(service, 'refreshLoggedUser');
         const activeAccount = { username: 'activeuser' };
         msalInstanceSpy.getActiveAccount.and.returnValue(activeAccount);
-        msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: fakeToken }));
-        spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(new Blob())));
+
         service.checkAndSetActiveAccount();
-        tick();
+
         expect(msalInstanceSpy.setActiveAccount).not.toHaveBeenCalled();
         expect(msalInstanceSpy.getActiveAccount).toHaveBeenCalled();
-    }));
+        expect(refreshSpy).toHaveBeenCalledTimes(1);
+    });
 
     it('checkAndSetActiveAccount - should not set active account if there are no accounts', () => {
-        msalInstanceSpy.setActiveAccount.calls.reset();
-        msalInstanceSpy.getActiveAccount.calls.reset();
-        msalInstanceSpy.getAllAccounts.calls.reset();
+        const refreshSpy = spyOn(service, 'refreshLoggedUser');
         msalInstanceSpy.getActiveAccount.and.returnValue(null);
         msalInstanceSpy.getAllAccounts.and.returnValue([]);
         service.checkAndSetActiveAccount();
         expect(msalInstanceSpy.setActiveAccount).not.toHaveBeenCalled();
         expect(msalInstanceSpy.getActiveAccount).toHaveBeenCalled();
         expect(msalInstanceSpy.getAllAccounts).toHaveBeenCalled();
+        expect(refreshSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('checkAndSetActiveAccount - should call refreshLoggedUser', () => {
-        msalInstanceSpy.setActiveAccount.calls.reset();
-        msalInstanceSpy.getActiveAccount.calls.reset();
-        msalInstanceSpy.getAllAccounts.calls.reset();
-        spyOn(service, 'refreshLoggedUser');
-        msalInstanceSpy.getActiveAccount.and.returnValue(null);
-        msalInstanceSpy.getAllAccounts.and.returnValue([{ username: 'testuser' }]);
-        service.checkAndSetActiveAccount();
-        expect(service.refreshLoggedUser).toHaveBeenCalled();
-    });
-    
     it('ngOnDestroy - should complete the _destroying$ subject', () => {
         spyOn(service[destroyingMethodName], 'next');
         spyOn(service[destroyingMethodName], 'complete');
@@ -267,28 +346,19 @@ describe('AzureService', () => {
         expect(service[destroyingMethodName].complete).toHaveBeenCalled();
     });
 
-    it('getRefreshedAccessToken - should return an observable that emits the access token', (done) => {
+    it('getRefreshedAccessToken - should return an observable that emits the access token', async () => {
         const expectedToken = 'test-access-token';
         const expiresOn = new Date(Date.now() + 10 * 60 * 1000);
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.resolve({ accessToken: expectedToken, expiresOn }));
 
-        service.getRefreshedAccessToken().subscribe((token) => {
-            expect(token).toEqual(expectedToken);
-            done();
-        });
+        expect(await firstValueFrom(service.getRefreshedAccessToken())).toBe(expectedToken);
     });
 
-    it('getRefreshedAccessToken - should handle error when acquiring token fails', (done) => {
+    it('getRefreshedAccessToken - should handle error when acquiring token fails', async () => {
         const expectedError = new Error('Error acquiring token');
         msalInstanceSpy.acquireTokenSilent.and.returnValue(Promise.reject(expectedError));
 
-        service.getRefreshedAccessToken().subscribe({
-            next: () => fail('Expected observable to error'),
-            error: (error) => {
-                expect(error).toEqual(expectedError);
-                done();
-            }
-        });
+        await expectAsync(firstValueFrom(service.getRefreshedAccessToken())).toBeRejectedWith(expectedError);
     });
 
     it('loadUserGroups should return filtered groups', done => {
@@ -323,6 +393,12 @@ describe('AzureService', () => {
 
             done();
         });
+    });
+
+    it('loadUserGroups should return an empty array for a non-array response', async () => {
+        azureGroupsServiceSpy.getAzureGroups.and.returnValue(of(null));
+
+        expect(await firstValueFrom(service.loadUserGroups())).toEqual([]);
     });
 
     describe('getAccessToken', () => {

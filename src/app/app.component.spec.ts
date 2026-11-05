@@ -135,6 +135,18 @@ describe('AppComponent', () => {
     expect(mockCatalogService.registerFeedbackSubmission).not.toHaveBeenCalled();
   });
 
+  it('should reject feedback without submitting when the logged-in user has an empty email', async () => {
+    component.loggedUser = { fullName: 'Fake', username: '', projects: [] };
+    spyOn(console, 'error');
+    mockProjectService.getCurrentProject.calls.reset();
+
+    await expectAsync(Promise.resolve(component.saveFeedback({ goal: 'Find a data product' })))
+      .toBeRejectedWithError('Cannot submit feedback without a submitter email.');
+
+    expect(mockProjectService.getCurrentProject).not.toHaveBeenCalled();
+    expect(mockCatalogService.registerFeedbackSubmission).not.toHaveBeenCalled();
+  });
+
   it('should omit the project and product question when they are not configured', async () => {
     const answers = { goal: 'Find a data product' };
     component.feedback.productQuestion = undefined;
@@ -148,6 +160,25 @@ describe('AppComponent', () => {
       questions: component.feedback.questions,
       answers
     });
+  });
+
+  it('should propagate the API error and allow a successful retry', async () => {
+    const answers = { goal: 'Find a data product' };
+    const submissionError = new Error('Submission failed');
+    mockCatalogService.registerFeedbackSubmission.and.returnValues(
+      throwError(() => submissionError),
+      of({} as FeedbackSubmission)
+    );
+
+    await expectAsync(Promise.resolve(component.saveFeedback(answers)))
+      .toBeRejectedWith(submissionError);
+
+    await expectAsync(Promise.resolve(component.saveFeedback(answers))).toBeResolved();
+    expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledTimes(2);
+    expect(mockCatalogService.registerFeedbackSubmission.calls.allArgs()).toEqual([
+      [jasmine.objectContaining({ answers })],
+      [jasmine.objectContaining({ answers })]
+    ]);
   });
 
   it('should keep the feedback save pending until the API responds', fakeAsync(() => {
@@ -175,6 +206,22 @@ describe('AppComponent', () => {
     await launcher.dialogSave()!({ goal: 'Find a data product' });
 
     expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledTimes(1);
+  });
+
+  it('should refresh catalog activity access when user groups change', () => {
+    component.catalogPicker.selected = 'test-catalog';
+    component.catalogOwners = ['owners-group'];
+    const catalogActivityLink = jasmine.objectContaining({ label: 'Catalog Activity' });
+
+    userGroupsSubject.next(['owners-group']);
+
+    expect(component.userGroups).toEqual(['owners-group']);
+    expect(component.sidenavSections.flatMap(section => section.links)).toContain(catalogActivityLink);
+
+    userGroupsSubject.next([]);
+
+    expect(component.userGroups).toEqual([]);
+    expect(component.sidenavSections.flatMap(section => section.links)).not.toContain(catalogActivityLink);
   });
 
   it('should initialize the service on ngOnInit', () => {
