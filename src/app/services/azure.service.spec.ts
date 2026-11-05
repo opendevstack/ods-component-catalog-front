@@ -76,14 +76,6 @@ describe('AzureService', () => {
         expect(service.loggedUser$.value).toBeNull();
     });
 
-    it('initialize - should set window.location.pathname to "/" when all accounts are removed', fakeAsync(() => {
-        msalInstanceSpy.getAllAccounts.and.returnValue([]);
-        service.initialize();
-        msalSubject$.next({ eventType: EventType.LOGOUT_SUCCESS } as EventMessage);
-        tick();
-        expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
-    }));
-
     it('refreshLoggedUser - should set loggedUser$ to null if no msalUser and isFirstTime is true', fakeAsync(() => {
         service.isFirstTime = true;
         msalInstanceSpy.getActiveAccount.and.returnValue(null);

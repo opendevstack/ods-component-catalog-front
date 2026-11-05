@@ -1,9 +1,10 @@
-import { AppShellToastsComponent, AppShellToastService } from '@opendevstack/ngx-appshell'
+import { AppShellFeedbackLauncherComponent, AppShellToastsComponent, AppShellToastService } from '@opendevstack/ngx-appshell'
 import { NatsMessage, NatsService } from './services/nats.service'
 import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { of, Subject, throwError } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { AzureService } from './services/azure.service';
 import { CatalogService } from './services/catalog.service';
@@ -103,12 +104,12 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should submit feedback with its questions, answers, submitter and current project', () => {
+  it('should submit feedback with its questions, answers, submitter and current project', async () => {
     const answers = { goal: 'Find a data product', satisfaction: 4 };
     mockProjectService.getCurrentProject.and.returnValue({ projectKey: 'PROJECT 1', location: 'LOCATION 1' });
     mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
 
-    component.handleFeedbackSubmission(answers);
+    await component.saveFeedback(answers);
 
     expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledWith({
       projectKey: 'PROJECT 1',
@@ -121,25 +122,26 @@ describe('AppComponent', () => {
     });
   });
 
-  it('should not submit feedback when the user has no email', () => {
+  it('should reject feedback without submitting when the user has no email', async () => {
     component.loggedUser = null;
     const consoleErrorSpy = spyOn(console, 'error');
     mockProjectService.getCurrentProject.calls.reset();
 
-    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+    await expectAsync(Promise.resolve(component.saveFeedback({ goal: 'Find a data product' })))
+      .toBeRejectedWithError('Cannot submit feedback without a submitter email.');
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Cannot submit feedback without a submitter email.');
     expect(mockProjectService.getCurrentProject).not.toHaveBeenCalled();
     expect(mockCatalogService.registerFeedbackSubmission).not.toHaveBeenCalled();
   });
 
-  it('should omit the project and product question when they are not configured', () => {
+  it('should omit the project and product question when they are not configured', async () => {
     const answers = { goal: 'Find a data product' };
     component.feedback.productQuestion = undefined;
     mockProjectService.getCurrentProject.and.returnValue(null);
     mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
 
-    component.handleFeedbackSubmission(answers);
+    await component.saveFeedback(answers);
 
     expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledWith({
       submitter: 'fake.user@fakemail.com',
@@ -148,18 +150,31 @@ describe('AppComponent', () => {
     });
   });
 
-  it('should show a toast when the feedback submission fails', () => {
-    const submissionError = new Error('Submission failed');
-    mockCatalogService.registerFeedbackSubmission.and.returnValue(throwError(() => submissionError));
+  it('should keep the feedback save pending until the API responds', fakeAsync(() => {
+    const submissionSubject = new Subject<FeedbackSubmission>();
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(submissionSubject.asObservable());
+    const resolvedSpy = jasmine.createSpy('saveResolved');
+    const saveFeedback = component.saveFeedback;
 
-    component.handleFeedbackSubmission({ goal: 'Find a data product' });
+    Promise.resolve(saveFeedback({ goal: 'Find a data product' })).then(resolvedSpy);
+    flushMicrotasks();
+    expect(resolvedSpy).not.toHaveBeenCalled();
 
-    expect(mockToastService.showToast).toHaveBeenCalledWith({
-      id: '',
-      read: false,
-      subject: 'only_toast',
-      title: 'We could not submit your feedback. Please try again later.'
-    }, 8000);
+    submissionSubject.next({} as FeedbackSubmission);
+    flushMicrotasks();
+    expect(resolvedSpy).toHaveBeenCalledTimes(1);
+    expect(submissionSubject.observed).toBeFalse();
+  }));
+
+  it('should bind the launcher save without resubmitting after success', async () => {
+    const launcher: AppShellFeedbackLauncherComponent = fixture.debugElement
+      .query(By.directive(AppShellFeedbackLauncherComponent)).componentInstance;
+    mockCatalogService.registerFeedbackSubmission.and.returnValue(of({} as FeedbackSubmission));
+
+    expect(launcher.save()).toBe(component.saveFeedback);
+    await launcher.dialogSave()!({ goal: 'Find a data product' });
+
+    expect(mockCatalogService.registerFeedbackSubmission).toHaveBeenCalledTimes(1);
   });
 
   it('should initialize the service on ngOnInit', () => {

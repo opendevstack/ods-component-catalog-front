@@ -251,7 +251,7 @@ paths:
     post:
       tags:
         - ProvisionResults
-      summary: Request App Support to do operations to delete provision status component (and dependencies) from the file
+      summary: Delete a provision component via AWX workflow
       description: >
         This endpoint receives project key and componentId and send an create an incident to app support.
       operationId: requestDeletion
@@ -387,6 +387,109 @@ paths:
         - Project-components-with-provision-status
       x-accepts:
         - application/json
+
+  /project/{projectKey}/component/{componentId}/parameters:
+    post:
+      tags:
+        - Project-components
+      summary: Update the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      description: >
+        Updates the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      operationId: updateProjectComponentParameters
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+      responses:
+        "201":
+          description: New parameters added to the project component.
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+    delete:
+      tags:
+        - Project-components
+      summary: Delete the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      description: >
+        Deletes the parameters of a project component given both its project key and component ID in the Bitbucket repository.
+      operationId: deleteProjectComponentParameters
+      parameters:
+        - name: projectKey
+          in: path
+          description: project key.
+          required: true
+          schema:
+            type: string
+        - name: componentId
+          in: path
+          description: component ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "204":
+          description: Parameters deleted from the project component.
+        "401":
+          description: Invalid client token on the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "403":
+          description: Insufficient permissions for the client to access the resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestErrorMessage'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -552,6 +655,11 @@ components:
               description: the workflow job id from AWX to correlate provisioning status with AWX job status updates
               example: "123456"
               nullable: true
+            deletionWorkflowJobId:
+              type: string
+              description: the workflow job id from AWX for the job to delete the component from the cluster
+              example: "123456"
+              nullable: true
             parameters:
               type: array
               description: List of name/value string parameters.
@@ -581,6 +689,28 @@ components:
           type: string
           description: The componentId set by the user.
           example: "any-component-id-from-backend"
+
+        parameters:
+          type: array
+          description: List of name/value string parameters.
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+                description: Parameter name
+                example: "deletion_requester"
+              values:
+                type: array
+                description: Parameter values
+                items:
+                  type: string
+                example:
+                  - "any-user@example.com"
+                  - "ignored-parameter"
 
     CreateIncidentParameter:
       properties:
