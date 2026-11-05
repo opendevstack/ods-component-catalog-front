@@ -332,16 +332,12 @@ export class AppComponent implements OnInit, OnDestroy {
       ...(this.feedback.productQuestion ? [this.feedback.productQuestion] : [])
     ];
 
-    try {
-      await firstValueFrom(this.catalogService.registerFeedbackSubmission({
-        ...(projectKey ? { projectKey } : {}),
-        submitter,
-        questions,
-        answers: feedbackAnswers
-      }));
-    } catch (error) {
-      throw error;
-    }
+    await firstValueFrom(this.catalogService.registerFeedbackSubmission({
+      ...(projectKey ? { projectKey } : {}),
+      submitter,
+      questions,
+      answers: feedbackAnswers
+    }));
   }
 
   private listenForProjectInUrl(): void {
